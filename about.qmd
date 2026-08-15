@@ -1,0 +1,11 @@
+---
+title: "About"
+---
+
+## About this site
+
+This site collects my coursework for ISSS626 Geospatial Analytics and Applications, a course in the Master of IT in Business programme at Singapore Management University. It is taught by Dr. Kam Tin Seong.
+
+## Tools
+
+Everything is written in R and published with Quarto.
