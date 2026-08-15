@@ -1,0 +1,169 @@
+/* ===========================================================
+   ISSS608-VAA custom styles
+   Teal/green accent, works with flatly (light) + darkly (dark)
+   =========================================================== */
+
+/* ----- Accent colour variables ----- */
+:root {
+  --accent: #1b9e8a;
+  --accent-dark: #157a6b;
+  --accent-soft: rgba(27, 158, 138, 0.12);
+}
+
+/* ----- Content width: give charts room to breathe ----- */
+main.content {
+  max-width: 950px;
+}
+
+/* ----- Body text: a touch more line spacing for readability ----- */
+body {
+  line-height: 1.65;
+  font-size: 1.02rem;
+}
+
+/* ----- Headings: accent colour and clear spacing ----- */
+h1, h2, h3, h4 {
+  letter-spacing: -0.01em;
+}
+
+h1.title {
+  font-weight: 700;
+}
+
+h2 {
+  border-bottom: 2px solid var(--accent-soft);
+  padding-bottom: 0.3rem;
+  margin-top: 2.4rem;
+}
+
+/* ----- Links ----- */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
+/* ----- Navbar brand accent ----- */
+.navbar-brand {
+  font-weight: 700;
+}
+
+/* ----- "Show code" fold button: make it look intentional ----- */
+.quarto-title-meta,
+details > summary,
+.code-fold summary,
+summary {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ----- Code blocks: softer background, rounded corners ----- */
+div.sourceCode {
+  border-radius: 8px;
+  border: 1px solid rgba(128, 128, 128, 0.18);
+}
+
+pre.sourceCode {
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+
+/* ----- Inline code ----- */
+code:not(.sourceCode) {
+  color: var(--accent-dark);
+  background-color: var(--accent-soft);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* ----- Figures and images: subtle framing, centered ----- */
+.figure img,
+p img {
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+figure figcaption,
+.figure-caption {
+  font-size: 0.85rem;
+  color: #6c757d;
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+/* ----- Tables: cleaner look ----- */
+table {
+  font-size: 0.92rem;
+}
+.table > thead {
+  border-bottom: 2px solid var(--accent-soft);
+}
+
+/* ----- Tabsets (still used in Take-home Ex2, keep them tidy) ----- */
+.panel-tabset .nav-link.active {
+  border-bottom: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+/* ----- Table of contents active item ----- */
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+#TOC a.active {
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+}
+
+/* ----- Landing page navigation cards ----- */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.home-card {
+  display: block;
+  padding: 1.3rem 1.4rem;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.home-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.4rem;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.home-card p {
+  margin-bottom: 0;
+  font-size: 0.92rem;
+  color: #6c757d;
+}
+
+/* ----- Dark mode adjustments ----- */
+.quarto-dark code:not(.sourceCode) {
+  color: #4fd1bd;
+  background-color: rgba(27, 158, 138, 0.18);
+}
+
+.quarto-dark .home-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.quarto-dark .home-card p,
+.quarto-dark figure figcaption {
+  color: #adb5bd;
+}

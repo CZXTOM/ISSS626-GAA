@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "In-class_Ex/In-class_Ex01/In-class_Ex01.html",
+    "href": "In-class_Ex/In-class_Ex01/In-class_Ex01.html",
+    "title": "In-class Exercise 1",
+    "section": "",
+    "text": "pacman::p_load(sf, tmap, tidyverse)"
+  },
+  {
+    "objectID": "In-class_Ex/In-class_Ex01/In-class_Ex01.html#installing-and-loading-r-packages",
+    "href": "In-class_Ex/In-class_Ex01/In-class_Ex01.html#installing-and-loading-r-packages",
+    "title": "In-class Exercise 1",
+    "section": "",
+    "text": "pacman::p_load(sf, tmap, tidyverse)"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "This site collects my coursework for ISSS626 Geospatial Analytics and Applications, a course in the Master of IT in Business programme at Singapore Management University. It is taught by Dr. Kam Tin Seong."
+  },
+  {
+    "objectID": "about.html#about-this-site",
+    "href": "about.html#about-this-site",
+    "title": "About",
+    "section": "",
+    "text": "This site collects my coursework for ISSS626 Geospatial Analytics and Applications, a course in the Master of IT in Business programme at Singapore Management University. It is taught by Dr. Kam Tin Seong."
+  },
+  {
+    "objectID": "about.html#tools",
+    "href": "about.html#tools",
+    "title": "About",
+    "section": "Tools",
+    "text": "Tools\nEverything is written in R and published with Quarto."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.html",
+    "href": "Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.html",
+    "title": "Hands-on Exercise 1",
+    "section": "",
+    "text": "pacman::p_load(sf, tmap, tidyverse)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.html#installing-and-loading-r-packages",
+    "href": "Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.html#installing-and-loading-r-packages",
+    "title": "Hands-on Exercise 1",
+    "section": "",
+    "text": "pacman::p_load(sf, tmap, tidyverse)"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ISSS626 Geospatial Analytics and Applications",
+    "section": "",
+    "text": "Hi, I am ZeXin. This site is where I keep my coursework for ISSS626 Geospatial Analytics and Applications at SMU.\nUse the menu at the top to explore."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html",
+    "href": "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html",
+    "title": "Take-home Exercise 1",
+    "section": "",
+    "text": "pacman::p_load(sf, tmap, tidyverse)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html#installing-and-loading-r-packages",
+    "href": "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html#installing-and-loading-r-packages",
+    "title": "Take-home Exercise 1",
+    "section": "",
+    "text": "pacman::p_load(sf, tmap, tidyverse)"
+  }
+]
