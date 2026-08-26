@@ -20,10 +20,10 @@ execute:
 
 ## Installing and Loading R Packages
 
-Five packages are used in this exercise. **sf** handles the geospatial data, **tmap** draws the thematic maps, **tidyverse** covers importing and wrangling, and **rvest** is needed to pull attribute fields out of the KML description blocks in the second half.
+Three packages are used in this exercise. **sf** handles the geospatial data, **tmap** draws the thematic maps, and **tidyverse** covers importing and wrangling.
 
 ```{r}
-pacman::p_load(sf, tmap, tidyverse, rvest)
+pacman::p_load(sf, tmap, tidyverse)
 ```
 
 A quick version check, since the tmap syntax used later only exists in version 4.
@@ -49,10 +49,11 @@ The output tells us this is a multipolygon layer with 323 features and 13 fields
 ### Polyline feature data
 
 ```{r}
-cyclingpath <- st_read("data/geospatial/CyclingPathNetworkGEOJSON.geojson")
+cyclingpath <- st_read(dsn = "data/geospatial",
+                       layer = "CyclingPathGazette")
 ```
 
-A multilinestring layer, also in WGS84.
+LTA ships this one as a shapefile rather than geojson, so `st_read()` takes the `dsn` and `layer` pair instead of a single path. Note the CRS it reports, LTA data usually arrives already in SVY21 unlike the data.gov.sg layers above.
 
 ### Point feature data
 
@@ -66,7 +67,7 @@ preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson")
 names(preschool)
 ```
 
-Worth pausing on this. The preschool layer has no real attribute columns. Everything the file knows about each centre is packed into a single `Description` string as an HTML table, a quirk of how data.gov.sg exports these layers. Section 2 of this exercise deals with exactly that problem for the 2019 boundary file. Here it does not matter, because every use of `preschool` below relies only on the geometry.
+Worth pausing on this. The preschool layer has no real attribute columns. Everything the file knows about each centre is packed into a single `Description` string as an HTML table, a quirk of how data.gov.sg exports these layers. Oddly the two Master Plan boundary layers do not have this problem, they come through with proper columns, so it is not consistent across data.gov.sg exports. Here it does not matter either way, because every use of `preschool` below relies only on the geometry.
 
 ## Checking the Content of a Simple Feature Data Frame
 
@@ -422,38 +423,21 @@ mpsz19 <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geo
   st_transform(crs = 3414)
 ```
 
-### Tidying the KML attributes
-
-The 2019 file has the same problem the preschool layer had in section 1. Its attributes live inside an HTML table in the `Description` field rather than as proper columns, so they have to be parsed out before the join can work. The helper below reads that HTML and pulls a single named field.
+### Checking the attributes
 
 ```{r}
-extract_kml_field <- function(html_text, field_name) {
-  if (is.na(html_text) || html_text == "") return(NA_character_)
-  page <- read_html(html_text)
-  rows <- page %>% html_elements("tr")
-  value <- rows %>%
-    keep(~ html_text2(html_element(.x, "th")) == field_name) %>%
-    html_element("td") %>%
-    html_text2()
-  if (length(value) == 0) NA_character_ else value
-}
-
-mpsz19 <- mpsz19 %>%
-  mutate(
-    REGION_N = map_chr(Description, extract_kml_field, "REGION_N"),
-    PLN_AREA_N = map_chr(Description, extract_kml_field, "PLN_AREA_N"),
-    SUBZONE_N = map_chr(Description, extract_kml_field, "SUBZONE_N"),
-    SUBZONE_C = map_chr(Description, extract_kml_field, "SUBZONE_C")
-  ) %>%
-  select(-Name, -Description) %>%
-  relocate(geometry, .after = last_col())
+names(mpsz19)
 ```
+
+The reference book at this point runs a chunk of `rvest` code to parse attributes out of an HTML table buried in a `Description` field. That was necessary for the KML version of this layer, which data.gov.sg has since unpublished. The geojson that replaced it carries `SUBZONE_N`, `PLN_AREA_N` and `REGION_N` as proper columns, so there is nothing to parse and the join below can use them directly.
+
+Worth noting the geojson is also in WGS84, which is why the `st_transform()` is piped onto the import above.
 
 ```{r}
 mpsz19
 ```
 
-Four proper attribute columns now, and the geometry sitting at the end where it belongs.
+332 features and 13 fields, with the three name columns the join needs.
 
 ### Importing the attribute data
 
@@ -465,21 +449,68 @@ popdata <- read_csv("data/aspatial/respopagesextod2024.csv")
 
 The target is one row per subzone with six derived fields. `YOUNG` covers ages 0 to 24, `ECONOMY ACTIVE` covers 25 to 64, `AGED` covers 65 and over, and `DEPENDENCY` is the ratio of the first and third against the second.
 
+First the aggregate and pivot.
+
 ```{r}
 popdata2024 <- popdata %>%
   group_by(PA, SZ, AG) %>%
-  summarise(`POP` = sum(`Pop`)) %>%
-  ungroup() %>%
-  pivot_wider(names_from = AG, values_from = POP) %>%
-  mutate(YOUNG = rowSums(.[3:6]) + rowSums(.[12])) %>%
-  mutate(`ECONOMY ACTIVE` = rowSums(.[7:11]) + rowSums(.[13:15])) %>%
-  mutate(`AGED` = rowSums(.[16:21])) %>%
-  mutate(`TOTAL` = rowSums(.[3:21])) %>%
-  mutate(`DEPENDENCY` = (`YOUNG` + `AGED`) / `ECONOMY ACTIVE`) %>%
+  summarise(`POP` = sum(`Pop`), .groups = "drop") %>%
+  pivot_wider(names_from = AG, values_from = POP)
+```
+
+Now a step the reference book does not take, and which turns out to matter a great deal.
+
+```{r}
+names(popdata2024)
+```
+
+The book computes the three age bands using hardcoded column positions, `rowSums(.[3:6]) + rowSums(.[12])` for `YOUNG` and so on. That only works if the age groups land in a particular order. They do not. `pivot_wider()` names the new columns after the values it found, and those get sorted as text, so `5_to_9` sorts after `55_to_59` and ends up at position 14 rather than 12.
+
+Run the book's indices against this and `YOUNG` picks up the 50 to 54 band instead of 5 to 9, while `ECONOMY ACTIVE` quietly absorbs primary school children. Nothing errors. The dependency ratio just comes out wrong, and every map built on it after that is wrong in a way no amount of staring at the map would reveal.
+
+Selecting by name instead removes the dependency on ordering entirely.
+
+```{r}
+young_ag <- c("0_to_4", "5_to_9", "10_to_14", "15_to_19", "20_to_24")
+
+active_ag <- c("25_to_29", "30_to_34", "35_to_39", "40_to_44",
+               "45_to_49", "50_to_54", "55_to_59", "60_to_64")
+
+aged_ag <- c("65_to_69", "70_to_74", "75_to_79",
+             "80_to_84", "85_to_89", "90_and_over")
+```
+
+A guard against the same class of problem returning. If a future release renames or adds a band, this stops the render rather than letting a wrong number through.
+
+```{r}
+stopifnot(all(c(young_ag, active_ag, aged_ag) %in% names(popdata2024)))
+```
+
+```{r}
+popdata2024 <- popdata2024 %>%
+  mutate(
+    YOUNG = rowSums(across(all_of(young_ag))),
+    `ECONOMY ACTIVE` = rowSums(across(all_of(active_ag))),
+    AGED = rowSums(across(all_of(aged_ag))),
+    TOTAL = rowSums(across(all_of(c(young_ag, active_ag, aged_ag)))),
+    DEPENDENCY = (YOUNG + AGED) / `ECONOMY ACTIVE`
+  ) %>%
   select(`PA`, `SZ`, `YOUNG`, `ECONOMY ACTIVE`, `AGED`, `TOTAL`, `DEPENDENCY`)
 ```
 
-The column positions above depend on the age groups landing in a particular order after the pivot. Worth checking with `names(popdata2024)` if the numbers look wrong.
+A sanity check on the result. The three bands should sum to the total, and the dependency ratio for Singapore as a whole should land somewhere near 0.7.
+
+```{r}
+popdata2024 %>%
+  summarise(
+    young = sum(YOUNG),
+    active = sum(`ECONOMY ACTIVE`),
+    aged = sum(AGED),
+    total = sum(TOTAL),
+    bands_match_total = sum(YOUNG) + sum(`ECONOMY ACTIVE`) + sum(AGED) == sum(TOTAL),
+    overall_dependency = (sum(YOUNG) + sum(AGED)) / sum(`ECONOMY ACTIVE`)
+  )
+```
 
 ### Joining the attribute and geospatial data
 
@@ -909,6 +940,8 @@ Three things stood out from this exercise.
 
 The first is that following a reference workflow step by step is not the same as understanding it. data.gov.sg has since retired the shapefile and KML versions of the Master Plan layer, and the geojson that replaced it arrives in WGS84 rather than SVY21. The book at that point uses `st_set_crs()` to repair a wrong EPSG label. Copying that line across would have stamped an SVY21 label onto decimal degrees, and nothing would have errored. The buffers, areas and counts would all have computed happily and all been wrong. The check that caught it was reading the bounding box and noticing the numbers were degrees.
 
-The second is the same lesson in a different costume. `st_buffer(dist = 5)` means five units of the layer's own coordinate system, so on an untransformed layer it silently asks for a five degree buffer instead of five metres. Neither of these mistakes announces itself.
+The second is the same lesson in a different costume, twice over. `st_buffer(dist = 5)` means five units of the layer's own coordinate system, so on an untransformed layer it silently asks for a five degree buffer rather than five metres. And the population wrangling addresses age bands by column position, which breaks the moment `pivot_wider()` sorts `5_to_9` after `55_to_59` as text. That one would have counted children as economically active and rendered without a murmur.
+
+What links all three is that none of them fails loudly. The render completes, the maps draw, the numbers look plausible. The only defence is checking intermediate output against what you expect rather than moving on the moment something runs.
 
 The third is the quantile against equal interval comparison. Same variable, same data, same palette, and two maps that would support quite different conclusions about how uneven Singapore's dependency ratio is. The classification method is an analytical choice, not a formatting one.
