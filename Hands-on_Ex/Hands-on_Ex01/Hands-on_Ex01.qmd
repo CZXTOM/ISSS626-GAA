@@ -240,7 +240,7 @@ plot(st_geometry(listings_sf), add = TRUE, col = "red", pch = 20, cex = 0.3)
 ```
 :::
 
-The listings cluster heavily in the central region, which fits what you would expect of short-term rental supply.
+Most listings sit in the central and southern subzones. They thin out quickly towards the west and the north coast, with a few clusters in the east near the airport. Big parts of the island have almost none.
 
 ## Geoprocessing with sf
 
@@ -377,7 +377,7 @@ ggplot(data = mpsz3414,
 ```
 :::
 
-The long right tail confirms what the summary hinted at. Provision is concentrated rather than spread evenly.
+Same story as the summary. Over a hundred subzones are in the lowest bin and the count drops off fast after that, with a few stragglers past 30 per square kilometre.
 
 A scatterplot of count against density shows how the two relate.
 
@@ -411,7 +411,9 @@ ggplot(data = mpsz3414,
 ```
 :::
 
-The relationship is loose rather than linear, which is the point. A subzone can have many pre-schools and still a low density if it is large.
+Count and density do rise together, but the spread is wide. Two subzones with the same density can be twenty pre-schools apart. The points on the far right, around 35 per square kilometre, only have a few pre-schools each because those subzones are small.
+
+One thing to watch. `xlim` and `ylim` cut the axes at 40, so any point past that just disappears instead of showing up as an outlier.
 
 # Thematic Mapping and Geovisualisation with tmap
 
@@ -545,7 +547,9 @@ tmap_mode("plot")
 qtm(shp = mpsz_pop2024, fill = "DEPENDENCY")
 ```
 
-`qtm()` is concise and the defaults are sensible, but individual layers are hard to control, which is why the rest of this section uses the full element syntax.
+`qtm()` is short to write, but look at what the default binning did. The legend goes 0 to 10 in steps of two. Almost every subzone is below 1, so the whole island ends up in the lightest class with one dark polygon near Changi. Nothing is wrong with the map, it just does not show anything.
+
+The cause is the single subzone with a ratio of 10. That is why the custom breaks section below matters, and why the rest of this section uses the longer syntax instead, since `qtm()` gives you no way to change the bins.
 
 ### Drawing a base map
 
@@ -642,7 +646,13 @@ tm_shape(mpsz_pop2024) +
 ```
 :::
 
-Quantile spreads the subzones evenly across the five classes and reveals variation across the whole island. Equal interval is dominated by the handful of extreme values, so most of the map collapses into a single class and looks far more uniform than it is. This is the classic way a choropleth misleads without anyone lying.
+Same column, same data, two maps that look nothing alike.
+
+Quantile puts the same number of subzones in each class, so the breaks come out at 0.64, 0.70, 0.74 and 0.82. Those all sit inside the range where the data actually is, and the map separates the central and eastern subzones clearly.
+
+Equal interval cuts 0 to 10 into five equal parts. Nearly everything falls in the first one, so the island goes pale with a single dark polygon. If you only saw that map you would think dependency hardly varies in Singapore, which is not true.
+
+Neither map is wrong. One subzone at 10 is enough to make the default useless.
 
 ### Custom breaks
 
@@ -808,7 +818,9 @@ agedmap <- tm_shape(mpsz_pop2024) +
 tmap_arrange(youngmap, agedmap, asp = 1, ncol = 2)
 ```
 
-Side by side, the young and aged populations sit in noticeably different parts of the island. The mature estates carry the older population while the newer towns skew young.
+The two maps look almost the same. I expected the aged map to light up the older estates and the young map to light up the newer towns, but the same subzones are dark on both.
+
+That is because both are raw counts. A subzone with more people has more of everyone. So the maps are mostly showing where people live, not where the population is young or old. To answer that you need a rate, which is what `DEPENDENCY` does.
 
 ### By a group-by variable in tm_facets()
 
@@ -854,7 +866,9 @@ mpsz_pop2024 %>%
   tm_layout(asp = 0.8)
 ```
 
-The boxplot immediately flags outliers that the map alone would not draw attention to. Highlighting and labelling them makes the pairing more useful.
+The boxplot shows something the map does not. All the outliers are below the box, near zero, not above it. Those are subzones with working age residents and hardly any children or elderly.
+
+Once labelled, they turn out to be bunched in the downtown core. The labels overlap a lot at this size and would need fixing before I used this anywhere, but you can still see where they are.
 
 ::: panel-tabset
 ## The Plot
@@ -939,12 +953,12 @@ tmap_mode("plot")
 
 # Reflections
 
-Three things stood out from this exercise.
+Four things I am taking away from this.
 
-The first is that following a reference workflow step by step is not the same as understanding it. data.gov.sg has since retired the shapefile and KML versions of the Master Plan layer, and the geojson that replaced it arrives in WGS84 rather than SVY21. The book at that point uses `st_set_crs()` to repair a wrong EPSG label. Copying that line across would have stamped an SVY21 label onto decimal degrees, and nothing would have errored. The buffers, areas and counts would all have computed happily and all been wrong. The check that caught it was reading the bounding box and noticing the numbers were degrees.
+First, copying a workflow step by step is not the same as understanding it. data.gov.sg has dropped the shapefile and KML versions of the Master Plan layer, and the geojson that replaced it comes in WGS84, not SVY21. The book uses `st_set_crs()` there to fix a wrong EPSG label. If I had copied that line, it would have put an SVY21 label on degree values and nothing would have errored. Every buffer, area and count after it would have been wrong. What caught it was looking at the bounding box and seeing the numbers were degrees.
 
-The second is the same trap wearing different clothes. The population wrangling in the book addresses age bands by column position, which breaks the moment `pivot_wider()` sorts `5_to_9` after `55_to_59` as text. Run as written, it would have counted primary school children as economically active and put 50 year olds in the young band. It would have rendered without a murmur, and the dependency map would have looked entirely reasonable.
+Second, the same problem showed up again in the population wrangling. The book picks age bands by column position, which stops working the moment `pivot_wider()` sorts `5_to_9` after `55_to_59`. Run as written it would have counted primary school children as economically active and put 50 year olds in the young band, and it would have rendered fine. Checking that the bands added up to the published resident population, and that the overall ratio was around 0.73, took a minute and was the only thing that would have caught it.
 
-What links these two is that neither fails loudly. The render completes, the maps draw, the numbers look plausible. Checking that the age bands summed to the published resident population, and that the overall dependency ratio landed near 0.73, took a minute and was the only thing standing between me and a wrong answer presented confidently.
+Third, I got one of my own readings wrong. I assumed the young and aged maps would show different parts of the island and they do not, because both are counts and counts mostly follow population size. I only noticed after looking at the two maps side by side. A map can look useful while answering a different question from the one you had in mind.
 
-The third is the quantile against equal interval comparison. Same variable, same data, same palette, and two maps that would support quite different conclusions about how uneven Singapore's dependency ratio is. The classification method is an analytical choice, not a formatting one.
+Fourth, the classification method does a lot of the work. Quantile and equal interval on the same column give maps that say opposite things about whether dependency varies across Singapore. One subzone at 10 is enough to flatten the equal interval map. Picking a classification is part of the analysis, not formatting, and the default is not a safe choice.
