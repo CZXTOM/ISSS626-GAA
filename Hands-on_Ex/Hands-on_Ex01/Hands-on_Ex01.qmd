@@ -248,10 +248,13 @@ The listings cluster heavily in the central region, which fits what you would ex
 
 The scenario is that the authority wants to widen the existing cycling paths and needs 5 metres of reserved land on either side. The task is to work out how much land that comes to.
 
-The cycling path came in as WGS84 like everything else, so it has to be reprojected before any of this works. `dist = 5` means five units of whatever the layer's coordinate system uses. On degrees that is a buffer roughly 550 km wide, which would run without error and produce a completely meaningless answer.
+`dist = 5` in `st_buffer()` means five units of whatever coordinate system the layer is in. On a WGS84 layer that would be five degrees, a buffer some 550 km wide, and it would run without error and give a meaningless answer.
+
+The cycling path is the one layer here that already arrived in SVY21, so this transform changes nothing. I have kept it anyway rather than relying on LTA continuing to ship it that way. It costs nothing and it makes the assumption explicit.
 
 ```{r}
 cyclingpath3414 <- st_transform(cyclingpath, crs = 3414)
+st_crs(cyclingpath3414)$epsg
 ```
 
 Now `st_buffer()` builds buffers that really are 5 metres.
@@ -940,8 +943,8 @@ Three things stood out from this exercise.
 
 The first is that following a reference workflow step by step is not the same as understanding it. data.gov.sg has since retired the shapefile and KML versions of the Master Plan layer, and the geojson that replaced it arrives in WGS84 rather than SVY21. The book at that point uses `st_set_crs()` to repair a wrong EPSG label. Copying that line across would have stamped an SVY21 label onto decimal degrees, and nothing would have errored. The buffers, areas and counts would all have computed happily and all been wrong. The check that caught it was reading the bounding box and noticing the numbers were degrees.
 
-The second is the same lesson in a different costume, twice over. `st_buffer(dist = 5)` means five units of the layer's own coordinate system, so on an untransformed layer it silently asks for a five degree buffer rather than five metres. And the population wrangling addresses age bands by column position, which breaks the moment `pivot_wider()` sorts `5_to_9` after `55_to_59` as text. That one would have counted children as economically active and rendered without a murmur.
+The second is the same trap wearing different clothes. The population wrangling in the book addresses age bands by column position, which breaks the moment `pivot_wider()` sorts `5_to_9` after `55_to_59` as text. Run as written, it would have counted primary school children as economically active and put 50 year olds in the young band. It would have rendered without a murmur, and the dependency map would have looked entirely reasonable.
 
-What links all three is that none of them fails loudly. The render completes, the maps draw, the numbers look plausible. The only defence is checking intermediate output against what you expect rather than moving on the moment something runs.
+What links these two is that neither fails loudly. The render completes, the maps draw, the numbers look plausible. Checking that the age bands summed to the published resident population, and that the overall dependency ratio landed near 0.73, took a minute and was the only thing standing between me and a wrong answer presented confidently.
 
 The third is the quantile against equal interval comparison. Same variable, same data, same palette, and two maps that would support quite different conclusions about how uneven Singapore's dependency ratio is. The classification method is an analytical choice, not a formatting one.
