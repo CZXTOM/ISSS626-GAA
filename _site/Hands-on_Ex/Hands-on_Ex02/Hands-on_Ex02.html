@@ -504,7 +504,7 @@ enclosing rectangle: [2667.54, 55941.94] x [21448.47, 50256.33] units</code></pr
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The <code>owin</code> is not decoration. Every function later in this exercise measures distances from each point to its neighbours, and near the edge of the region some of those neighbours fall outside and never get counted. That biases the answer downward.</p>
+<p>The <code>owin</code> matters more than it looks. Every function later in this exercise measures distances from each point to its neighbours, and near the edge of the region some of those neighbours fall outside and never get counted. That biases the answer downward.</p>
 <p>Floch, Marcon and Puech call this the edge effect and spend a section on it. It is the reason <code>Gest()</code>, <code>Kest()</code> and the rest all take a <code>correction</code> argument. Before I read that, I would have treated those arguments as noise.</p>
 </div>
 </div>
@@ -567,7 +567,7 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 <div class="callout-body-container callout-body">
 <p>The two p-values are not the same and they cannot be. The Monte Carlo version compares R against 99 simulated patterns, so the smallest p-value it can possibly report is 0.01. It is not more or less significant than the first, it is a different test with a floor set by how many simulations I asked for.</p>
-<p>Floch et al.&nbsp;give the rule. For a two-sided test the envelope corresponds to alpha equal to 2 divided by q plus 1, so 39 simulations gives 5 percent. Every simulation count in this exercise is therefore a choice about alpha, and the book changes it between sections without comment.</p>
+<p>The required reading gives the rule. For a two-sided test, alpha works out as 2 divided by the number of simulations plus 1, so 39 simulations gives 5 percent. Every simulation count in this exercise is therefore a choice about alpha, and the book changes it between sections without comment.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-caution callout-titled">
@@ -580,7 +580,7 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>R comes out well below 1 and the p-value is tiny, so the test says clustered. But I am not sure the test is asking anything.</p>
+<p>R comes out well below 1 and the p-value is tiny, so the test says clustered. I am not sure that tells me much.</p>
 <p>The null here is that childcare centres could be anywhere in Singapore with equal probability. That includes reservoirs, the airport, industrial land and military areas. Childcare centres go where children live.</p>
 <p>Floch et al.&nbsp;make exactly this point about pharmacies in France, whose locations are regulated by population, and conclude the CSR reference “does not appear to be the most relevant in this case”. I think the same applies here. I come back to it in Part 3 with a null that is not a strawman.</p>
 </div>
@@ -718,9 +718,9 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The four rules disagree by a factor of about fifteen, 4.36 from CvL against 0.30 from diggle. CvL gives the widest bandwidth and diggle the narrowest, and the maps that come out look like different claims about the city.</p>
-<p>Baddeley recommends ppl when the pattern is mostly tight clusters and diggle when you are hunting a single cluster in noise. But the honest summary is that this is a choice I am making, not something the data decided. Floch et al.&nbsp;put it plainly, the choice of kernel barely matters and the choice of bandwidth matters enormously.</p>
-<p>Same shape of problem as the classification method in Exercise 1. A default that looks like a setting is actually an analytical decision.</p>
+<p>The four rules disagree by a factor of about fifteen, 4.36 from CvL against 0.30 from diggle. CvL gives the widest bandwidth and diggle the narrowest, and the maps they produce say different things about the city.</p>
+<p>Baddeley recommends ppl when the pattern is mostly tight clusters, and diggle when you are hunting one cluster in noise. Either way this is a choice I am making, not something the data settled. The reading says the same thing more bluntly, that the kernel barely matters and the bandwidth matters enormously.</p>
+<p>Same problem as picking the classification method in Exercise 1. It looks like a setting you leave alone, and it is really a decision about what the map says.</p>
 </div>
 </div>
 </section>
@@ -756,7 +756,7 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 </div>
 </div>
-<p>Holding the bandwidth fixed at 0.6 and swapping the kernel, the four maps are near enough identical. That is the point. The reading said the kernel choice has limited impact and here it is, visible.</p>
+<p>Holding the bandwidth at 0.6 and swapping the kernel, the four maps come out near enough identical. Floch et al.&nbsp;said the kernel choice has limited impact, and this is that claim made visible.</p>
 </section>
 </section>
 <section id="fixed-and-adaptive-bandwidth" class="level2" data-number="2.5">
@@ -1227,7 +1227,7 @@ alternative hypothesis: two-sided</code></pre>
 </div>
 <div class="callout-body-container callout-body">
 <p><code>glocal = TRUE</code> appears here and for L, but not for G or F earlier. I copied it across without noticing, then went back to work out what it does.</p>
-<p>The test is repeated at every value of r. Floch et al.&nbsp;point out this inflates the false positive rate well above the stated alpha, because you are running dozens of tests and reporting the one that crosses. A global envelope corrects for that. A pointwise one does not.</p>
+<p>The test is repeated at every value of r. Running the same test at dozens of values of r, then reporting the ones that cross, inflates the false positive rate well above the stated alpha. A global envelope corrects for that. A pointwise one does not.</p>
 <p>So the G and F results above are on a weaker footing than the K and L results below, and the book never says so. I redo one of them properly in Part 3.</p>
 </div>
 </div>
@@ -1346,7 +1346,7 @@ alternative hypothesis: two-sided</code></pre>
 </section>
 <section id="part-3-beyond-the-exercise" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Part 3, Beyond the Exercise</h1>
-<p>Three things bothered me by the end of Part 2, and all three come from the required reading rather than from me.</p>
+<p>Four things bothered me by the end of Part 2. All of them came out of the required reading rather than from me.</p>
 <section id="testing-against-a-null-that-is-not-a-strawman" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="testing-against-a-null-that-is-not-a-strawman"><span class="header-section-number">4.1</span> Testing Against a Null That Is Not a Strawman</h2>
 <p>Everything so far compares childcare centres to a pattern where any point in Singapore is equally likely. Reservoirs, the airport, Jurong Island, military land.</p>
@@ -1373,7 +1373,7 @@ alternative hypothesis: two-sided</code></pre>
 <p>My surface comes out entirely positive, so nothing here needs fixing. I am clamping anyway, and the reason is worth writing down.</p>
 <p>Look at the book’s own output in section 4.7.1. Its density range starts at -6.58e-21. That is floating point noise from the edge correction rather than a real negative density, and it is invisible when you plot the surface.</p>
 <p>It stops mattering right up until you feed the surface to <code>rpoispp()</code> for the simulation below, which refuses a negative intensity with a “negative probability” error that says nothing about where the negative came from. Whether you hit it depends on your data.</p>
-<p>One line of insurance is cheaper than that error.</p>
+<p>One line now is cheaper than working that out later.</p>
 </div>
 </div>
 <div class="cell">
@@ -1490,7 +1490,7 @@ alternative hypothesis: two-sided</code></pre>
 </div>
 <div class="callout-body-container callout-body">
 <p>Under randomness the pair correlation sits at 1, which is the dashed line. Above 1 means more neighbours at that exact distance than chance would give.</p>
-<p>The advantage over K is that it localises. The disadvantage, which Floch et al.&nbsp;also name, is that a cumulative function can detect clusters of clusters and a density function cannot. They answer different questions and neither replaces the other.</p>
+<p>The advantage over K is that it localises. The disadvantage is that a cumulative function can spot clusters of clusters and a density function cannot. They answer different questions and neither replaces the other.</p>
 </div>
 </div>
 </section>
@@ -1592,8 +1592,8 @@ Quadrats: 13 tiles (irregular windows)</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The disagreement is the point. The quadrat answer depends entirely on the grid I chose, and a different <code>nx</code> and <code>ny</code> would move it.</p>
-<p>That is the Modifiable Areal Unit Problem again, the same thing I hit in Exercise 1 aggregating subzones up to planning areas. Distance-based methods avoid it, and Floch et al.&nbsp;give exactly this as a main reason to prefer them.</p>
+<p>The quadrat answer depends entirely on the grid I picked, and a different <code>nx</code> and <code>ny</code> would move it.</p>
+<p>That is the Modifiable Areal Unit Problem again, the same thing I hit in Exercise 1 aggregating subzones up to planning areas. Avoiding it is one of the main reasons the reading gives for preferring distance-based methods.</p>
 </div>
 </div>
 </section>
@@ -1604,14 +1604,14 @@ Quadrats: 13 tiles (irregular windows)</code></pre>
 <li>The <code>Kinhom</code> null is estimated from the same data it tests. It is a better question than CSR, not an independent one.</li>
 <li>Simulation counts vary through the exercise, 99 here and 999 there, and each choice sets a different alpha.</li>
 <li>The four planning areas come from the book. They are not a sample of anything, so nothing here generalises to Singapore’s other planning areas.</li>
-<li>First and second order effects cannot be separated from a single observed pattern, which is the limitation below and applies to the whole document.</li>
+<li>First and second order effects cannot be separated from a single observed pattern. That one is not fixable here and it undercuts the whole document, which is why it is also the second point in the reflections.</li>
 </ul>
 </section>
 </section>
 <section id="reflections" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Reflections</h1>
 <p>Five things I am taking from this one.</p>
-<p><strong>The null hypothesis was doing more work than the test.</strong> Every result in Parts 1 and 2 compares childcare centres against a pattern that could put them in the middle of a reservoir. The tests came back clustered with tiny p-values, and I am not sure that told me anything beyond the fact that people live in some places and not others. Reading Floch et al.&nbsp;on French pharmacies is what made me see it, because the situation is identical.</p>
+<p><strong>The null hypothesis mattered more than the test did.</strong> Every result in Parts 1 and 2 compares childcare centres against a pattern that could put them in the middle of a reservoir. The tests came back clustered with tiny p-values, and I am not sure that told me anything beyond the fact that people live in some places and not others. Reading Floch et al.&nbsp;on French pharmacies is what made me see it, because the situation is identical.</p>
 <p><strong>The two chapters promise something they cannot deliver together.</strong> Chapter 4 is first order, intensity. Chapter 5 is second order, interaction. Floch et al.&nbsp;state that from a single observed pattern the two cannot be told apart, and cite work showing that natural advantage and genuine attraction produce indistinguishable results. So I can say the centres are clustered. I cannot say whether that is because they are drawn to the same places or drawn to each other.</p>
 <p><strong>Several arguments I was copying turned out to be decisions.</strong> The <code>correction</code> argument exists because of edge effects. <code>glocal</code> exists because testing at every r inflates the error rate. <code>nsim</code> sets alpha. None of these are formatting, and I had been treating all three as boilerplate to be pasted along with everything else.</p>
 <p><strong>Two methods disagreed and that was more useful than agreement.</strong> Clark-Evans rejected randomness for Choa Chu Kang and the quadrat test did not, on the same points at the same alpha. Working out why, that one reads distances between points and the other only counts them in boxes, taught me more about what each test can see than either result on its own.</p>
