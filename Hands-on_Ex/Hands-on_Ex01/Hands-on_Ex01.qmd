@@ -16,6 +16,12 @@ execute:
   freeze: true
 ---
 
+::: {.pagefacts}
+[Six datasets, all downloaded fresh]{.fact}
+[data.gov.sg, LTA DataMall, SingStat, Inside Airbnb]{.fact .data}
+[`sf` `tmap` `tidyverse`]{.fact .pkg}
+:::
+
 # Getting Started
 
 ## Installing and Loading R Packages
@@ -44,7 +50,12 @@ data.gov.sg has retired the shapefile and KML versions of this layer, so the geo
 mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson")
 ```
 
-The output tells us this is a multipolygon layer with 323 features and 13 fields. Two things differ from what the reference book reports. The layer arrives in **WGS84**, not SVY21, and the field names for area and length are `SHAPE_1.AREA` and `SHAPE_1.LEN`. Both matter later.
+323 features, 13 fields, multipolygon. Two things are different from the book. The layer comes in as **WGS84**, not SVY21. And the area and length fields are called `SHAPE_1.AREA` and `SHAPE_1.LEN`, not `SHAPE_Area` and `SHAPE_Leng`. Both of these bite me later.
+
+::: {.callout-note}
+## Learning diary
+Small thing, but worth writing down. The 2019 file downloads as `MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson`, with GEOJSON in the middle of the name rather than just the extension. Nobody would guess that. Now I copy filenames out of `ls` instead of typing what I think they are called.
+:::
 
 ### Polyline feature data
 
@@ -53,7 +64,12 @@ cyclingpath <- st_read(dsn = "data/geospatial",
                        layer = "CyclingPathGazette")
 ```
 
-LTA ships this one as a shapefile rather than geojson, so `st_read()` takes the `dsn` and `layer` pair instead of a single path. Note the CRS it reports, LTA data usually arrives already in SVY21 unlike the data.gov.sg layers above.
+LTA gives this one as a shapefile, not geojson. So `st_read()` needs the `dsn` and `layer` pair instead of one path. Look at the CRS it reports too, this one is already in SVY21 while the data.gov.sg layers are not.
+
+::: {.callout-warning}
+## Issue I hit
+The zip unpacked into a folder called `CyclingPath_Mar2026`, so my files sat one level deeper than the code expected and `st_read()` could not find the layer. I moved the nine `CyclingPathGazette.*` files up into `data/geospatial` and it worked. Nothing clever, I just had not looked at where the unzip actually put them.
+:::
 
 ### Point feature data
 
@@ -87,7 +103,7 @@ This prints only the geometry column, so we see the feature type, extent and coo
 glimpse(mpsz)
 ```
 
-`glimpse()` shows the data type of every field. Note the geometry column and the two shape measurement fields, which in this geojson are named `SHAPE_1.AREA` and `SHAPE_1.LEN` rather than the `SHAPE_Area` and `SHAPE_Leng` the book refers to. The `X_ADDR` and `Y_ADDR` centroid fields present in the old shapefile are absent here.
+`glimpse()` shows the data type of every field. Two things differ from the book here. The shape fields are `SHAPE_1.AREA` and `SHAPE_1.LEN` here, not `SHAPE_Area` and `SHAPE_Leng`. And the `X_ADDR` and `Y_ADDR` centroid fields are gone.
 
 ### Working with head()
 
@@ -101,21 +117,65 @@ The `n` argument controls how many records are shown, which keeps the output rea
 
 The default plot of an sf object draws every attribute as its own small map.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 plot(mpsz)
 ```
 
-Passing only the geometry gives the outline on its own.
+## The Code
 
 ```{r}
-plot(st_geometry(mpsz))
+#| eval: false
+plot(mpsz)
 ```
+:::
+
+Passing only the geometry gives the outline on its own.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+plot(st_geometry(mpsz),
+     col = "#EFE9DB", border = "grey65", lwd = 0.4,
+     main = "Singapore planning subzones, Master Plan 2014")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+plot(st_geometry(mpsz),
+     col = "#EFE9DB", border = "grey65", lwd = 0.4,
+     main = "Singapore planning subzones, Master Plan 2014")
+```
+:::
 
 Or a single named attribute.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
-plot(mpsz["PLN_AREA_N"])
+#| echo: false
+plot(mpsz["PLN_AREA_N"],
+     key.pos = NULL, border = "grey80", lwd = 0.3,
+     main = "Subzones coloured by planning area")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+plot(mpsz["PLN_AREA_N"],
+     key.pos = NULL, border = "grey80", lwd = 0.3,
+     main = "Subzones coloured by planning area")
+```
+:::
 
 `plot()` is fine for a quick look. Anything meant for presentation should go through tmap instead, which is the whole of the second half of this exercise.
 
@@ -129,13 +189,22 @@ Two layers can only be used together if they share a coordinate system, so this 
 st_crs(mpsz)
 ```
 
-This is the point where my file and the reference book diverge, and the difference is worth being careful about.
+Here my file and the book part ways, so I had to stop and think about it.
 
-The book imports a shapefile that really is in SVY21 but carries a wrong EPSG label of 9001, so it fixes the label with `st_set_crs(3414)`. That is the right tool for a mislabelling, because the coordinates themselves are already correct and only the metadata is wrong.
+The book reads a shapefile that really is in SVY21 but has the wrong EPSG code attached. The coordinates are fine, only the label is wrong, so it fixes the label with `st_set_crs(3414)`.
 
-My geojson is a different situation. It reports WGS84, and it means it. The bounding box runs 103.6 to 104.0 on x and 1.15 to 1.47 on y, which are decimal degrees, not the metre values SVY21 would give. So the label is accurate and the coordinates are the thing that needs changing.
+Mine is a different problem. It says WGS84 and it means it. The bounding box runs 103.6 to 104.0 across and 1.15 to 1.47 up, and those are degrees. SVY21 would give me metres in the tens of thousands.
 
-Using `st_set_crs(3414)` here would be a real error rather than a cosmetic one. It would attach an SVY21 label to degree values without touching them, and every area, distance and buffer computed afterwards would be silently wrong. `st_transform()` is what actually reprojects the coordinates.
+So if I copied `st_set_crs(3414)` I would be sticking an SVY21 label on degree values without changing the numbers underneath. `st_transform()` is the one that actually converts them.
+
+::: {.callout-note}
+## Learning diary
+This is the one that would have got me. Nothing errors either way. The map still draws, the code still runs, and every area and buffer after it is quietly wrong.
+
+What saved me was reading the bounding box instead of skipping past it. Degrees look like 103.8. Metres look like 28,000. Once I noticed that, the rest was obvious.
+
+The rule I am taking from this. `st_set_crs` fixes a wrong label. `st_transform` changes the actual coordinates. Ask which one is broken before picking.
+:::
 
 ```{r}
 mpsz3414 <- st_transform(mpsz, crs = 3414)
@@ -149,7 +218,7 @@ st_crs(mpsz3414)$epsg
 st_bbox(mpsz3414)
 ```
 
-The bounding box is now in metres and in the tens of thousands, which is the quick check that the transform did something real rather than just relabelling.
+The bounding box is now in metres, in the tens of thousands. That is my quick check that the transform actually did something rather than just changing the label.
 
 ### Transforming preschool to svy21
 
@@ -174,16 +243,22 @@ Before the transform, the preschool points would not have landed on the subzone 
 
 ```{r}
 #| echo: false
-plot(st_geometry(mpsz3414))
-plot(st_geometry(preschool3414), add = TRUE)
+plot(st_geometry(mpsz3414),
+     col = "#F7F4EC", border = "grey72", lwd = 0.4,
+     main = "2,290 pre-schools over the subzone boundaries")
+plot(st_geometry(preschool3414), add = TRUE,
+     pch = 21, cex = 0.42, bg = "#0072B2AA", col = "#00548A", lwd = 0.3)
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-plot(st_geometry(mpsz3414))
-plot(st_geometry(preschool3414), add = TRUE)
+plot(st_geometry(mpsz3414),
+     col = "#F7F4EC", border = "grey72", lwd = 0.4,
+     main = "2,290 pre-schools over the subzone boundaries")
+plot(st_geometry(preschool3414), add = TRUE,
+     pch = 21, cex = 0.42, bg = "#0072B2AA", col = "#00548A", lwd = 0.3)
 ```
 :::
 
@@ -212,7 +287,7 @@ listings_sf <- st_as_sf(listings,
   st_transform(crs = 3414)
 ```
 
-Three things worth noting about the arguments. `coords` wants x first then y, so longitude comes before latitude. `crs = 4326` is WGS84, the system the raw coordinates are in. The piped `st_transform()` then moves it to 3414 to match everything else.
+Three things about the arguments. `coords` wants x first then y, so longitude comes before latitude. `crs = 4326` is WGS84, the system the raw coordinates are in. The piped `st_transform()` then moves it to 3414 to match everything else.
 
 ```{r}
 glimpse(listings_sf)
@@ -227,16 +302,22 @@ A `geometry` column has appeared and the separate longitude and latitude columns
 
 ```{r}
 #| echo: false
-plot(st_geometry(mpsz3414))
-plot(st_geometry(listings_sf), add = TRUE, col = "red", pch = 20, cex = 0.3)
+plot(st_geometry(mpsz3414),
+     col = "#F7F4EC", border = "grey72", lwd = 0.4,
+     main = "Airbnb listings cluster in the centre and south")
+plot(st_geometry(listings_sf), add = TRUE,
+     pch = 20, cex = 0.3, col = "#D55E0099")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-plot(st_geometry(mpsz3414))
-plot(st_geometry(listings_sf), add = TRUE, col = "red", pch = 20, cex = 0.3)
+plot(st_geometry(mpsz3414),
+     col = "#F7F4EC", border = "grey72", lwd = 0.4,
+     main = "Airbnb listings cluster in the centre and south")
+plot(st_geometry(listings_sf), add = TRUE,
+     pch = 20, cex = 0.3, col = "#D55E0099")
 ```
 :::
 
@@ -290,16 +371,22 @@ buffer_cycling_selected <- st_intersection(buffer_cycling, mpsz_selected)
 
 ```{r}
 #| echo: false
-plot(st_geometry(mpsz_selected))
-plot(st_geometry(buffer_cycling_selected), add = TRUE, col = "red")
+plot(st_geometry(mpsz_selected),
+     col = "#F7F4EC", border = "grey55", lwd = 0.8,
+     main = "Five metre reserve along cycling paths, Tampines West")
+plot(st_geometry(buffer_cycling_selected), add = TRUE,
+     col = "#D55E00", border = NA)
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-plot(st_geometry(mpsz_selected))
-plot(st_geometry(buffer_cycling_selected), add = TRUE, col = "red")
+plot(st_geometry(mpsz_selected),
+     col = "#F7F4EC", border = "grey55", lwd = 0.8,
+     main = "Five metre reserve along cycling paths, Tampines West")
+plot(st_geometry(buffer_cycling_selected), add = TRUE,
+     col = "#D55E00", border = NA)
 ```
 :::
 
@@ -313,7 +400,12 @@ The scenario is that the authority needs a pre-school count for every planning s
 mpsz3414$`PreSch Count` <- lengths(st_intersects(mpsz3414, preschool3414))
 ```
 
-Note that this is `st_intersects()`, not `st_intersection()`. The two names are close but they do very different things.
+This is `st_intersects()`, not `st_intersection()`.
+
+::: {.callout-note}
+## Learning diary
+These two are one letter apart and do different jobs, so this is worth saying out loud before typing either. `st_intersects()` answers which things overlap and gives you a list. `st_intersection()` cuts the shapes and gives you the overlapping pieces back. Only the first one is any use for counting.
+:::
 
 ```{r}
 summary(mpsz3414$`PreSch Count`)
@@ -339,9 +431,39 @@ mpsz3414 <- mpsz3414 %>%
 
 The base R histogram is quick but hard to customise.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
-hist(mpsz3414$`PreSch Density`)
+#| echo: false
+dens <- as.numeric(mpsz3414$`PreSch Density`)
+
+hist(dens,
+     breaks = 20, col = "#CFE3F0", border = "white",
+     main = "Pre-school density is heavily skewed",
+     xlab = "Pre-schools per square kilometre",
+     ylab = "Number of subzones")
+abline(v = median(dens, na.rm = TRUE), col = "#D55E00", lwd = 2, lty = 2)
+legend("topright", bty = "n", col = "#D55E00", lwd = 2, lty = 2,
+       legend = sprintf("median %.1f", median(dens, na.rm = TRUE)))
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+dens <- as.numeric(mpsz3414$`PreSch Density`)
+
+hist(dens,
+     breaks = 20, col = "#CFE3F0", border = "white",
+     main = "Pre-school density is heavily skewed",
+     xlab = "Pre-schools per square kilometre",
+     ylab = "Number of subzones")
+abline(v = median(dens, na.rm = TRUE), col = "#D55E00", lwd = 2, lty = 2)
+legend("topright", bty = "n", col = "#D55E00", lwd = 2, lty = 2,
+       legend = sprintf("median %.1f", median(dens, na.rm = TRUE)))
+```
+:::
 
 ggplot2 gives a far more presentable version, with room for a proper title and axis labels.
 
@@ -413,7 +535,11 @@ ggplot(data = mpsz3414,
 
 Count and density do rise together, but the spread is wide. Two subzones with the same density can be twenty pre-schools apart. The points on the far right, around 35 per square kilometre, only have a few pre-schools each because those subzones are small.
 
-One thing to watch. `xlim` and `ylim` cut the axes at 40, so any point past that just disappears instead of showing up as an outlier.
+::: {.column-margin}
+**Watch the axis limits.** `xlim` and `ylim` stop at 40 here. Anything past that is dropped from the plot without a warning, so an outlier just vanishes instead of showing up.
+:::
+
+One thing to watch. `xlim` and `ylim` cut the axes at 40, so any point past that is dropped from the plot instead of showing up as an outlier. The chart looks tidier than the data actually is.
 
 # Thematic Mapping and Geovisualisation with tmap
 
@@ -436,7 +562,7 @@ names(mpsz19)
 
 The reference book at this point runs a chunk of `rvest` code to parse attributes out of an HTML table buried in a `Description` field. That was necessary for the KML version of this layer, which data.gov.sg has since unpublished. The geojson that replaced it carries `SUBZONE_N`, `PLN_AREA_N` and `REGION_N` as proper columns, so there is nothing to parse and the join below can use them directly.
 
-Worth noting the geojson is also in WGS84, which is why the `st_transform()` is piped onto the import above.
+The geojson is also in WGS84, which is why `st_transform()` is piped onto the import above.
 
 ```{r}
 mpsz19
@@ -452,7 +578,7 @@ popdata <- read_csv("data/aspatial/respopagesextod2024.csv")
 
 ## Data Preparation
 
-The target is one row per subzone with six derived fields. `YOUNG` covers ages 0 to 24, `ECONOMY ACTIVE` covers 25 to 64, `AGED` covers 65 and over, and `DEPENDENCY` is the ratio of the first and third against the second.
+The target is one row per subzone with six fields. `YOUNG` is ages 0 to 24, `ECONOMY ACTIVE` is 25 to 64, and `AGED` is 65 and over. `DEPENDENCY` divides the young plus the aged by the economically active.
 
 First the aggregate and pivot.
 
@@ -469,9 +595,18 @@ Now a step the reference book does not take, and which turns out to matter a gre
 names(popdata2024)
 ```
 
-The book computes the three age bands using hardcoded column positions, `rowSums(.[3:6]) + rowSums(.[12])` for `YOUNG` and so on. That only works if the age groups land in a particular order. They do not. `pivot_wider()` names the new columns after the values it found, and those get sorted as text, so `5_to_9` sorts after `55_to_59` and ends up at position 14 rather than 12.
+The book builds the three age bands by column number, like `rowSums(.[3:6]) + rowSums(.[12])` for `YOUNG`. That only works if the age groups come out in a particular order. Look at the list above. They do not.
 
-Run the book's indices against this and `YOUNG` picks up the 50 to 54 band instead of 5 to 9, while `ECONOMY ACTIVE` quietly absorbs primary school children. Nothing errors. The dependency ratio just comes out wrong, and every map built on it after that is wrong in a way no amount of staring at the map would reveal.
+`pivot_wider()` names the new columns after the values it found, then those names get sorted as text. As text, `5_to_9` comes after `55_to_59`, so it sits at position 14 instead of 12.
+
+Run the book's numbers against my columns and `YOUNG` grabs the 50 to 54 band instead of 5 to 9. `ECONOMY ACTIVE` ends up counting primary school children.
+
+::: {.callout-warning}
+## Issue I hit
+Like the projection one, this does not error. It just gives you a wrong dependency ratio, and every map after it looks completely normal.
+
+I nearly skipped `names(popdata2024)`. It was one line and it caught the whole thing.
+:::
 
 Selecting by name instead removes the dependency on ordering entirely.
 
@@ -503,7 +638,7 @@ popdata2024 <- popdata2024 %>%
   select(`PA`, `SZ`, `YOUNG`, `ECONOMY ACTIVE`, `AGED`, `TOTAL`, `DEPENDENCY`)
 ```
 
-A sanity check on the result. The three bands should sum to the total, and the dependency ratio for Singapore as a whole should land somewhere near 0.7.
+Now a check. The three bands should add up to the total, and the ratio for Singapore overall should be somewhere near 0.7.
 
 ```{r}
 popdata2024 %>%
@@ -516,6 +651,13 @@ popdata2024 %>%
     overall_dependency = (sum(YOUNG) + sum(AGED)) / sum(`ECONOMY ACTIVE`)
   )
 ```
+
+::: {.callout-important}
+## Check that caught it
+The bands add to 4,189,460 and Singapore's published resident population is about 4.19 million, so that matches. The overall ratio is 0.732, which is in the right range.
+
+Both had to be right before I trusted any map on this page. If I had used the book's column numbers, this check is where it would have shown up.
+:::
 
 ### Joining the attribute and geospatial data
 
@@ -542,30 +684,78 @@ write_rds(mpsz_pop2024, "data/rds/mpsz_pop2024.rds")
 
 ### The quick way, qtm()
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tmap_mode("plot")
-qtm(shp = mpsz_pop2024, fill = "DEPENDENCY")
+qtm(shp = mpsz_pop2024, fill = "DEPENDENCY",
+    title = "The default bins, left exactly as qtm gives them")
 ```
 
-`qtm()` is short to write, but look at what the default binning did. The legend goes 0 to 10 in steps of two. Almost every subzone is below 1, so the whole island ends up in the lightest class with one dark polygon near Changi. Nothing is wrong with the map, it just does not show anything.
+## The Code
 
-The cause is the single subzone with a ratio of 10. That is why the custom breaks section below matters, and why the rest of this section uses the longer syntax instead, since `qtm()` gives you no way to change the bins.
+```{r}
+#| eval: false
+tmap_mode("plot")
+qtm(shp = mpsz_pop2024, fill = "DEPENDENCY",
+    title = "The default bins, left exactly as qtm gives them")
+```
+:::
+
+`qtm()` is quick to write, but look at what the default bins did. The legend runs 0 to 10 in steps of two. Almost every subzone is under 1, so the whole island lands in the palest class and one dark polygon sits near Changi.
+
+The map is not wrong. It just does not show anything.
+
+::: {.callout-note}
+## Learning diary
+One subzone with a ratio of 10 is enough to wreck the default bins for all 332 of them. That is why the custom breaks section below matters.
+
+It is also why I stopped using `qtm()` after this point. It is fine for a first look but it gives you no way to change the bins.
+:::
 
 ### Drawing a base map
 
 `tm_shape()` sets the data, then layer functions draw on top of it.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons()
 ```
 
-### Drawing a choropleth with tm_polygons()
+## The Code
 
 ```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons()
+```
+:::
+
+### Drawing a choropleth with tm_polygons()
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "DEPENDENCY")
+```
+:::
 
 The default binning is "pretty" and the default palette is blues3. Missing values come out grey.
 
@@ -573,26 +763,67 @@ The default binning is "pretty" and the default palette is blues3. Missing value
 
 `tm_polygons()` is really a wrapper around these two.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_fill("DEPENDENCY")
 ```
 
-Adding the borders back in.
+## The Code
 
 ```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_fill("DEPENDENCY")
+```
+:::
+
+Adding the borders back in.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_fill("DEPENDENCY") +
   tm_borders()
 ```
 
-`tm_borders()` takes `col`, `lwd` and `lty` for colour, line width and line type.
+## The Code
 
 ```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_fill("DEPENDENCY") +
+  tm_borders()
+```
+:::
+
+`tm_borders()` takes `col`, `lwd` and `lty` for colour, line width and line type.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_fill("DEPENDENCY") +
   tm_borders(col = "grey60", lwd = 0.1, lty = "dashed")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_fill("DEPENDENCY") +
+  tm_borders(col = "grey60", lwd = 0.1, lty = "dashed")
+```
+:::
 
 ## Data Classification Methods
 
@@ -607,8 +838,10 @@ tmap offers ten classification styles. The choice matters more than it looks, be
 #| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(style = "quantile", n = 5)) +
-  tm_borders(fill_alpha = 0.5)
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Quantile puts an equal number of subzones in each class")
 ```
 
 ## The Code
@@ -617,8 +850,10 @@ tm_shape(mpsz_pop2024) +
 #| eval: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(style = "quantile", n = 5)) +
-  tm_borders(fill_alpha = 0.5)
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Quantile puts an equal number of subzones in each class")
 ```
 :::
 
@@ -631,8 +866,10 @@ tm_shape(mpsz_pop2024) +
 #| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(style = "equal", n = 5)) +
-  tm_borders(fill_alpha = 0.5)
+              fill.scale = tm_scale_intervals(style = "equal", n = 5),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Equal interval hands almost every subzone to one class")
 ```
 
 ## The Code
@@ -641,8 +878,10 @@ tm_shape(mpsz_pop2024) +
 #| eval: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(style = "equal", n = 5)) +
-  tm_borders(fill_alpha = 0.5)
+              fill.scale = tm_scale_intervals(style = "equal", n = 5),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Equal interval hands almost every subzone to one class")
 ```
 :::
 
@@ -652,7 +891,7 @@ Quantile puts the same number of subzones in each class, so the breaks come out 
 
 Equal interval cuts 0 to 10 into five equal parts. Nearly everything falls in the first one, so the island goes pale with a single dark polygon. If you only saw that map you would think dependency hardly varies in Singapore, which is not true.
 
-Neither map is wrong. One subzone at 10 is enough to make the default useless.
+Neither map is lying. They are the same numbers. But one subzone at 10 is enough to make the equal interval version useless, and I would not have known that without putting them side by side.
 
 ### Custom breaks
 
@@ -664,35 +903,91 @@ summary(mpsz_pop2024$DEPENDENCY)
 
 Most values sit between 0.6 and 1.0, so breaks at 0.60, 0.70, 0.80 and 0.90 will separate the bulk of the data. Remember tmap needs n+1 values including a minimum and maximum.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
               fill.scale = tm_scale_intervals(
-                breaks = c(0, 0.60, 0.70, 0.80, 0.90, 1.00))) +
-  tm_borders(fill_alpha = 0.5)
+                breaks = c(0, 0.60, 0.70, 0.80, 0.90, 1.00)),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Breaks chosen from the summary rather than by the default")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.60, 0.70, 0.80, 0.90, 1.00)),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Breaks chosen from the summary rather than by the default")
+```
+:::
 
 ## Colour Scheme
 
 ### ColorBrewer palettes
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
               fill.scale = tm_scale_intervals(style = "quantile", n = 5,
-                                              values = "brewer.greens")) +
-  tm_borders(fill_alpha = 0.5)
+                                              values = "brewer.greens"),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Same breaks, a different ramp")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "brewer.greens"),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Same breaks, a different ramp")
+```
+:::
 
 A minus prefix reverses the ramp.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
               fill.scale = tm_scale_intervals(style = "quantile", n = 5,
                                               values = "-brewer.greens")) +
   tm_borders(fill_alpha = 0.5)
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "-brewer.greens")) +
+  tm_borders(fill_alpha = 0.5)
+```
+:::
 
 ### Cartographic furniture
 
@@ -734,7 +1029,11 @@ tm_shape(mpsz_pop2024) +
 
 ### Legend
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
               fill.scale = tm_scale_intervals(style = "quantile", n = 5),
@@ -747,9 +1046,30 @@ tm_shape(mpsz_pop2024) +
              position = c("left", "bottom"))
 ```
 
-### Map style
+## The Code
 
 ```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5),
+              fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_compass(type = "8star", size = 2) +
+  tm_scalebar() +
+  tm_grid(lwd = 0.1, alpha = 0.2) +
+  tm_credits("Source: data.gov.sg & singstat",
+             position = c("left", "bottom"))
+```
+:::
+
+### Map style
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "DEPENDENCY",
               fill.scale = tm_scale_intervals(style = "quantile", n = 5,
@@ -757,6 +1077,19 @@ tm_shape(mpsz_pop2024) +
   tm_borders(fill_alpha = 0.5) +
   tmap_style("natural")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "-brewer.greens")) +
+  tm_borders(fill_alpha = 0.5) +
+  tmap_style("natural")
+```
+:::
 
 Resetting to the default so it does not carry over into later chunks.
 
@@ -798,14 +1131,18 @@ tm_shape(mpsz_pop2024) +
 
 ### By arranging separate maps in a grid
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 youngmap <- tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "YOUNG",
               fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
               fill.scale = tm_scale_intervals(style = "quantile",
                                               values = "brewer.blues")) +
   tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of young population")
+  tm_title("Where the young live, as a raw count")
 
 agedmap <- tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "AGED",
@@ -813,32 +1150,145 @@ agedmap <- tm_shape(mpsz_pop2024) +
               fill.scale = tm_scale_intervals(style = "quantile",
                                               values = "brewer.blues")) +
   tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of aged population")
+  tm_title("Where the aged live, as a raw count")
 
 tmap_arrange(youngmap, agedmap, asp = 1, ncol = 2)
 ```
 
+## The Code
+
+```{r}
+#| eval: false
+youngmap <- tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "YOUNG",
+              fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Where the young live, as a raw count")
+
+agedmap <- tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "AGED",
+              fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Where the aged live, as a raw count")
+
+tmap_arrange(youngmap, agedmap, asp = 1, ncol = 2)
+```
+:::
+
 The two maps look almost the same. I expected the aged map to light up the older estates and the young map to light up the newer towns, but the same subzones are dark on both.
 
-That is because both are raw counts. A subzone with more people has more of everyone. So the maps are mostly showing where people live, not where the population is young or old. To answer that you need a rate, which is what `DEPENDENCY` does.
+That is because both are raw counts. A subzone with more people in it has more of everyone. So these maps are mostly showing where people live, not where the population is young or old.
+
+::: {.callout-tip}
+## Alternative explored
+The book stops at the count maps. Since they were not answering my question, I redrew both as shares of each subzone's own population instead.
+:::
+
+Dividing each band by the subzone total takes population size out of it.
+
+```{r}
+mpsz_pop2024 <- mpsz_pop2024 %>%
+  mutate(`YOUNG PCT` = YOUNG / TOTAL * 100,
+         `AGED PCT` = AGED / TOTAL * 100)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+youngpct <- tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "YOUNG PCT",
+              fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Young as a share of the subzone")
+
+agedpct <- tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "AGED PCT",
+              fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Aged as a share of the subzone")
+
+tmap_arrange(youngpct, agedpct, asp = 1, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+youngpct <- tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "YOUNG PCT",
+              fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Young as a share of the subzone")
+
+agedpct <- tm_shape(mpsz_pop2024) +
+  tm_polygons(fill = "AGED PCT",
+              fill.legend = tm_legend(position = tm_pos_in("right", "bottom")),
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Aged as a share of the subzone")
+
+tmap_arrange(youngpct, agedpct, asp = 1, ncol = 2)
+```
+:::
+
+Now the two maps look different, which is what I expected the first pair to show. Read them against the count maps above to see how much of that first pattern was just population size.
 
 ### By a group-by variable in tm_facets()
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 tm_shape(mpsz_pop2024) +
   tm_fill(fill = "DEPENDENCY",
           fill.scale = tm_scale_intervals(style = "quantile",
-                                          values = "brewer.blues")) +
+                                          values = "brewer.blues"),
+          fill.legend = tm_legend(title = "Dependency ratio")) +
   tm_facets(by = "REGION_N", nrow = 2, ncols = 3,
             free.coords = TRUE, drop.units = TRUE) +
-  tm_borders(fill_alpha = 0.5)
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Dependency by region, each panel on its own extent")
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_pop2024) +
+  tm_fill(fill = "DEPENDENCY",
+          fill.scale = tm_scale_intervals(style = "quantile",
+                                          values = "brewer.blues"),
+          fill.legend = tm_legend(title = "Dependency ratio")) +
+  tm_facets(by = "REGION_N", nrow = 2, ncols = 3,
+            free.coords = TRUE, drop.units = TRUE) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Dependency by region, each panel on its own extent")
+```
+:::
 
 ## Mapping a Selection Criterion
 
 Rather than facetting, we can just filter down to the region of interest.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 mpsz_pop2024 %>%
   filter(REGION_N == "CENTRAL REGION") %>%
   tm_shape() +
@@ -849,11 +1299,30 @@ mpsz_pop2024 %>%
   tm_borders(fill_alpha = 0.5)
 ```
 
+## The Code
+
+```{r}
+#| eval: false
+mpsz_pop2024 %>%
+  filter(REGION_N == "CENTRAL REGION") %>%
+  tm_shape() +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.greens"),
+              fill.legend = tm_legend()) +
+  tm_borders(fill_alpha = 0.5)
+```
+:::
+
 ## Complementing the Map with a Statistical Chart
 
 A map shows where, a chart shows how much. `fill.chart` puts both in one figure.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 mpsz_pop2024 %>%
   filter(REGION_N == "CENTRAL REGION") %>%
   tm_shape() +
@@ -865,6 +1334,23 @@ mpsz_pop2024 %>%
   tm_borders() +
   tm_layout(asp = 0.8)
 ```
+
+## The Code
+
+```{r}
+#| eval: false
+mpsz_pop2024 %>%
+  filter(REGION_N == "CENTRAL REGION") %>%
+  tm_shape() +
+  tm_polygons(fill = "DEPENDENCY",
+              fill.scale = tm_scale_intervals(style = "quantile",
+                                              values = "brewer.greens"),
+              fill.legend = tm_legend(),
+              fill.chart = tm_chart_box()) +
+  tm_borders() +
+  tm_layout(asp = 0.8)
+```
+:::
 
 The boxplot shows something the map does not. All the outliers are below the box, near zero, not above it. Those are subzones with working age residents and hardly any children or elderly.
 
@@ -924,7 +1410,11 @@ tm_shape(mpsz_selected_central) +
 
 Switching `tmap_mode()` to view turns the same code into a zoomable, clickable map.
 
+::: panel-tabset
+## The Plot
+
 ```{r}
+#| echo: false
 region_selected <- mpsz_pop2024 %>%
   filter(REGION_N == "CENTRAL REGION")
 region_bbox <- st_bbox(region_selected)
@@ -945,20 +1435,295 @@ tm_shape(region_selected, bbox = region_bbox) +
   tm_view(set_zoom_limits = c(12, 14))
 ```
 
+## The Code
+
+```{r}
+#| eval: false
+region_selected <- mpsz_pop2024 %>%
+  filter(REGION_N == "CENTRAL REGION")
+region_bbox <- st_bbox(region_selected)
+
+stats <- boxplot.stats(region_selected$DEPENDENCY)
+outlier_vals <- stats$out
+outlier_sf <- region_selected[region_selected$DEPENDENCY %in% outlier_vals, ]
+
+tmap_mode("view")
+tm_shape(region_selected, bbox = region_bbox) +
+  tm_fill("DEPENDENCY",
+          id = "SUBZONE_N",
+          popup.vars = c("Name" = "SUBZONE_N",
+                         "Dependency" = "DEPENDENCY")) +
+  tm_borders() +
+  tm_shape(outlier_sf) +
+  tm_borders(col = "red", lwd = 2) +
+  tm_view(set_zoom_limits = c(12, 14))
+```
+:::
+
 `set_zoom_limits` is doing real work here. Total freedom to zoom sounds generous but in practice users end up lost somewhere over the ocean, so bounding the range keeps them inside the study area.
 
 ```{r}
 tmap_mode("plot")
 ```
 
+# Beyond the Exercise
+
+The two chapters finish at the choropleth. Three things bothered me once I got there, so I went looking.
+
+First, whether any of this is actually spatial. Second, whether the pattern I mapped survives a change in the size of the units. Third, whether the map itself is misleading me about who lives where.
+
+## Is this actually spatial analysis?
+
+Anselin's lecture gives a test for this. If you move things around and nothing changes, it was not spatial analysis. If it does change, it was.
+
+Easy enough to run on my own data. `sample()` only reshuffles which subzone holds which number, so every value is preserved.
+
+```{r}
+set.seed(1234)
+mpsz_shuffled <- mpsz_pop2024
+mpsz_shuffled$DEPENDENCY <- sample(mpsz_pop2024$DEPENDENCY)
+```
+
+If the values are the same, any summary that ignores location should be identical.
+
+```{r}
+tibble(
+  version  = c("Real Singapore", "Same numbers, shuffled"),
+  subzones = c(sum(!is.na(mpsz_pop2024$DEPENDENCY)),
+               sum(!is.na(mpsz_shuffled$DEPENDENCY))),
+  mean     = c(mean(mpsz_pop2024$DEPENDENCY, na.rm = TRUE),
+               mean(mpsz_shuffled$DEPENDENCY, na.rm = TRUE)),
+  sd       = c(sd(mpsz_pop2024$DEPENDENCY, na.rm = TRUE),
+               sd(mpsz_shuffled$DEPENDENCY, na.rm = TRUE)),
+  median   = c(median(mpsz_pop2024$DEPENDENCY, na.rm = TRUE),
+               median(mpsz_shuffled$DEPENDENCY, na.rm = TRUE))
+) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4)))
+```
+
+Same for the histogram.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+bind_rows(
+  tibble(version = "Real Singapore",         value = mpsz_pop2024$DEPENDENCY),
+  tibble(version = "Same numbers, shuffled", value = mpsz_shuffled$DEPENDENCY)
+) %>%
+  filter(!is.na(value), value < 2) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 30, fill = "#0072B2", colour = "white", linewidth = 0.2) +
+  facet_wrap(~version) +
+  labs(title = "The same histogram twice",
+       subtitle = "Values under 2 only, so the single subzone at 10 does not flatten the axis",
+       x = "Dependency ratio", y = "Subzones") +
+  theme_minimal()
+```
+
+## The Code
+
+```{r}
+#| eval: false
+bind_rows(
+  tibble(version = "Real Singapore",         value = mpsz_pop2024$DEPENDENCY),
+  tibble(version = "Same numbers, shuffled", value = mpsz_shuffled$DEPENDENCY)
+) %>%
+  filter(!is.na(value), value < 2) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 30, fill = "#0072B2", colour = "white", linewidth = 0.2) +
+  facet_wrap(~version) +
+  labs(title = "The same histogram twice",
+       subtitle = "Values under 2 only, so the single subzone at 10 does not flatten the axis",
+       x = "Dependency ratio", y = "Subzones") +
+  theme_minimal()
+```
+:::
+
+Now the maps.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+shuffle_map <- function(dat, ttl) {
+  tm_shape(dat) +
+    tm_polygons(fill = "DEPENDENCY",
+                fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                                values = "brewer.blues"),
+                fill.legend = tm_legend(show = FALSE)) +
+    tm_borders(fill_alpha = 0.4) +
+    tm_title(ttl, size = 0.9)
+}
+
+tmap_arrange(shuffle_map(mpsz_pop2024,  "Real Singapore"),
+             shuffle_map(mpsz_shuffled, "Same numbers, shuffled"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+shuffle_map <- function(dat, ttl) {
+  tm_shape(dat) +
+    tm_polygons(fill = "DEPENDENCY",
+                fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                                values = "brewer.blues"),
+                fill.legend = tm_legend(show = FALSE)) +
+    tm_borders(fill_alpha = 0.4) +
+    tm_title(ttl, size = 0.9)
+}
+
+tmap_arrange(shuffle_map(mpsz_pop2024,  "Real Singapore"),
+             shuffle_map(mpsz_shuffled, "Same numbers, shuffled"),
+             ncol = 2)
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+Every number is the same. The mean, the spread, the median, the histogram. And the two maps look nothing alike.
+
+So whatever the difference is between those two pictures, none of the statistics I know how to compute can see it. That gap is what the rest of this course is for. Lesson 4 defines what neighbouring means and Lesson 5 turns this difference into a single number I can test.
+
+It also answers something I had wondered at the start, which was why not just do this in pandas. A non-spatial toolkit would tell me these two datasets are identical, because on everything it can measure, they are.
+:::
+
+## Does the pattern survive a change of unit?
+
+This is the Modifiable Areal Unit Problem. Results shift when you change the size or the shape of the units you are measuring on.
+
+Singapore's subzones sit inside planning areas, so I can test the size half of it directly.
+
+```{r}
+mpsz_pa <- mpsz_pop2024 %>%
+  st_drop_geometry() %>%
+  filter(!is.na(TOTAL)) %>%
+  group_by(PLN_AREA_N) %>%
+  summarise(YOUNG  = sum(YOUNG),
+            ACTIVE = sum(`ECONOMY ACTIVE`),
+            AGED   = sum(AGED),
+            n_subzones = n(),
+            .groups = "drop") %>%
+  mutate(DEPENDENCY_PA = (YOUNG + AGED) / ACTIVE) %>%
+  filter(is.finite(DEPENDENCY_PA))
+```
+
+```{r}
+tibble(
+  unit   = c("Subzone", "Planning area"),
+  n      = c(sum(!is.na(mpsz_pop2024$DEPENDENCY)), nrow(mpsz_pa)),
+  min    = c(min(mpsz_pop2024$DEPENDENCY, na.rm = TRUE),    min(mpsz_pa$DEPENDENCY_PA)),
+  median = c(median(mpsz_pop2024$DEPENDENCY, na.rm = TRUE), median(mpsz_pa$DEPENDENCY_PA)),
+  max    = c(max(mpsz_pop2024$DEPENDENCY, na.rm = TRUE),    max(mpsz_pa$DEPENDENCY_PA))
+) %>%
+  mutate(across(where(is.numeric), ~round(.x, 3)))
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+bind_rows(
+  tibble(unit = "Subzone",
+         value = mpsz_pop2024$DEPENDENCY[!is.na(mpsz_pop2024$DEPENDENCY)]),
+  tibble(unit = "Planning area", value = mpsz_pa$DEPENDENCY_PA)
+) %>%
+  ggplot(aes(x = value, fill = unit)) +
+  geom_density(alpha = 0.45) +
+  coord_cartesian(xlim = c(0, 1.5)) +
+  labs(title = "Aggregating flattens the spread",
+       subtitle = "Zoomed to 0 to 1.5. The density still uses every value, including the outlier",
+       x = "Dependency ratio", y = "Density", fill = NULL) +
+  theme_minimal()
+```
+
+## The Code
+
+```{r}
+#| eval: false
+bind_rows(
+  tibble(unit = "Subzone",
+         value = mpsz_pop2024$DEPENDENCY[!is.na(mpsz_pop2024$DEPENDENCY)]),
+  tibble(unit = "Planning area", value = mpsz_pa$DEPENDENCY_PA)
+) %>%
+  ggplot(aes(x = value, fill = unit)) +
+  geom_density(alpha = 0.45) +
+  coord_cartesian(xlim = c(0, 1.5)) +
+  labs(title = "Aggregating flattens the spread",
+       subtitle = "Zoomed to 0 to 1.5. The density still uses every value, including the outlier",
+       x = "Dependency ratio", y = "Density", fill = NULL) +
+  theme_minimal()
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+The planning area curve is taller and narrower. Same people, same formula, and the extremes have gone.
+
+A map drawn at planning area level would make Singapore look far more even than it is. Neither unit is the right one. All I can do is say which one I used and admit the answer depends on it.
+
+I could only test the size half of MAUP. The other half is that results also change when you redraw the boundaries at the same size, and I have no alternative zoning to try that with.
+:::
+
+## Who does the map actually show?
+
+A choropleth colours areas, and the eye reads area as amount. So a big empty subzone shouts while a small crowded one whispers.
+
+That is measurable.
+
+```{r}
+mpsz_pop2024 %>%
+  filter(!is.na(TOTAL)) %>%
+  mutate(area_km2 = as.numeric(st_area(.)) / 1e6) %>%
+  st_drop_geometry() %>%
+  summarise(
+    `Map area held by the least populated half of subzones (%)` =
+      round(sum(area_km2[TOTAL <= median(TOTAL)]) / sum(area_km2) * 100, 1),
+    `Population those same subzones hold (%)` =
+      round(sum(TOTAL[TOTAL <= median(TOTAL)]) / sum(TOTAL) * 100, 1)
+  ) %>%
+  pivot_longer(everything(), names_to = "measure", values_to = "value")
+```
+
+::: {.callout-note}
+## Learning diary
+Put those two numbers next to each other and the map stops looking neutral. Anyone reading it is weighting land, not people.
+
+This is the same problem as the young and aged count maps further up, arriving from a different direction. There I was mapping counts when I wanted rates. Here I am mapping rates but the canvas itself is weighted by area.
+:::
+
+## Limitations
+
+Worth stating what this does not cover.
+
+- Part 1 uses the 2014 Master Plan boundaries and Part 2 uses 2019, because that is what the chapters specify. Subzone definitions changed between them, so the pre-school counts and the dependency ratios are not measured on quite the same geography.
+- 94 subzones have no population data and are grey on every map. They are dropped rather than shown as zero.
+- The dependency ratio treats 25 to 64 as working age. That is a convention, not a fact, and it is drifting.
+- Point in polygon counting ignores catchments. A pre-school just over a subzone boundary serves those children anyway.
+- Only the scale half of MAUP is tested, as noted above.
+
+::: {.callout-warning}
+## Issue I hit
+`na.rm = TRUE` does not remove `Inf`. I assumed it did.
+
+If a subzone has residents but nobody of working age, the dependency ratio divides by zero and gives `Inf`, and then `mean(x, na.rm = TRUE)` returns `Inf` for the whole column. `is.finite()` is the filter that actually catches it.
+
+My data avoids this because I filtered on `ECONOMY ACTIVE > 0` before the join, but that was luck rather than intent.
+:::
+
 # Reflections
 
-Four things I am taking away from this.
+Four things I am taking away from this one.
 
-First, copying a workflow step by step is not the same as understanding it. data.gov.sg has dropped the shapefile and KML versions of the Master Plan layer, and the geojson that replaced it comes in WGS84, not SVY21. The book uses `st_set_crs()` there to fix a wrong EPSG label. If I had copied that line, it would have put an SVY21 label on degree values and nothing would have errored. Every buffer, area and count after it would have been wrong. What caught it was looking at the bounding box and seeing the numbers were degrees.
+**Most of what went wrong was small.** The cycling path zip unpacked into a subfolder and my path was one level off. The 2019 file had GEOJSON stuck in the middle of its name. And `st_intersects` and `st_intersection` are one letter apart with completely different jobs, which is a trap waiting to happen. None of these were hard, they just cost time, and all of them came from not looking at what was actually on disk before writing the code.
 
-Second, the same problem showed up again in the population wrangling. The book picks age bands by column position, which stops working the moment `pivot_wider()` sorts `5_to_9` after `55_to_59`. Run as written it would have counted primary school children as economically active and put 50 year olds in the young band, and it would have rendered fine. Checking that the bands added up to the published resident population, and that the overall ratio was around 0.73, took a minute and was the only thing that would have caught it.
+**Two things went wrong quietly, and those were the dangerous ones.** The projection and the age band ordering. Neither threw an error. The code ran, the maps drew, and the numbers would have been wrong. What caught both was checking output I could have skipped, the bounding box in one case and `names()` in the other.
 
-Third, I got one of my own readings wrong. I assumed the young and aged maps would show different parts of the island and they do not, because both are counts and counts mostly follow population size. I only noticed after looking at the two maps side by side. A map can look useful while answering a different question from the one you had in mind.
+**I got one of my own readings wrong.** I looked at the young and aged maps and expected them to show different parts of the island. They look almost identical. Both are counts, and counts mostly follow how many people live somewhere. I had to redraw them as rates to answer the question I thought I was already asking.
 
-Fourth, the classification method does a lot of the work. Quantile and equal interval on the same column give maps that say opposite things about whether dependency varies across Singapore. One subzone at 10 is enough to flatten the equal interval map. Picking a classification is part of the analysis, not formatting, and the default is not a safe choice.
+**The classification method decides a lot.** Quantile and equal interval on the same column gave me two maps that say opposite things about whether dependency varies across Singapore. One subzone at 10 flattens the equal interval version completely. Picking a classification is part of the analysis, not a formatting choice at the end.

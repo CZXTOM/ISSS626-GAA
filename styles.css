@@ -1,169 +1,546 @@
 /* ===========================================================
-   ISSS608-VAA custom styles
-   Teal/green accent, works with flatly (light) + darkly (dark)
+   ISSS626-GAA
+   Palette is Okabe-Ito, the colourblind-safe set recommended
+   by Nature for scientific figures. No green, so nothing
+   depends on a red-green distinction. Every callout carries
+   colour, an icon and a word, so colour is never the only
+   signal.
    =========================================================== */
 
-/* ----- Accent colour variables ----- */
 :root {
-  --accent: #1b9e8a;
-  --accent-dark: #157a6b;
-  --accent-soft: rgba(27, 158, 138, 0.12);
+  --ok-blue:   #0072B2;
+  --ok-orange: #E69F00;
+  --ok-purple: #CC79A7;
+  --ok-verm:   #D55E00;
+
+  /* darkened variants, the raw Okabe-Ito hues fail 4.5:1 as text */
+  --blue-ink:   #005A8C;
+  --orange-ink: #7D5600;
+  --purple-ink: #873A66;
+  --verm-ink:   #8E3B00;
+
+  --ink:   #16191D;
+  --ink2:  #3E454E;
+  --ink3:  #5D6672;
+  --ink4:  #616A76;
+  --paper: #FDFAF3;
+  --shade: #F4EFE3;
+  --line:  #E2DACA;
+  --hair:  #EFE9DB;
+
+  --sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: Newsreader, Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
-/* ----- Content width: give charts room to breathe ----- */
-main.content {
-  max-width: 950px;
-}
-
-/* ----- Body text: a touch more line spacing for readability ----- */
+/* ----- base ------------------------------------------------ */
 body {
-  line-height: 1.65;
-  font-size: 1.02rem;
+  font-family: var(--sans);
+  color: var(--ink2);
+  font-size: 16.5px;
+  line-height: 1.68;
+  background: var(--paper);
 }
+p { margin-bottom: 1rem; }
+p strong { color: var(--ink); font-weight: 600; }
+a { color: var(--ok-blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-/* ----- Headings: accent colour and clear spacing ----- */
-h1, h2, h3, h4 {
-  letter-spacing: -0.01em;
+/* ----- navbar ---------------------------------------------- */
+.navbar {
+  background: rgba(253,250,243,.95) !important;
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  padding-top: 0; padding-bottom: 0;
+  min-height: 58px;
 }
-
-h1.title {
+.navbar-brand, .navbar-title {
+  font-family: var(--sans);
   font-weight: 700;
+  font-size: 15px;
+  color: var(--ink) !important;
+  letter-spacing: -.01em;
+}
+.navbar .nav-link {
+  font-size: 13.5px !important;
+  font-weight: 500;
+  color: var(--ink3) !important;
+  padding: 6px 11px !important;
+  border-radius: 6px;
+}
+.navbar .nav-link:hover { color: var(--ok-blue) !important; background: var(--hair); }
+.navbar .nav-link.active {
+  color: var(--blue-ink) !important;   /* deeper blue, the accent blue drops
+                                          under 4.5:1 once the page is warm */
+  background: rgba(0,114,178,.08);
 }
 
-h2 {
-  border-bottom: 2px solid var(--accent-soft);
-  padding-bottom: 0.3rem;
-  margin-top: 2.4rem;
-}
+/* ----- title block ----------------------------------------- */
+.quarto-title-block { position: relative; }
 
-/* ----- Links ----- */
-a {
-  color: var(--accent);
-  text-decoration: none;
+/* faint graticule behind the title, on theme without being a globe */
+#title-block-header::before {
+  content: "";
+  position: absolute;
+  left: -4rem; right: -4rem; top: -2rem; bottom: 55%;
+  pointer-events: none; z-index: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,114,178,.14) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(rgba(0,114,178,.14) 0 1px, transparent 1px 72px);
+  -webkit-mask-image: radial-gradient(115% 130% at 18% 15%, #000 0, rgba(0,0,0,.4) 42%, transparent 72%);
+          mask-image: radial-gradient(115% 130% at 18% 15%, #000 0, rgba(0,0,0,.4) 42%, transparent 72%);
 }
-a:hover {
-  color: var(--accent-dark);
-  text-decoration: underline;
-}
+#title-block-header > * { position: relative; z-index: 1; }
 
-/* ----- Navbar brand accent ----- */
-.navbar-brand {
-  font-weight: 700;
+.quarto-title h1.title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 46px;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  margin-bottom: .5rem;
 }
-
-/* ----- "Show code" fold button: make it look intentional ----- */
-.quarto-title-meta,
-details > summary,
-.code-fold summary,
-summary {
-  color: var(--accent);
+.quarto-title .subtitle {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--ink3);
+  margin-bottom: 0;
+}
+.quarto-title-meta {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.quarto-title-meta-heading {
+  font-size: 12px !important;
+  font-weight: 600;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink4) !important;
+  opacity: 1;
+}
+.quarto-title-meta-contents {
+  font-size: 14px !important;
+  color: var(--ink2) !important;
   font-weight: 500;
 }
+.quarto-title-meta-contents p { margin-bottom: 0; }
 
-/* ----- Code blocks: softer background, rounded corners ----- */
+/* optional metadata strip, markup is in the README */
+.pagefacts { display: flex; flex-wrap: wrap; gap: 8px; margin: 1.5rem 0 0; }
+.pagefacts .fact {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--ink2);
+  background: var(--shade); border: 1px solid var(--line);
+  border-radius: 99px; padding: 5px 12px;
+}
+.pagefacts .fact::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ok-blue); flex: none;
+}
+.pagefacts .fact.data::before { background: var(--ok-purple); }
+.pagefacts .fact.pkg::before  { background: var(--ok-orange); }
+
+/* ----- headings, numbers hang in the left gutter ------------ */
+main h1, main .h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 1.16;
+  letter-spacing: -.018em;
+  color: var(--ink);
+  margin-top: 4rem;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+  position: relative;
+}
+main h1 .header-section-number { color: var(--ok-blue); font-weight: 500; }
+/* An h2 straight after an h1 does not need its own rule above it.
+   Quarto wraps every section in <section>, so h1 and h2 are NOT
+   siblings. The h1 and the following section.level2 are. */
+section.level1 > h1 + section.level2 > h2 {
+  margin-top: 1.5rem;
+  border-top: 0;
+  padding-top: 0;
+}
+section.level1 > h1 + section.level2 > h2 .header-section-number {
+  top: 0; line-height: 1.22;
+}
+
+main h2, main .h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1.22;
+  letter-spacing: -.014em;
+  color: var(--ink);
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--ink);
+  border-bottom: 0;
+  position: relative;
+}
+main h3, main .h3 {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--ink);
+  margin-top: 2rem;
+  letter-spacing: -.005em;
+  position: relative;
+}
+main h4, main .h4 {
+  font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink);
+}
+main h2 .header-section-number,
+main h3 .header-section-number { color: var(--ink4); }
+
+@media (min-width: 1200px) {
+  main h2 .header-section-number,
+  main h3 .header-section-number {
+    position: absolute;
+    left: -104px;
+    width: 88px;
+    text-align: right;
+    font-family: var(--mono);
+    letter-spacing: .04em;
+  }
+  main h2 .header-section-number {
+    font-size: 13px; font-weight: 500; color: var(--ok-blue);
+    top: 1rem; line-height: 2.6;
+  }
+  main h3 .header-section-number { font-size: 12px; color: var(--ink4); font-weight: 400; }
+}
+
+/* ----- code ------------------------------------------------- */
 div.sourceCode {
-  border-radius: 8px;
-  border: 1px solid rgba(128, 128, 128, 0.18);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  margin: 1.5rem 0 0;
+  overflow: hidden;   /* clips the header bar to the rounded corners */
 }
-
 pre.sourceCode {
-  border-radius: 8px;
-  font-size: 0.86rem;
+  font-family: var(--mono);
+  font-size: 13.2px;
+  line-height: 1.68;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 0;
+  margin: 0;
 }
+/* Join the output panel to the code block above it rather than
+   leaving it floating with a missing top border. */
+.cell > div.sourceCode:has(+ .cell-output),
+.code-with-filename:has(+ .cell-output) > div.sourceCode {
+  border-radius: 9px 9px 0 0;
+  margin-bottom: 0;
+}
+.cell > div.sourceCode + .cell-output { margin-top: 0; }
 
-/* ----- Inline code ----- */
+.cell-output pre {
+  font-family: var(--mono);
+  font-size: 12.4px;
+  line-height: 1.62;
+  color: var(--ink3);
+  background: #FAFBFC;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 9px 9px;
+  padding: 12px 16px;
+  margin: 0 0 1.5rem;
+}
+.cell-output { margin-top: 0; }
 code:not(.sourceCode) {
-  color: var(--accent-dark);
-  background-color: var(--accent-soft);
-  padding: 0.1rem 0.35rem;
+  font-family: var(--mono);
+  font-size: .855em;
+  background: var(--shade);
+  border: 1px solid var(--hair);
+  padding: 1px 5px;
   border-radius: 4px;
+  color: var(--ink);
+}
+.pagefacts .fact code:not(.sourceCode) {
+  font-size: 12px; background: none; border: 0; padding: 0;
+  color: var(--ink); font-weight: 500;
 }
 
-/* ----- Figures and images: subtle framing, centered ----- */
-.figure img,
-p img {
-  border-radius: 8px;
+/* syntax, darkened so every token clears 4.5:1 on white */
+code span.co { color: var(--ink4); font-style: italic; }
+code span.fu { color: var(--ok-blue); }
+code span.st { color: var(--verm-ink); }
+code span.dv, code span.fl { color: #9C4576; }
+code span.op, code span.sc { color: var(--ink3); }
+
+/* ----- code header bar ------------------------------------------
+   v5 gives every code block a header strip with an R tag on the left
+   and an optional caption on the right. Quarto emits no such element,
+   so the strip is drawn with ::before. Add a caption to any chunk with
+       #| filename: "reproject to svy21"
+   which makes Quarto wrap it in .code-with-filename. */
+
+
+
+/* Plain case, R tag only. Matches div.sourceCode rather than
+   .cell > .cell-code, because an executable {r} chunk carries the
+   .cell wrapper but a plain ```r block does not, and both should
+   look the same. */
+div.sourceCode::before,
+.code-with-filename .code-with-filename-file::before {
+  content: "R";
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .13em;
+  color: var(--ink4);
+  font-weight: 500;
+}
+/* No negative margins. They broke out of the rounded parent in
+   Safari and left the bar floating above the block. */
+div.sourceCode::before {
+  display: block;
+  padding: 6px 14px;
+  background: var(--shade);
+  border-bottom: 1px solid var(--line);
+}
+
+/* the captioned case */
+.code-with-filename { margin: 1.5rem 0 0; }
+.code-with-filename .code-with-filename-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: var(--shade);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  margin-bottom: 0;
+}
+.code-with-filename .code-with-filename-file pre,
+.code-with-filename .code-with-filename-file strong {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink4);
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.code-with-filename > div.sourceCode {
+  margin-top: 0;
+  border-radius: 0 0 9px 9px;
+}
+.code-with-filename > div.sourceCode::before { content: none; }
+
+/* ----- callouts --------------------------------------------- */
+.callout.callout-style-default {
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 9px;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  background: var(--paper);
+}
+.callout.callout-style-default .callout-header {
+  padding: 9px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.callout.callout-style-default .callout-body-container { padding: 13px 15px; }
+.callout.callout-style-default .callout-body-container p { font-size: 15px; line-height: 1.64; }
+.callout.callout-style-default .callout-body-container p:last-child { margin-bottom: 0; }
+.callout .callout-icon-container { padding-right: 9px; }
+
+.callout-note { border-left-color: var(--ok-blue) !important; }
+.callout-note .callout-header {
+  background: rgba(0,114,178,.06) !important;
+  color: var(--blue-ink);
+  border-bottom-color: rgba(0,114,178,.18) !important;
+}
+.callout-warning { border-left-color: #7A5300 !important; }
+.callout-warning .callout-header {
+  background: rgba(230,159,0,.09) !important;
+  color: var(--orange-ink);
+  border-bottom-color: rgba(230,159,0,.24) !important;
+}
+.callout-tip { border-left-color: #A84E80 !important; }
+.callout-tip .callout-header {
+  background: rgba(204,121,167,.09) !important;
+  color: var(--purple-ink);
+  border-bottom-color: rgba(204,121,167,.24) !important;
+}
+.callout-important { border-left-color: var(--ok-verm) !important; }
+.callout-important .callout-header {
+  background: rgba(213,94,0,.09) !important;
+  color: var(--verm-ink);
+  border-bottom-color: rgba(213,94,0,.24) !important;
+}
+.callout-caution { border-left-color: var(--ink3) !important; }
+.callout-caution .callout-header {
+  background: var(--shade) !important;
+  color: var(--ink2);
+  border-bottom-color: var(--line) !important;
+}
+
+/* ----- tabsets ----------------------------------------------- */
+/* Tom's exercises use panel-tabset for Plot / Code. Flatly's default
+   active tab is teal at 2.41:1, so it has to be overridden. */
+.panel-tabset .nav-tabs { border-bottom: 1px solid var(--line); gap: 2px; }
+.panel-tabset .nav-tabs .nav-link {
+  font-size: 13.5px !important;
+  font-weight: 500;
+  color: var(--ink3) !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0;
+  padding: 7px 13px !important;
+  background: none !important;
+}
+.panel-tabset .nav-tabs .nav-link:hover { color: var(--ink) !important; background: var(--hair) !important; }
+.panel-tabset .nav-tabs .nav-link.active {
+  color: var(--ok-blue) !important;
+  border-bottom-color: var(--ok-blue) !important;
+  background: none !important;
+}
+.panel-tabset .tab-content { padding-top: 1rem; }
+
+/* ----- margin notes ----------------------------------------- */
+.column-margin { font-size: 12.8px; line-height: 1.56; color: var(--ink3); }
+.column-margin > p:first-child,
+.column-margin > div:first-child {
+  border-top: 2px solid var(--ok-blue);
+  padding-top: 8px;
+}
+.column-margin strong { color: var(--blue-ink); font-weight: 600; }
+.column-margin code:not(.sourceCode) { font-size: 12px; }
+
+/* ----- figures ---------------------------------------------- */
+figure, .quarto-figure { margin: 2rem 0; }
+figure img, .quarto-figure img {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--paper);
   max-width: 100%;
 }
-
-figure figcaption,
-.figure-caption {
-  font-size: 0.85rem;
-  color: #6c757d;
-  text-align: center;
-  margin-top: 0.4rem;
+figcaption, .figure-caption, .quarto-figure figcaption {
+  font-size: 13px !important;
+  line-height: 1.5;
+  color: var(--ink3);
+  text-align: left !important;
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 2px solid var(--line);
 }
 
-/* ----- Tables: cleaner look ----- */
-table {
-  font-size: 0.92rem;
+/* ----- tables ----------------------------------------------- */
+main table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 14px;
+  margin: 1.5rem 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  overflow: hidden;
 }
-.table > thead {
-  border-bottom: 2px solid var(--accent-soft);
+main thead { background: var(--shade); }
+main th {
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink4);
+  font-weight: 600;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
 }
+main td { padding: 10px 14px; border-bottom: 1px solid var(--hair); color: var(--ink2); }
+main tbody tr:last-child td { border-bottom: 0; }
 
-/* ----- Tabsets (still used in Take-home Ex2, keep them tidy) ----- */
-.panel-tabset .nav-link.active {
-  border-bottom: 2px solid var(--accent);
-  color: var(--accent);
+/* ----- table of contents ------------------------------------ */
+/* Quarto ships .sidebar nav[role=doc-toc] ul>li>a.active with
+   !important, so these selectors have to carry .sidebar to win. */
+.sidebar nav[role="doc-toc"] > h2,
+.sidebar nav[role="doc-toc"] > .h2,
+#toc-title {
+  font-size: 12px !important;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink4);
+  font-weight: 600;
+  border: 0;
+  margin-bottom: 12px;
+  padding: 0;
+  font-family: var(--sans);
 }
-
-/* ----- Table of contents active item ----- */
-.sidebar nav[role="doc-toc"] ul > li > a.active,
-#TOC a.active {
-  color: var(--accent);
-  border-left: 2px solid var(--accent);
-}
-
-/* ----- Landing page navigation cards ----- */
-.home-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin: 2rem 0;
-}
-
-.home-card {
+.sidebar nav[role="doc-toc"] > ul a {
   display: block;
-  padding: 1.3rem 1.4rem;
-  border: 1px solid rgba(128, 128, 128, 0.2);
-  border-radius: 12px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  text-decoration: none;
-  color: inherit;
+  font-size: 13px;
+  line-height: 1.42;
+  color: var(--ink3);
+  padding: 5px 0 5px 12px !important;
+  border-left: 2px solid var(--hair) !important;
+}
+.sidebar nav[role="doc-toc"] > ul a:hover {
+  color: var(--ok-blue);
+  border-left-color: var(--line) !important;
+}
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+.sidebar nav[role="doc-toc"] ul > li > ul > li > a.active {
+  color: var(--ok-blue) !important;
+  border-left: 2px solid var(--ok-blue) !important;
+  font-weight: 500;
+}
+.sidebar nav[role="doc-toc"] ul ul > li > a { padding-left: 24px !important; font-size: 12.5px; }
+
+/* ----- footer ----------------------------------------------- */
+.nav-footer {
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--ink4);
+  background: var(--paper);
 }
 
-.home-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  border-color: var(--accent);
-  text-decoration: none;
+/* ----- narrow ------------------------------------------------ */
+@media (max-width: 991px) {
+  .quarto-title h1.title { font-size: 34px; }
+  .quarto-title .subtitle { font-size: 18px; }
+  main h2, main .h2 { font-size: 24px; }
+  #title-block-header::before { left: 0; right: 0; }
+  .column-margin > p:first-child,
+  .column-margin > div:first-child {
+    border-top: 0;
+    border-left: 2px solid var(--ok-blue);
+    padding: 2px 0 2px 13px;
+  }
 }
 
-.home-card h3 {
-  margin-top: 0;
-  margin-bottom: 0.4rem;
-  color: var(--accent);
-  font-size: 1.1rem;
-}
-
-.home-card p {
-  margin-bottom: 0;
-  font-size: 0.92rem;
-  color: #6c757d;
-}
-
-/* ----- Dark mode adjustments ----- */
-.quarto-dark code:not(.sourceCode) {
-  color: #4fd1bd;
-  background-color: rgba(27, 158, 138, 0.18);
-}
-
-.quarto-dark .home-card:hover {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-}
-
-.quarto-dark .home-card p,
-.quarto-dark figure figcaption {
-  color: #adb5bd;
+/* ----- print --------------------------------------------------- */
+/* On screen a long code line scrolls sideways. On paper it is simply
+   cut off, so wrap it instead. Checked against a real PDF export. */
+@media print {
+  div.sourceCode { overflow: visible !important; }
+  /* The <pre> alone is not enough. Quarto puts a <code> inside it and
+     that carries white-space:pre, which blocks the wrap. */
+  pre.sourceCode,
+  pre.sourceCode code,
+  .cell-output pre,
+  .cell-output pre code {
+    white-space: pre-wrap !important;
+    word-break: break-word;
+    overflow: visible !important;
+  }
+  .panel-tabset .tab-content > .tab-pane { display: block !important; }
+  #title-block-header::before { display: none; }
+  .callout, figure, table, .cell { break-inside: avoid; }
 }
