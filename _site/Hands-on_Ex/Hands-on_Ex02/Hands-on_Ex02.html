@@ -1575,7 +1575,7 @@ Quadrats: 13 tiles (irregular windows)</code></pre>
 <p>The quadrat test does not agree with Clark-Evans, and that is the most useful result in Part 3.</p>
 <p>Clark-Evans gave R of 0.84 with p of 0.0089, so it rejected randomness for Choa Chu Kang. The quadrat test on the same points gives p of 0.084, so it does not. Two tests, one dataset, opposite conclusions at the five percent level.</p>
 <p>Neither is wrong. They measure different things. Clark-Evans looks at nearest neighbour distances, so it notices points sitting in tight pairs. The quadrat test only counts how many points fall in each cell, so a pattern can be clumpy inside cells and still spread evenly across them.</p>
-<p>Note the degrees of freedom too. I asked for a four by four grid, which is sixteen cells and should give fifteen degrees of freedom, and the output reports twelve. Cells that fall outside the planning area boundary get dropped.</p>
+<p>Note the tile count too. I asked for a four by four grid, so sixteen cells, and the output says thirteen tiles and twelve degrees of freedom. Three cells fell outside the planning area boundary and were dropped, and twelve is thirteen minus one. So the grid I specified is not the grid that was tested.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-tip callout-titled">
