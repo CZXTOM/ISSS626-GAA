@@ -9,5 +9,3 @@ _freeze/
 .vercel
 .vercel/
 data/
-CLAUDE.local.md
-.claude/
