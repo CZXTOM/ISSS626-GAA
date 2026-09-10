@@ -234,7 +234,9 @@ summary(st_kde)
 ## Learning diary
 Two bandwidths come out of this, not one. `h` is the spatial one in metres, around 19 km. `lambda` is the temporal one in months, and it comes out at 0.027 of a month, which is less than a day.
 
-A day of temporal smoothing on data that is only recorded in months is odd. It means the estimate for month 8 barely borrows anything from months 7 or 9. I did not understand why until the day-of-year section below, where the same function picks a completely different lambda. The default bandwidth rule is reacting to the spacing of the time values it was given, and integer months are very coarse.
+A day of smoothing on data recorded in whole months is odd. It means month 8 barely borrows anything from months 7 or 9.
+
+I did not understand why until the day-of-year section below, where the same function picks a very different lambda. The default rule reacts to how the time values are spaced, and whole months are very coarse.
 :::
 
 ::: panel-tabset
@@ -344,7 +346,9 @@ bw_boot
 ## Learning diary
 Slow. It prints thirty odd iterations before settling, and each one refits the surface. This is the chunk that made me set `freeze: true` at the top of the file, otherwise every render rerun it.
 
-The book's bootstrap on its 741 points settles at h of 9000 and lambda of 19, and the chapter rounds them before using them. Mine settles somewhere else entirely, h of about 45.6 km and lambda of about 17 days. So I round my own output to 45000 and 17 rather than borrowing the book's numbers, which belong to a different sample. Carrying six decimal places from a bootstrap into a bandwidth pretends to a precision the method does not have.
+The book's bootstrap lands at h of 9000 and lambda of 19, and the chapter rounds them before use. Mine lands somewhere else, about 45.6 km and 17 days. Those are different samples, so I round my own numbers to 45000 and 17 rather than borrow the book's.
+
+Rounding is the right call either way. Six decimal places from a bootstrap pretend to a precision the method does not have.
 :::
 
 ```{r}
@@ -392,7 +396,11 @@ Same six days, two bandwidth choices, stacked so they can be compared.
 
 The default gave h of about 19 km and lambda of about 6 days. The bootstrap gave 45 km and 17 days. So the bootstrap smooths harder on both axes, more than twice the spatial bandwidth and nearly three times the temporal one.
 
-Both sets of maps tell the same story, a hotspot in west Bangka at the start of August that migrates to the south of the island by late September, with Belitung quiet throughout. The difference is how they tell it. The default keeps the hotspot tight and Belitung dark. The bootstrap spreads the same hotspot across half of Bangka, halves its peak, and lets Belitung glow, because a 45 km kernel reaches across the strait. Which is right depends on what you want the surface for. If the question is where fires happen, the default's sharper space is more useful. If it is when, the bootstrap's smoother time is. The bootstrap is optimising a single overall error and does not know which question I am asking.
+Both sets of maps tell the same story. A hotspot starts in west Bangka in early August and moves to the south of the island by late September. Belitung stays quiet throughout.
+
+The difference is how they tell it. The default keeps the hotspot tight and Belitung dark. The bootstrap spreads the same hotspot across half of Bangka, halves its peak, and lets Belitung glow, because a 45 km kernel reaches across the strait.
+
+Which is right depends on the question. For where fires happen, the default's sharper space is more useful. For when, the bootstrap's smoother time is. The bootstrap minimises one overall error and does not know which question I am asking.
 
 The book got 9 km and 19 days on its 741 points, which is sharper space than its own default. Same method, different sample, opposite call on the spatial axis. Bandwidth is a property of the data in hand, not of the method.
 :::
@@ -444,7 +452,9 @@ kbb_stik <- STIKhat(fire_stpp)
 ## Issue I hit
 The book's `plotK(kbb_stik)` rendered to nothing. The chunk ran, the page had an empty tab where the surface should be.
 
-The function source explains it. `plotK()` closes the current graphics device and opens a fresh one to get its layout, which throws away the device knitr was recording into. So the plot went to a window nobody saw. The fix is to skip `plotK()` and draw the matrix myself. The object holds `Khat` over `dist` and `times`, plus `Ktheo`, the value expected if space and time were independent. I plot the difference, which is what the interpretation below is actually about, and it lets me label the axes properly.
+The function source explains it. `plotK()` closes the current graphics device and opens a new one for its own layout. Knitr was recording into the device that got closed, so the plot went to a window nobody saw.
+
+The fix is to skip `plotK()` and draw the surface myself. The object holds `Khat`, the estimate, and `Ktheo`, the value expected if space and time were independent, both over `dist` and `times`. I plot the difference, since that is what the reading below is about, and I get to label the axes properly.
 :::
 
 ::: panel-tabset
@@ -493,13 +503,15 @@ filled.contour(u, v, k_excess,
 ## Learning diary
 This took me a while to read, so here is the version I wish the book had given.
 
-The plot is a surface over two axes. `u` is spatial distance and `v` is temporal distance. The height at any point is how many more other fires you find within `u` metres and `v` days of a typical fire than you would if space and time were independent, which is the `Khat` minus `Ktheo` I drew above.
+The plot is a surface over two axes. `u` is distance in metres and `v` is distance in days. The height at any point is how many more fires sit within `u` metres and `v` days of a typical fire than you would expect if space and time were independent. That is the `Khat` minus `Ktheo` I drew above.
 
-High contours near the origin, at small `u` and small `v`, mean fires happen close to other fires soon after them. That is space-time clustering. Flat contours mean no such interaction.
+A surface that rises steeply near the origin, at small `u` and small `v`, means fires happen close to other fires and soon after them. That is space-time clustering. A flat surface means no such interaction.
 
-The word inhomogeneous in the name is a promise the call above does not keep. `STIKhat()` only corrects for varying intensity if you pass it a `lambda`, the intensity at every point. The book does not, and neither did I, so it falls back to a constant, the point count over the space-time volume. That makes this a homogeneous K in practice.
+The word inhomogeneous in the name is a promise the call above does not keep. `STIKhat()` only corrects for varying intensity if you pass it a `lambda`, the intensity at every point. The book does not and neither did I. So it falls back to a constant, the point count divided by the space-time volume, and this is really a homogeneous K.
 
-The surface shows it. The excess is positive everywhere and keeps climbing with both `u` and `v`, out to 45 km and 80 days. Clustering that grows with scale like that is the dry season and the fire belt of Bangka, first order structure the KDE already found, not fires near fires triggering more fires. A proper inhomogeneous version would feed the spatio-temporal KDE back in as `lambda`, and that is the version I want for the take-home.
+The surface shows it. The excess is positive everywhere and keeps climbing with both `u` and `v`, out to 45 km and 80 days. Clustering that keeps growing with scale is the dry season and the fire belt of Bangka showing through. The KDE already found that. It is not fires near fires setting off more fires.
+
+A proper inhomogeneous version would feed the spatio-temporal KDE back in as `lambda`. That is the version I want for the take-home.
 :::
 
 # Part 4, Beyond the Exercise
@@ -633,7 +645,11 @@ plot(L_sp, . - r ~ r, xlab = "d (m)", ylab = "L(d) - r",
 ## Alternative explored
 Read the two together. The L function says the fires cluster in space when you collapse the whole year onto one map. The STIK surface says whether there is *additional* clustering once you also ask about time.
 
-If both show clustering, fires are drawn to the same places and also happen in bursts. If only the spatial one does, the bursts are just the dry season being the dry season, and nearby fires are not actually triggering each other. Here both do, but the K surface was computed with a constant intensity, so its clustering still contains the dry season. The honest reading is that space and time both cluster and the interaction between them is untested until `lambda` goes in. The chapter runs the second test without the first, so it cannot make that distinction. Running both is what makes the space-time result interpretable.
+If both show clustering, fires are drawn to the same places and also happen in bursts. If only the spatial one does, the bursts are just the dry season, and nearby fires are not setting each other off.
+
+Here both show clustering. But the K surface was computed with a constant intensity, so the dry season is still inside it. The honest reading is that fires cluster in space and cluster in time, and whether the two interact stays untested until `lambda` goes in.
+
+The chapter runs the second test without the first, so it cannot make that distinction. Running both is what makes the space-time result readable.
 :::
 
 ## Limitations
@@ -653,8 +669,8 @@ Five things I am taking from this one.
 
 **Two downloads failed before one worked.** A 553 MB shapefile at 44 kilobytes a second, then a bundle that arrived truncated with Indonesia in the missing part. The per-country FIRMS file and GADM level 2 got me the same analysis from 9 MB total. Worth remembering that the book's data path is one route, not the only one.
 
-**Bandwidth is now two numbers and the selector does not know which one I care about.** The default and the bootstrap disagreed on both, and on my data the bootstrap smoothed harder on each, where on the book's data it went sharper in space. Neither is wrong, and the choice depends on whether the question is where or when, which is not something a bandwidth selector can know.
+**Bandwidth is now two numbers, and the selector does not know which one I care about.** The default and the bootstrap disagreed on both. On my data the bootstrap smoothed harder on each, on the book's data it went sharper in space. Neither is wrong. The right choice depends on whether the question is where or when, and no selector can know that.
 
-**A plot call can be a mistake.** `plot(kde_yday)` with no time selection gives 343 images, and `plotK()` gives none because it swaps graphics devices under knitr. I would not have thought to check the first, except that the rendered chapter page is itself the warning, and the second only showed up because I read my own render before pushing it.
+**A plot call can be a mistake.** `plot(kde_yday)` with no time selected gives 343 images. `plotK()` gives none, because it swaps graphics devices under knitr. The first I caught because the book's own rendered page is the warning. The second I caught only because I read my own render before pushing it.
 
-**The space-time K function only means something next to the plain spatial one, and only with an intensity behind it.** On its own it says there is clustering. Next to the L function from Exercise 2 it says whether that clustering is more than the dry season, and without a `lambda` it cannot even ask, because inhomogeneous is just a word in the function name until you pass one. The chapter runs one without the other and passes no intensity, and I think that is a gap.
+**The space-time K function needs two things next to it, the plain spatial L and an intensity.** On its own it says there is clustering. Next to the L function from Exercise 2 it can say whether that clustering is more than the dry season. Without a `lambda` it cannot even ask, because inhomogeneous is just a word in the function name until you pass one. The chapter does neither, and I think that is a gap.
