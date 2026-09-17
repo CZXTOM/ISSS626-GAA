@@ -1,0 +1,648 @@
+---
+title: "Hands-on Exercise 4"
+subtitle: "Spatial Weights and Applications"
+author: "ZeXin Chen"
+date: "2026-09-17"
+date-modified: "last-modified"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  eval: true
+  warning: false
+  message: false
+  freeze: true
+---
+
+::: {.pagefacts}
+[88 counties of Hunan, one year of indicators]{.fact}
+[Hunan shapefile, Hunan_2012.csv]{.fact .data}
+[`sf` `spdep` `tmap` `tidyverse` `knitr`]{.fact .pkg}
+:::
+
+# Getting Started
+
+The first three exercises were about points. This one is about areas, and about the one idea everything after it depends on. Before you can ask whether rich counties sit next to rich counties, you have to decide what "next to" means. That decision is the spatial weights matrix.
+
+The chapter builds several of them for the 88 counties of Hunan and then uses them to compute a spatially lagged GDP per capita. Nothing here is a test yet. Those come in the next chapter.
+
+## Installing and Loading R Packages
+
+Only one package is new. **spdep** builds neighbour lists and weights and does the lagging.
+
+```{r}
+#| output: false
+pacman::p_load(sf, spdep, tmap, tidyverse, knitr)
+```
+
+# Part 1, Data
+
+## Importing the Study Area
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial", layer = "Hunan")
+```
+
+Eighty eight polygons in WGS 84. The `County` column is the join key for the next step.
+
+## Importing the Indicators
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+glimpse(hunan2012)
+```
+
+::: {.callout-note}
+## Learning diary
+The zip came with a `Dictionary.xlsx` the chapter never mentions. It says GDPPC is GDP per capita in RMB for 2005 to 2012, so the 2012 in the file name is the year, not a version. It also flags that three counties, Shuangqing, Beita and Daxiang, share the same disposable income value. That is not a column this exercise uses, but it is the kind of thing worth knowing before the take-home.
+:::
+
+## Joining Them
+
+```{r}
+hunan <- left_join(hunan, hunan2012) %>%
+  select(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)
+
+nrow(hunan)
+```
+
+::: {.callout-caution}
+## Where I differ from the book
+The book does `select(1:4, 7, 15)`. That works, but only because column 15 happens to be GDPPC after the join. Add one column to the csv and it silently picks the wrong variable. I select by name instead, which is the same result and cannot drift.
+
+`left_join()` found the key on its own because both tables have a `County` column. I checked that all 88 names match on both sides before trusting that. They do.
+:::
+
+## Visualising GDP per Capita
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+basemap <- tm_shape(hunan) +
+  tm_polygons(fill = "#F7F4EC", col = "grey60") +
+  tm_text("NAME_3", size = 0.35) +
+  tm_title("Hunan, 88 counties")
+
+gdppc <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "brewer.oranges"),
+              fill.legend = tm_legend(title = "GDPPC (RMB)"),
+              col = "grey60") +
+  tm_title("GDP per capita, 2012")
+
+tmap_arrange(basemap, gdppc, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+basemap <- tm_shape(hunan) +
+  tm_polygons(fill = "#F7F4EC", col = "grey60") +
+  tm_text("NAME_3", size = 0.35) +
+  tm_title("Hunan, 88 counties")
+
+gdppc <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "brewer.oranges"),
+              fill.legend = tm_legend(title = "GDPPC (RMB)"),
+              col = "grey60") +
+  tm_title("GDP per capita, 2012")
+
+tmap_arrange(basemap, gdppc, ncol = 2)
+```
+:::
+
+The high values sit in the middle and the north east, around Changsha. The west and south are poorer. Whether that is a real pattern or the eye finding one is exactly what the next chapter tests, and what this chapter builds the tools for.
+
+# Part 2, Contiguity Weights
+
+Two polygons are contiguous if they touch. Queen contiguity counts a shared corner as touching. Rook contiguity needs a shared edge.
+
+## Queen
+
+```{r}
+wm_q <- poly2nb(hunan, queen = TRUE)
+summary(wm_q)
+```
+
+Every county has at least one neighbour, so there are no islands to worry about. The busiest county has eleven.
+
+```{r}
+hunan$County[85]
+wm_q[[85]]
+hunan$County[wm_q[[85]]]
+```
+
+::: {.callout-note}
+## Learning diary
+`wm_q` is a list of 88 integer vectors. Element 85 holds the row numbers of `r hunan$County[85]`'s neighbours, and looking them up in `hunan$County` turns numbers into names. That lookup is the whole trick to reading any neighbour object. The numbers are positions, not IDs, so if the rows of `hunan` were ever reordered every weight matrix would have to be rebuilt.
+:::
+
+The full matrix is 88 by 88, so I only show a corner of it.
+
+```{r}
+wm_q_mat <- nb2mat(wm_q, style = "B")
+wm_q_mat[1:8, 1:8]
+```
+
+## Rook
+
+```{r}
+wm_r <- poly2nb(hunan, queen = FALSE)
+summary(wm_r)
+```
+
+Same 88 regions, 440 links instead of 448. Every link is counted from both ends, so that is four county pairs that touch only at a corner.
+
+## Plotting the Links
+
+The links are drawn between polygon centroids, so I need those first.
+
+```{r}
+longitude <- map_dbl(hunan$geometry, ~st_centroid(.x)[[1]])
+latitude <- map_dbl(hunan$geometry, ~st_centroid(.x)[[2]])
+coords <- cbind(longitude, latitude)
+head(coords)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 0.5))
+plot(hunan$geometry, border = "grey70", main = "Queen contiguity")
+plot(wm_q, coords, pch = 19, cex = 0.5, add = TRUE, col = "#D55E00")
+plot(hunan$geometry, border = "grey70", main = "Rook contiguity")
+plot(wm_r, coords, pch = 19, cex = 0.5, add = TRUE, col = "#0072B2")
+par(mfrow = c(1, 1))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 0.5))
+plot(hunan$geometry, border = "grey70", main = "Queen contiguity")
+plot(wm_q, coords, pch = 19, cex = 0.5, add = TRUE, col = "#D55E00")
+plot(hunan$geometry, border = "grey70", main = "Rook contiguity")
+plot(wm_r, coords, pch = 19, cex = 0.5, add = TRUE, col = "#0072B2")
+par(mfrow = c(1, 1))
+```
+:::
+
+The two look identical at this scale. The four missing pairs are corner touches, and a corner touch is a single point, so there is nothing to see.
+
+# Part 3, Distance Based Weights
+
+Contiguity does not care how big a county is. A distance rule does. The book uses two, a fixed radius and a fixed number of nearest neighbours.
+
+## Finding the Cut-off
+
+The radius has to be big enough that nobody is left without a neighbour. The book finds it by asking how far each county's single nearest neighbour is, and taking the largest of those.
+
+```{r}
+k1 <- knn2nb(knearneigh(coords))
+k1dists <- unlist(nbdists(k1, coords, longlat = TRUE))
+summary(k1dists)
+```
+
+The largest nearest-neighbour distance is just under 62 km, so 62 km guarantees every county at least one neighbour.
+
+```{r}
+which.max(k1dists)
+hunan$County[which.max(k1dists)]
+```
+
+::: {.callout-important}
+## Check that caught something
+One county sets the cut-off for all 88. I wanted to know which. It is `r hunan$County[which.max(k1dists)]`, the same county that had the most neighbours under Queen. That is not a contradiction. It is the largest county on the map, so it touches many others while its centroid sits far from all of theirs. Contiguity says it is the best connected county in Hunan. Distance says it is the most isolated. Everything about the fixed distance matrix below is shaped by that one row.
+:::
+
+## Fixed Distance, 62 km
+
+```{r}
+wm_d62 <- dnearneigh(coords, 0, 62, longlat = TRUE)
+wm_d62
+```
+
+```{r}
+n_comp <- n.comp.nb(wm_d62)
+n_comp$nc
+```
+
+One connected component, so the graph does not fall apart into islands at this radius.
+
+## Adaptive Distance, Six Nearest
+
+```{r}
+knn6 <- knn2nb(knearneigh(coords, k = 6))
+knn6
+```
+
+Every county gets exactly six, whether it is a small county packed around Changsha or a large one in the mountains.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 0.5))
+plot(hunan$geometry, border = "grey70", main = "Fixed distance, 62 km")
+plot(wm_d62, coords, pch = 19, cex = 0.5, add = TRUE, col = "#D55E00")
+plot(hunan$geometry, border = "grey70", main = "Adaptive, k = 6")
+plot(knn6, coords, pch = 19, cex = 0.5, add = TRUE, col = "#0072B2")
+par(mfrow = c(1, 1))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 0.5))
+plot(hunan$geometry, border = "grey70", main = "Fixed distance, 62 km")
+plot(wm_d62, coords, pch = 19, cex = 0.5, add = TRUE, col = "#D55E00")
+plot(hunan$geometry, border = "grey70", main = "Adaptive, k = 6")
+plot(knn6, coords, pch = 19, cex = 0.5, add = TRUE, col = "#0072B2")
+par(mfrow = c(1, 1))
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+The fixed radius is dense where counties are small and sparse where they are large, because 62 km reaches many small centroids and few large ones. The adaptive rule is the opposite. Everyone has six, so the links are long in the mountains and short around the capital.
+
+Which is right depends on what the weights are for. If the question is about physical spillover, distance matters and the fixed radius is honest about it. If the question is about comparing each county to its peers, the adaptive rule keeps the comparison fair.
+:::
+
+# Part 4, From Neighbours to Weights
+
+A neighbour list says who counts. A weight says how much. Two schemes here.
+
+## Inverse Distance
+
+```{r}
+dist <- nbdists(wm_q, coords, longlat = TRUE)
+ids <- lapply(dist, function(x) 1 / x)
+ids[[1]]
+```
+
+Closer neighbours weigh more. The unit is one over km, which is why the numbers are small.
+
+## Row Standardised
+
+```{r}
+rswm_q <- nb2listw(wm_q, style = "W", zero.policy = TRUE)
+rswm_q$weights[85]
+```
+
+`r hunan$County[85]` has `r length(wm_q[[85]])` neighbours, so each gets one share of that. The row sums to one.
+
+```{r}
+rswm_ids <- nb2listw(wm_q, glist = ids, style = "B", zero.policy = TRUE)
+rswm_ids$weights[1]
+```
+
+::: {.callout-note}
+## Learning diary
+`style = "W"` divides each neighbour's weight by the number of neighbours, so a lag becomes an average. `style = "B"` leaves the weights as given, so a lag becomes a sum. The book calls the inverse distance version "row standardised" but passes `style = "B"`, so it is not. Its lags will be sums of inverse distances, not averages. That is fine, it just is not what the heading says.
+
+`zero.policy = TRUE` tells spdep to carry on if a region has no neighbours. Nobody in Hunan is in that position, so it does nothing here, but leaving it on costs nothing and stops a hard error on a dataset that does have islands.
+:::
+
+# Part 5, Spatial Lag
+
+A spatial lag replaces each county's value with something computed from its neighbours' values. Four versions, and the difference between them is only which weights go in.
+
+## Row Standardised Lag, the Average of Neighbours
+
+```{r}
+GDPPC.lag <- lag.listw(rswm_q, hunan$GDPPC)
+head(GDPPC.lag)
+```
+
+```{r}
+lag.list <- list(hunan$NAME_3, GDPPC.lag)
+lag.res <- as.data.frame(lag.list)
+colnames(lag.res) <- c("NAME_3", "lag GDPPC")
+hunan <- left_join(hunan, lag.res)
+```
+
+## Lag Sum, the Total of Neighbours
+
+```{r}
+b_weights <- lapply(wm_q, function(x) 0 * x + 1)
+b_weights2 <- nb2listw(wm_q, glist = b_weights, style = "B")
+lag_sum <- list(hunan$NAME_3, lag.listw(b_weights2, hunan$GDPPC))
+lag.res <- as.data.frame(lag_sum)
+colnames(lag.res) <- c("NAME_3", "lag_sum GDPPC")
+hunan <- left_join(hunan, lag.res)
+```
+
+::: {.callout-note}
+## Learning diary
+`0 * x + 1` is a small trick. Multiplying the neighbour list by zero and adding one gives a vector of ones the same length as each county's neighbour list. With `style = "B"` those ones are used as is, so the lag is a plain sum.
+:::
+
+## Window Average, Me and My Neighbours
+
+```{r}
+wm_qs <- include.self(wm_q)
+wm_qs <- nb2listw(wm_qs)
+lag_w_avg_gpdpc <- lag.listw(wm_qs, hunan$GDPPC)
+lag_wm_qs.res <- as.data.frame(list(hunan$NAME_3, lag_w_avg_gpdpc))
+colnames(lag_wm_qs.res) <- c("NAME_3", "lag_window_avg GDPPC")
+hunan <- left_join(hunan, lag_wm_qs.res)
+```
+
+## Window Sum
+
+```{r}
+wm_qs <- include.self(wm_q)
+b_weights <- lapply(wm_qs, function(x) 0 * x + 1)
+b_weights2 <- nb2listw(wm_qs, glist = b_weights, style = "B")
+w_sum_gdppc <- list(hunan$NAME_3, lag.listw(b_weights2, hunan$GDPPC))
+w_sum_gdppc.res <- as.data.frame(w_sum_gdppc)
+colnames(w_sum_gdppc.res) <- c("NAME_3", "w_sum GDPPC")
+hunan <- left_join(hunan, w_sum_gdppc.res)
+```
+
+```{r}
+hunan %>%
+  st_drop_geometry() %>%
+  select(NAME_3, GDPPC, `lag GDPPC`, `lag_window_avg GDPPC`,
+         `lag_sum GDPPC`, `w_sum GDPPC`) %>%
+  head(8) %>%
+  kable(digits = 0)
+```
+
+## Comparing Them
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 8
+lag_map <- function(var, title) {
+  tm_shape(hunan) +
+    tm_polygons(fill = var,
+                fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                                values = "brewer.oranges"),
+                fill.legend = tm_legend(title = "RMB"),
+                col = "grey60") +
+    tm_title(title)
+}
+
+tmap_arrange(lag_map("GDPPC", "GDPPC"),
+             lag_map("lag GDPPC", "Lag, neighbour average"),
+             lag_map("lag_window_avg GDPPC", "Window average"),
+             lag_map("lag_sum GDPPC", "Lag sum"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+lag_map <- function(var, title) {
+  tm_shape(hunan) +
+    tm_polygons(fill = var,
+                fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                                values = "brewer.oranges"),
+                fill.legend = tm_legend(title = "RMB"),
+                col = "grey60") +
+    tm_title(title)
+}
+
+tmap_arrange(lag_map("GDPPC", "GDPPC"),
+             lag_map("lag GDPPC", "Lag, neighbour average"),
+             lag_map("lag_window_avg GDPPC", "Window average"),
+             lag_map("lag_sum GDPPC", "Lag sum"),
+             ncol = 2)
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+The two averages smooth the map. The north east block around Changsha and the south east block around Chenzhou both firm up, and the two lone highs in the west, Lengshuijiang and the county next to Jishou, vanish because their neighbours are poor.
+
+The sum does something different. Look at the big county in the north west. It is pale on the GDPPC map and pale on both averages, but dark on the sum, and that is Taoyuan with its eleven neighbours. The sum rewards having many neighbours regardless of how rich they are, so a lag sum map is partly a map of neighbour counts. It carries the shape of the weights matrix as much as the values.
+:::
+
+# Part 6, Beyond the Exercise
+
+Three things I wanted to check that the chapter does not.
+
+## Four Rules, One Table
+
+The chapter builds four neighbour definitions and never lines them up.
+
+```{r}
+nb_summary <- tibble(
+  rule = c("Queen", "Rook", "Fixed 62 km", "k = 6"),
+  links = c(sum(card(wm_q)), sum(card(wm_r)),
+            sum(card(wm_d62)), sum(card(knn6))),
+  min_nb = c(min(card(wm_q)), min(card(wm_r)),
+             min(card(wm_d62)), min(card(knn6))),
+  median_nb = c(median(card(wm_q)), median(card(wm_r)),
+                median(card(wm_d62)), median(card(knn6))),
+  max_nb = c(max(card(wm_q)), max(card(wm_r)),
+             max(card(wm_d62)), max(card(knn6)))
+)
+kable(nb_summary)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+hunan_nb <- hunan %>%
+  mutate(queen_nb = card(wm_q),
+         d62_nb = card(wm_d62))
+
+nb_map <- function(var, title) {
+  tm_shape(hunan_nb) +
+    tm_polygons(fill = var,
+                fill.scale = tm_scale_intervals(breaks = c(1, 3, 5, 7, 9, 12),
+                                                labels = c("1 to 2", "3 to 4", "5 to 6",
+                                                           "7 to 8", "9 to 11"),
+                                                values = "brewer.purples"),
+                fill.legend = tm_legend(title = "Neighbours"),
+                col = "grey60") +
+    tm_title(title)
+}
+
+tmap_arrange(nb_map("queen_nb", "Neighbours under Queen"),
+             nb_map("d62_nb", "Neighbours within 62 km"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+hunan_nb <- hunan %>%
+  mutate(queen_nb = card(wm_q),
+         d62_nb = card(wm_d62))
+
+nb_map <- function(var, title) {
+  tm_shape(hunan_nb) +
+    tm_polygons(fill = var,
+                fill.scale = tm_scale_intervals(breaks = c(1, 3, 5, 7, 9, 12),
+                                                labels = c("1 to 2", "3 to 4", "5 to 6",
+                                                           "7 to 8", "9 to 11"),
+                                                values = "brewer.purples"),
+                fill.legend = tm_legend(title = "Neighbours"),
+                col = "grey60") +
+    tm_title(title)
+}
+
+tmap_arrange(nb_map("queen_nb", "Neighbours under Queen"),
+             nb_map("d62_nb", "Neighbours within 62 km"),
+             ncol = 2)
+```
+:::
+
+::: {.callout-tip}
+## Alternative explored
+The table surprised me. I expected the 62 km rule to be the densest, because a radius reaches past the counties you touch. It is the sparsest, 324 links against Queen's 448, and nobody gets more than six. The reason is scale. Hunan's counties are mostly 40 to 60 km across, so a 62 km circle around a centroid rarely reaches past the immediate ring, and for the big counties in the west it does not even reach that.
+
+The map shows where each rule is generous. Queen hands the most neighbours to the largest counties, because a big polygon touches many small ones. The 62 km rule hands the most to the middle band of small counties, where centroids are packed tightly, and leaves the north west and the far south with one or two. Same province, opposite answers about who is well connected.
+
+That matters for the next chapter. Whichever rule I pick decides which counties carry weight in every statistic after it. Queen leans on the big western counties. Fixed distance leans on the small central ones.
+:::
+
+## Does the Projection Matter
+
+The book keeps the data in WGS 84 and asks `nbdists()` for great circle distances with `longlat = TRUE`. That is correct for distances. But `st_centroid()` on a lon/lat polygon is not quite right, and sf says so in a warning that `warning: false` hides. I wanted to know how far off it is.
+
+```{r}
+hunan_utm <- st_transform(hunan, crs = 32649)
+coords_utm <- st_coordinates(st_centroid(hunan_utm))
+
+k1_utm <- knn2nb(knearneigh(coords_utm))
+k1dists_utm <- unlist(nbdists(k1_utm, coords_utm)) / 1000
+summary(k1dists_utm)
+```
+
+```{r}
+tibble(
+  method = c("WGS 84 centroids, great circle", "UTM 49N centroids, planar"),
+  max_nn_km = c(max(k1dists), max(k1dists_utm)),
+  cutoff_county = c(hunan$County[which.max(k1dists)],
+                    hunan$County[which.max(k1dists_utm)])
+) %>% kable(digits = 2)
+```
+
+::: {.callout-tip}
+## Alternative explored
+Hunan sits at about 112 east and 28 north, inside UTM zone 49 north, which is EPSG 32649. I expected the two methods to agree within a few hundred metres. They do not. Projecting first moves the cut-off from 61.8 km to 58.3 km, and a different county sets it, Yuanling instead of Taoyuan.
+
+The distance formula is not the cause. Great circle and planar UTM agree to a few metres over 60 km. The cause is the centroids. `st_centroid()` on lon/lat treats degrees as if they were flat, and for a big irregular county that puts the centroid a few kilometres from where it belongs. Taoyuan is big and irregular, so its centroid moved the most, and its nearest neighbour got closer.
+
+The book's 62 km radius still works, because 62 is above both numbers. But the warning it hides is not about tiny errors. It is about which county is the loneliest, and that changed. I am projecting first from now on.
+:::
+
+## A Preview of Moran's I
+
+The next chapter asks whether GDPPC is spatially autocorrelated. The lag I just computed is half of that answer already. If a county's value predicts its neighbours' average, the points on this plot line up.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 7
+#| fig-height: 6
+lag_df <- hunan %>%
+  st_drop_geometry() %>%
+  select(NAME_3, GDPPC, lag = `lag GDPPC`)
+
+fit <- lm(lag ~ GDPPC, data = lag_df)
+
+ggplot(lag_df, aes(GDPPC, lag)) +
+  scale_x_continuous(expand = expansion(mult = c(0.05, 0.12))) +
+  geom_hline(yintercept = mean(lag_df$lag), colour = "grey70", linetype = 2) +
+  geom_vline(xintercept = mean(lag_df$GDPPC), colour = "grey70", linetype = 2) +
+  geom_point(colour = "#D55E00", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#0072B2", linewidth = 0.7) +
+  geom_text(data = lag_df %>% filter(GDPPC > 60000 | lag > 45000),
+            aes(label = NAME_3), size = 3, vjust = -0.8) +
+  labs(x = "GDPPC (RMB)", y = "Neighbour average GDPPC (RMB)",
+       title = "Each county against the average of its Queen neighbours",
+       subtitle = paste0("Slope of the fitted line, ",
+                         round(coef(fit)[2], 3))) +
+  theme_minimal()
+```
+
+## The Code
+
+```{r}
+#| eval: false
+lag_df <- hunan %>%
+  st_drop_geometry() %>%
+  select(NAME_3, GDPPC, lag = `lag GDPPC`)
+
+fit <- lm(lag ~ GDPPC, data = lag_df)
+
+ggplot(lag_df, aes(GDPPC, lag)) +
+  scale_x_continuous(expand = expansion(mult = c(0.05, 0.12))) +
+  geom_hline(yintercept = mean(lag_df$lag), colour = "grey70", linetype = 2) +
+  geom_vline(xintercept = mean(lag_df$GDPPC), colour = "grey70", linetype = 2) +
+  geom_point(colour = "#D55E00", alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, colour = "#0072B2", linewidth = 0.7) +
+  geom_text(data = lag_df %>% filter(GDPPC > 60000 | lag > 45000),
+            aes(label = NAME_3), size = 3, vjust = -0.8) +
+  labs(x = "GDPPC (RMB)", y = "Neighbour average GDPPC (RMB)",
+       title = "Each county against the average of its Queen neighbours",
+       subtitle = paste0("Slope of the fitted line, ",
+                         round(coef(fit)[2], 3))) +
+  theme_minimal()
+```
+:::
+
+::: {.callout-tip}
+## Alternative explored
+The slope of that line, with both variables standardised, is Moran's I. With raw RMB it is not quite the same number but it is the same idea and the same sign. The slope here is 0.30 and positive, so rich counties do tend to have rich neighbours.
+
+The labelled points are the ones off the line. Changsha, Wangcheng, Liuyang and Ningxiang sit top right, rich with rich neighbours, which is the capital and its ring. Zixing and Lengshuijiang sit bottom right, rich counties surrounded by poor ones. Both are mining and industrial towns, so the wealth is local to the pit and does not spill over. Pingjiang is the reverse, a poor county whose neighbours average over 55,000 because it borders the Changsha ring.
+
+Those off-line counties are what the local statistics in the next chapter pick out one by one. I am leaving the number itself for that chapter so I can compute it properly with a test.
+:::
+
+## Limitations
+
+- The centroids in Parts 2 and 3 were computed on lon/lat, which moves them by a few kilometres for the big counties. Part 6 shows that is enough to change which county sets the distance cut-off.
+- The 62 km cut-off is set by a single county. A different boundary file with a different centroid for that county would change the radius for everyone.
+- Row standardising treats every neighbour as equal within a county. Inverse distance does not, but the book then uses it with binary style, so neither version here is a distance weighted average.
+- All of this is 2012 GDPPC. One year, one variable, no sense yet of whether the pattern is stable.
+
+# Reflections
+
+Four things I am taking from this one.
+
+**The weights matrix is a decision, not a fact.** Four reasonable rules gave four different graphs of the same 88 counties. Nothing downstream is more objective than the choice made here, and that choice needs a sentence of justification every time.
+
+**Read the count, not just the map.** Queen and Rook looked identical when plotted. The summary said eight links were missing. The picture would never have told me.
+
+**Style W and style B are the difference between an average and a sum.** Same neighbours, same values, and the maps come out telling different stories. One is about levels, the other is partly about how many neighbours you have.
+
+**The projection shortcut is not as safe as it looks.** The book's degrees plus `longlat = TRUE` gets the distances right but the centroids wrong, and that was enough to move the cut-off by 3 km and hand it to a different county. The radius survived. The reasoning under it did not. Better to project once at the top and stop thinking about it.

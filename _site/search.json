@@ -287,6 +287,167 @@
     "text": "5.4 Limitations\n\nGADM’s boundary and the book’s kelurahan shapefile are different sources, so the observation window is not identical to the book’s and the point count differs.\nMODIS detects heat, not fire. A detection is a hot pixel about a kilometre across, so a single fire may appear as several points and several fires as one.\nCloud cover hides fires. Missing days in the dry season may be weather, not absence of fire.\nTwo satellites, Terra and Aqua, pass at different times of day, so the daily record is really two snapshots, not continuous.\nThe bootstrap bandwidths optimise one overall error and do not know whether the analyst cares more about where or about when.\nThe STIK surface has no envelope in this exercise, so a high contour is suggestive, not tested. It also used a constant intensity, so it is not yet the inhomogeneous version its name claims."
   },
   {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html",
+    "title": "Hands-on Exercise 4",
+    "section": "",
+    "text": "88 counties of Hunan, one year of indicators Hunan shapefile, Hunan_2012.csv sf spdep tmap tidyverse knitr"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#installing-and-loading-r-packages",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#installing-and-loading-r-packages",
+    "title": "Hands-on Exercise 4",
+    "section": "1.1 Installing and Loading R Packages",
+    "text": "1.1 Installing and Loading R Packages\nOnly one package is new. spdep builds neighbour lists and weights and does the lagging.\n\npacman::p_load(sf, spdep, tmap, tidyverse, knitr)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#importing-the-study-area",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#importing-the-study-area",
+    "title": "Hands-on Exercise 4",
+    "section": "2.1 Importing the Study Area",
+    "text": "2.1 Importing the Study Area\n\nhunan &lt;- st_read(dsn = \"data/geospatial\", layer = \"Hunan\")\n\nReading layer `Hunan' from data source \n  `/Users/czxtom/Documents/Programming/GAA/ISSS626-GAA/Hands-on_Ex/Hands-on_Ex04/data/geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\n\nEighty eight polygons in WGS 84. The County column is the join key for the next step."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#importing-the-indicators",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#importing-the-indicators",
+    "title": "Hands-on Exercise 4",
+    "section": "2.2 Importing the Indicators",
+    "text": "2.2 Importing the Indicators\n\nhunan2012 &lt;- read_csv(\"data/aspatial/Hunan_2012.csv\")\nglimpse(hunan2012)\n\nRows: 88\nColumns: 29\n$ County      &lt;chr&gt; \"Anhua\", \"Anren\", \"Anxiang\", \"Baojing\", \"Chaling\", \"Changn…\n$ City        &lt;chr&gt; \"Yiyang\", \"Chenzhou\", \"Changde\", \"Hunan West\", \"Zhuzhou\", …\n$ avg_wage    &lt;dbl&gt; 30544, 28058, 31935, 30843, 31251, 28518, 54540, 28597, 33…\n$ deposite    &lt;dbl&gt; 10967.0, 4598.9, 5517.2, 2250.0, 8241.4, 10860.0, 24332.0,…\n$ FAI         &lt;dbl&gt; 6831.7, 6386.1, 3541.0, 1005.4, 6508.4, 7920.0, 33624.0, 1…\n$ Gov_Rev     &lt;dbl&gt; 456.72, 220.57, 243.64, 192.59, 620.19, 769.86, 5350.00, 1…\n$ Gov_Exp     &lt;dbl&gt; 2703.0, 1454.7, 1779.5, 1379.1, 1947.0, 2631.6, 7885.5, 11…\n$ GDP         &lt;dbl&gt; 13225.0, 4941.2, 12482.0, 4087.9, 11585.0, 19886.0, 88009.…\n$ GDPPC       &lt;dbl&gt; 14567, 12761, 23667, 14563, 20078, 24418, 88656, 10132, 17…\n$ GIO         &lt;dbl&gt; 9276.90, 4189.20, 5108.90, 3623.50, 9157.70, 37392.00, 513…\n$ Loan        &lt;dbl&gt; 3954.90, 2555.30, 2806.90, 1253.70, 4287.40, 4242.80, 4053…\n$ NIPCR       &lt;dbl&gt; 3528.3, 3271.8, 7693.7, 4191.3, 3887.7, 9528.0, 17070.0, 3…\n$ Bed         &lt;dbl&gt; 2718, 970, 1931, 927, 1449, 3605, 3310, 582, 2170, 2179, 1…\n$ Emp         &lt;dbl&gt; 494.310, 290.820, 336.390, 195.170, 330.290, 548.610, 670.…\n$ EmpR        &lt;dbl&gt; 441.4, 255.4, 270.5, 145.6, 299.0, 415.1, 452.0, 127.6, 21…\n$ EmpRT       &lt;dbl&gt; 338.0, 99.4, 205.9, 116.4, 154.0, 273.7, 219.4, 94.4, 174.…\n$ Pri_Stu     &lt;dbl&gt; 54.175, 33.171, 19.584, 19.249, 33.906, 81.831, 59.151, 18…\n$ Sec_Stu     &lt;dbl&gt; 32.830, 17.505, 17.819, 11.831, 20.548, 44.485, 39.685, 7.…\n$ Household   &lt;dbl&gt; 290.4, 104.6, 148.1, 73.2, 148.7, 211.2, 300.3, 76.1, 139.…\n$ Household_R &lt;dbl&gt; 234.5, 121.9, 135.4, 69.9, 139.4, 211.7, 248.4, 59.6, 110.…\n$ NOIP        &lt;dbl&gt; 101, 34, 53, 18, 106, 115, 214, 17, 55, 70, 44, 84, 74, 17…\n$ Pop_R       &lt;dbl&gt; 670.3, 243.2, 346.0, 184.1, 301.6, 448.2, 475.1, 189.6, 31…\n$ RSCG        &lt;dbl&gt; 5760.60, 2386.40, 3957.90, 768.04, 4009.50, 5220.40, 22604…\n$ Pop_T       &lt;dbl&gt; 910.8, 388.7, 528.3, 281.3, 578.4, 816.3, 998.6, 256.7, 45…\n$ Agri        &lt;dbl&gt; 4942.253, 2357.764, 4524.410, 1118.561, 3793.550, 6430.782…\n$ Service     &lt;dbl&gt; 5414.5, 3814.1, 14100.0, 541.8, 5444.0, 13074.6, 17726.6, …\n$ Disp_Inc    &lt;dbl&gt; 12373, 16072, 16610, 13455, 20461, 20868, 183252, 12379, 1…\n$ RORP        &lt;dbl&gt; 0.7359464, 0.6256753, 0.6549309, 0.6544614, 0.5214385, 0.5…\n$ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651, 0.7…\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nThe zip came with a Dictionary.xlsx the chapter never mentions. It says GDPPC is GDP per capita in RMB for 2005 to 2012, so the 2012 in the file name is the year, not a version. It also flags that three counties, Shuangqing, Beita and Daxiang, share the same disposable income value. That is not a column this exercise uses, but it is the kind of thing worth knowing before the take-home."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#joining-them",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#joining-them",
+    "title": "Hands-on Exercise 4",
+    "section": "2.3 Joining Them",
+    "text": "2.3 Joining Them\n\nhunan &lt;- left_join(hunan, hunan2012) %&gt;%\n  select(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)\n\nnrow(hunan)\n\n[1] 88\n\n\n\n\n\n\n\n\nCautionWhere I differ from the book\n\n\n\nThe book does select(1:4, 7, 15). That works, but only because column 15 happens to be GDPPC after the join. Add one column to the csv and it silently picks the wrong variable. I select by name instead, which is the same result and cannot drift.\nleft_join() found the key on its own because both tables have a County column. I checked that all 88 names match on both sides before trusting that. They do."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#visualising-gdp-per-capita",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#visualising-gdp-per-capita",
+    "title": "Hands-on Exercise 4",
+    "section": "2.4 Visualising GDP per Capita",
+    "text": "2.4 Visualising GDP per Capita\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nbasemap &lt;- tm_shape(hunan) +\n  tm_polygons(fill = \"#F7F4EC\", col = \"grey60\") +\n  tm_text(\"NAME_3\", size = 0.35) +\n  tm_title(\"Hunan, 88 counties\")\n\ngdppc &lt;- tm_shape(hunan) +\n  tm_polygons(fill = \"GDPPC\",\n              fill.scale = tm_scale_intervals(style = \"quantile\", n = 5,\n                                              values = \"brewer.oranges\"),\n              fill.legend = tm_legend(title = \"GDPPC (RMB)\"),\n              col = \"grey60\") +\n  tm_title(\"GDP per capita, 2012\")\n\ntmap_arrange(basemap, gdppc, ncol = 2)\n\n\n\n\nThe high values sit in the middle and the north east, around Changsha. The west and south are poorer. Whether that is a real pattern or the eye finding one is exactly what the next chapter tests, and what this chapter builds the tools for."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#queen",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#queen",
+    "title": "Hands-on Exercise 4",
+    "section": "3.1 Queen",
+    "text": "3.1 Queen\n\nwm_q &lt;- poly2nb(hunan, queen = TRUE)\nsummary(wm_q)\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 448 \nPercentage nonzero weights: 5.785124 \nAverage number of links: 5.090909 \nLink number distribution:\n\n 1  2  3  4  5  6  7  8  9 11 \n 2  2 12 16 24 14 11  4  2  1 \n2 least connected regions:\n30 65 with 1 link\n1 most connected region:\n85 with 11 links\n\n\nEvery county has at least one neighbour, so there are no islands to worry about. The busiest county has eleven.\n\nhunan$County[85]\n\n[1] \"Taoyuan\"\n\nwm_q[[85]]\n\n [1]  1  2  3  5  6 32 56 57 69 75 78\n\nhunan$County[wm_q[[85]]]\n\n [1] \"Anxiang\"  \"Hanshou\"  \"Jinshi\"   \"Linli\"    \"Shimen\"   \"Yuanling\"\n [7] \"Anhua\"    \"Nan\"      \"Cili\"     \"Sangzhi\"  \"Taojiang\"\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nwm_q is a list of 88 integer vectors. Element 85 holds the row numbers of Taoyuan’s neighbours, and looking them up in hunan$County turns numbers into names. That lookup is the whole trick to reading any neighbour object. The numbers are positions, not IDs, so if the rows of hunan were ever reordered every weight matrix would have to be rebuilt.\n\n\nThe full matrix is 88 by 88, so I only show a corner of it.\n\nwm_q_mat &lt;- nb2mat(wm_q, style = \"B\")\nwm_q_mat[1:8, 1:8]\n\n  1 2 3 4 5 6 7 8\n1 0 1 1 1 0 0 0 0\n2 1 0 0 0 0 0 0 0\n3 1 0 0 1 1 0 0 0\n4 1 0 1 0 1 1 0 0\n5 0 0 1 1 0 1 0 0\n6 0 0 0 1 1 0 0 0\n7 0 0 0 0 0 0 0 0\n8 0 0 0 0 0 0 0 0"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#rook",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#rook",
+    "title": "Hands-on Exercise 4",
+    "section": "3.2 Rook",
+    "text": "3.2 Rook\n\nwm_r &lt;- poly2nb(hunan, queen = FALSE)\nsummary(wm_r)\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 440 \nPercentage nonzero weights: 5.681818 \nAverage number of links: 5 \nLink number distribution:\n\n 1  2  3  4  5  6  7  8  9 10 \n 2  2 12 20 21 14 11  3  2  1 \n2 least connected regions:\n30 65 with 1 link\n1 most connected region:\n85 with 10 links\n\n\nSame 88 regions, 440 links instead of 448. Every link is counted from both ends, so that is four county pairs that touch only at a corner."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#plotting-the-links",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#plotting-the-links",
+    "title": "Hands-on Exercise 4",
+    "section": "3.3 Plotting the Links",
+    "text": "3.3 Plotting the Links\nThe links are drawn between polygon centroids, so I need those first.\n\nlongitude &lt;- map_dbl(hunan$geometry, ~st_centroid(.x)[[1]])\nlatitude &lt;- map_dbl(hunan$geometry, ~st_centroid(.x)[[2]])\ncoords &lt;- cbind(longitude, latitude)\nhead(coords)\n\n     longitude latitude\n[1,]  112.1531 29.44362\n[2,]  112.0372 28.86489\n[3,]  111.8917 29.47107\n[4,]  111.7031 29.74499\n[5,]  111.6138 29.49258\n[6,]  111.0341 29.79863\n\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\npar(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 0.5))\nplot(hunan$geometry, border = \"grey70\", main = \"Queen contiguity\")\nplot(wm_q, coords, pch = 19, cex = 0.5, add = TRUE, col = \"#D55E00\")\nplot(hunan$geometry, border = \"grey70\", main = \"Rook contiguity\")\nplot(wm_r, coords, pch = 19, cex = 0.5, add = TRUE, col = \"#0072B2\")\npar(mfrow = c(1, 1))\n\n\n\n\nThe two look identical at this scale. The four missing pairs are corner touches, and a corner touch is a single point, so there is nothing to see."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#finding-the-cut-off",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#finding-the-cut-off",
+    "title": "Hands-on Exercise 4",
+    "section": "4.1 Finding the Cut-off",
+    "text": "4.1 Finding the Cut-off\nThe radius has to be big enough that nobody is left without a neighbour. The book finds it by asking how far each county’s single nearest neighbour is, and taking the largest of those.\n\nk1 &lt;- knn2nb(knearneigh(coords))\nk1dists &lt;- unlist(nbdists(k1, coords, longlat = TRUE))\nsummary(k1dists)\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n  24.79   32.57   38.01   39.07   44.52   61.79 \n\n\nThe largest nearest-neighbour distance is just under 62 km, so 62 km guarantees every county at least one neighbour.\n\nwhich.max(k1dists)\n\n[1] 85\n\nhunan$County[which.max(k1dists)]\n\n[1] \"Taoyuan\"\n\n\n\n\n\n\n\n\nImportantCheck that caught something\n\n\n\nOne county sets the cut-off for all 88. I wanted to know which. It is Taoyuan, the same county that had the most neighbours under Queen. That is not a contradiction. It is the largest county on the map, so it touches many others while its centroid sits far from all of theirs. Contiguity says it is the best connected county in Hunan. Distance says it is the most isolated. Everything about the fixed distance matrix below is shaped by that one row."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#fixed-distance-62-km",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#fixed-distance-62-km",
+    "title": "Hands-on Exercise 4",
+    "section": "4.2 Fixed Distance, 62 km",
+    "text": "4.2 Fixed Distance, 62 km\n\nwm_d62 &lt;- dnearneigh(coords, 0, 62, longlat = TRUE)\nwm_d62\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 324 \nPercentage nonzero weights: 4.183884 \nAverage number of links: 3.681818 \n\n\n\nn_comp &lt;- n.comp.nb(wm_d62)\nn_comp$nc\n\n[1] 1\n\n\nOne connected component, so the graph does not fall apart into islands at this radius."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#adaptive-distance-six-nearest",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#adaptive-distance-six-nearest",
+    "title": "Hands-on Exercise 4",
+    "section": "4.3 Adaptive Distance, Six Nearest",
+    "text": "4.3 Adaptive Distance, Six Nearest\n\nknn6 &lt;- knn2nb(knearneigh(coords, k = 6))\nknn6\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 528 \nPercentage nonzero weights: 6.818182 \nAverage number of links: 6 \nNon-symmetric neighbours list\n\n\nEvery county gets exactly six, whether it is a small county packed around Changsha or a large one in the mountains.\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\npar(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 0.5))\nplot(hunan$geometry, border = \"grey70\", main = \"Fixed distance, 62 km\")\nplot(wm_d62, coords, pch = 19, cex = 0.5, add = TRUE, col = \"#D55E00\")\nplot(hunan$geometry, border = \"grey70\", main = \"Adaptive, k = 6\")\nplot(knn6, coords, pch = 19, cex = 0.5, add = TRUE, col = \"#0072B2\")\npar(mfrow = c(1, 1))\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nThe fixed radius is dense where counties are small and sparse where they are large, because 62 km reaches many small centroids and few large ones. The adaptive rule is the opposite. Everyone has six, so the links are long in the mountains and short around the capital.\nWhich is right depends on what the weights are for. If the question is about physical spillover, distance matters and the fixed radius is honest about it. If the question is about comparing each county to its peers, the adaptive rule keeps the comparison fair."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#inverse-distance",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#inverse-distance",
+    "title": "Hands-on Exercise 4",
+    "section": "5.1 Inverse Distance",
+    "text": "5.1 Inverse Distance\n\ndist &lt;- nbdists(wm_q, coords, longlat = TRUE)\nids &lt;- lapply(dist, function(x) 1 / x)\nids[[1]]\n\n[1] 0.01535405 0.03916350 0.01820896 0.02807922 0.01145113\n\n\nCloser neighbours weigh more. The unit is one over km, which is why the numbers are small."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#row-standardised",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#row-standardised",
+    "title": "Hands-on Exercise 4",
+    "section": "5.2 Row Standardised",
+    "text": "5.2 Row Standardised\n\nrswm_q &lt;- nb2listw(wm_q, style = \"W\", zero.policy = TRUE)\nrswm_q$weights[85]\n\n[[1]]\n [1] 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909\n [7] 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909\n\n\nTaoyuan has 11 neighbours, so each gets one share of that. The row sums to one.\n\nrswm_ids &lt;- nb2listw(wm_q, glist = ids, style = \"B\", zero.policy = TRUE)\nrswm_ids$weights[1]\n\n[[1]]\n[1] 0.01535405 0.03916350 0.01820896 0.02807922 0.01145113\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nstyle = \"W\" divides each neighbour’s weight by the number of neighbours, so a lag becomes an average. style = \"B\" leaves the weights as given, so a lag becomes a sum. The book calls the inverse distance version “row standardised” but passes style = \"B\", so it is not. Its lags will be sums of inverse distances, not averages. That is fine, it just is not what the heading says.\nzero.policy = TRUE tells spdep to carry on if a region has no neighbours. Nobody in Hunan is in that position, so it does nothing here, but leaving it on costs nothing and stops a hard error on a dataset that does have islands."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#row-standardised-lag-the-average-of-neighbours",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#row-standardised-lag-the-average-of-neighbours",
+    "title": "Hands-on Exercise 4",
+    "section": "6.1 Row Standardised Lag, the Average of Neighbours",
+    "text": "6.1 Row Standardised Lag, the Average of Neighbours\n\nGDPPC.lag &lt;- lag.listw(rswm_q, hunan$GDPPC)\nhead(GDPPC.lag)\n\n[1] 24847.20 22724.80 24143.25 27737.50 27270.25 21248.80\n\n\n\nlag.list &lt;- list(hunan$NAME_3, GDPPC.lag)\nlag.res &lt;- as.data.frame(lag.list)\ncolnames(lag.res) &lt;- c(\"NAME_3\", \"lag GDPPC\")\nhunan &lt;- left_join(hunan, lag.res)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#lag-sum-the-total-of-neighbours",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#lag-sum-the-total-of-neighbours",
+    "title": "Hands-on Exercise 4",
+    "section": "6.2 Lag Sum, the Total of Neighbours",
+    "text": "6.2 Lag Sum, the Total of Neighbours\n\nb_weights &lt;- lapply(wm_q, function(x) 0 * x + 1)\nb_weights2 &lt;- nb2listw(wm_q, glist = b_weights, style = \"B\")\nlag_sum &lt;- list(hunan$NAME_3, lag.listw(b_weights2, hunan$GDPPC))\nlag.res &lt;- as.data.frame(lag_sum)\ncolnames(lag.res) &lt;- c(\"NAME_3\", \"lag_sum GDPPC\")\nhunan &lt;- left_join(hunan, lag.res)\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n0 * x + 1 is a small trick. Multiplying the neighbour list by zero and adding one gives a vector of ones the same length as each county’s neighbour list. With style = \"B\" those ones are used as is, so the lag is a plain sum."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#window-average-me-and-my-neighbours",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#window-average-me-and-my-neighbours",
+    "title": "Hands-on Exercise 4",
+    "section": "6.3 Window Average, Me and My Neighbours",
+    "text": "6.3 Window Average, Me and My Neighbours\n\nwm_qs &lt;- include.self(wm_q)\nwm_qs &lt;- nb2listw(wm_qs)\nlag_w_avg_gpdpc &lt;- lag.listw(wm_qs, hunan$GDPPC)\nlag_wm_qs.res &lt;- as.data.frame(list(hunan$NAME_3, lag_w_avg_gpdpc))\ncolnames(lag_wm_qs.res) &lt;- c(\"NAME_3\", \"lag_window_avg GDPPC\")\nhunan &lt;- left_join(hunan, lag_wm_qs.res)"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#window-sum",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#window-sum",
+    "title": "Hands-on Exercise 4",
+    "section": "6.4 Window Sum",
+    "text": "6.4 Window Sum\n\nwm_qs &lt;- include.self(wm_q)\nb_weights &lt;- lapply(wm_qs, function(x) 0 * x + 1)\nb_weights2 &lt;- nb2listw(wm_qs, glist = b_weights, style = \"B\")\nw_sum_gdppc &lt;- list(hunan$NAME_3, lag.listw(b_weights2, hunan$GDPPC))\nw_sum_gdppc.res &lt;- as.data.frame(w_sum_gdppc)\ncolnames(w_sum_gdppc.res) &lt;- c(\"NAME_3\", \"w_sum GDPPC\")\nhunan &lt;- left_join(hunan, w_sum_gdppc.res)\n\n\nhunan %&gt;%\n  st_drop_geometry() %&gt;%\n  select(NAME_3, GDPPC, `lag GDPPC`, `lag_window_avg GDPPC`,\n         `lag_sum GDPPC`, `w_sum GDPPC`) %&gt;%\n  head(8) %&gt;%\n  kable(digits = 0)\n\n\n\n\n\n\n\n\n\n\n\n\nNAME_3\nGDPPC\nlag GDPPC\nlag_window_avg GDPPC\nlag_sum GDPPC\nw_sum GDPPC\n\n\n\n\nAnxiang\n23667\n24847\n24650\n124236\n147903\n\n\nHanshou\n20981\n22725\n22434\n113624\n134605\n\n\nJinshi\n34592\n24143\n26233\n96573\n131165\n\n\nLi\n24473\n27738\n27085\n110950\n135423\n\n\nLinli\n25554\n27270\n26927\n109081\n134635\n\n\nShimen\n27137\n21249\n22230\n106244\n133381\n\n\nLiuyang\n63118\n43747\n47621\n174988\n238106\n\n\nNingxiang\n62202\n33583\n37160\n235079\n297281"
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#comparing-them",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#comparing-them",
+    "title": "Hands-on Exercise 4",
+    "section": "6.5 Comparing Them",
+    "text": "6.5 Comparing Them\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nlag_map &lt;- function(var, title) {\n  tm_shape(hunan) +\n    tm_polygons(fill = var,\n                fill.scale = tm_scale_intervals(style = \"quantile\", n = 5,\n                                                values = \"brewer.oranges\"),\n                fill.legend = tm_legend(title = \"RMB\"),\n                col = \"grey60\") +\n    tm_title(title)\n}\n\ntmap_arrange(lag_map(\"GDPPC\", \"GDPPC\"),\n             lag_map(\"lag GDPPC\", \"Lag, neighbour average\"),\n             lag_map(\"lag_window_avg GDPPC\", \"Window average\"),\n             lag_map(\"lag_sum GDPPC\", \"Lag sum\"),\n             ncol = 2)\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nThe two averages smooth the map. The north east block around Changsha and the south east block around Chenzhou both firm up, and the two lone highs in the west, Lengshuijiang and the county next to Jishou, vanish because their neighbours are poor.\nThe sum does something different. Look at the big county in the north west. It is pale on the GDPPC map and pale on both averages, but dark on the sum, and that is Taoyuan with its eleven neighbours. The sum rewards having many neighbours regardless of how rich they are, so a lag sum map is partly a map of neighbour counts. It carries the shape of the weights matrix as much as the values."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#four-rules-one-table",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#four-rules-one-table",
+    "title": "Hands-on Exercise 4",
+    "section": "7.1 Four Rules, One Table",
+    "text": "7.1 Four Rules, One Table\nThe chapter builds four neighbour definitions and never lines them up.\n\nnb_summary &lt;- tibble(\n  rule = c(\"Queen\", \"Rook\", \"Fixed 62 km\", \"k = 6\"),\n  links = c(sum(card(wm_q)), sum(card(wm_r)),\n            sum(card(wm_d62)), sum(card(knn6))),\n  min_nb = c(min(card(wm_q)), min(card(wm_r)),\n             min(card(wm_d62)), min(card(knn6))),\n  median_nb = c(median(card(wm_q)), median(card(wm_r)),\n                median(card(wm_d62)), median(card(knn6))),\n  max_nb = c(max(card(wm_q)), max(card(wm_r)),\n             max(card(wm_d62)), max(card(knn6)))\n)\nkable(nb_summary)\n\n\n\n\nrule\nlinks\nmin_nb\nmedian_nb\nmax_nb\n\n\n\n\nQueen\n448\n1\n5\n11\n\n\nRook\n440\n1\n5\n10\n\n\nFixed 62 km\n324\n1\n4\n6\n\n\nk = 6\n528\n6\n6\n6\n\n\n\n\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nhunan_nb &lt;- hunan %&gt;%\n  mutate(queen_nb = card(wm_q),\n         d62_nb = card(wm_d62))\n\nnb_map &lt;- function(var, title) {\n  tm_shape(hunan_nb) +\n    tm_polygons(fill = var,\n                fill.scale = tm_scale_intervals(breaks = c(1, 3, 5, 7, 9, 12),\n                                                labels = c(\"1 to 2\", \"3 to 4\", \"5 to 6\",\n                                                           \"7 to 8\", \"9 to 11\"),\n                                                values = \"brewer.purples\"),\n                fill.legend = tm_legend(title = \"Neighbours\"),\n                col = \"grey60\") +\n    tm_title(title)\n}\n\ntmap_arrange(nb_map(\"queen_nb\", \"Neighbours under Queen\"),\n             nb_map(\"d62_nb\", \"Neighbours within 62 km\"),\n             ncol = 2)\n\n\n\n\n\n\n\n\n\n\nTipAlternative explored\n\n\n\nThe table surprised me. I expected the 62 km rule to be the densest, because a radius reaches past the counties you touch. It is the sparsest, 324 links against Queen’s 448, and nobody gets more than six. The reason is scale. Hunan’s counties are mostly 40 to 60 km across, so a 62 km circle around a centroid rarely reaches past the immediate ring, and for the big counties in the west it does not even reach that.\nThe map shows where each rule is generous. Queen hands the most neighbours to the largest counties, because a big polygon touches many small ones. The 62 km rule hands the most to the middle band of small counties, where centroids are packed tightly, and leaves the north west and the far south with one or two. Same province, opposite answers about who is well connected.\nThat matters for the next chapter. Whichever rule I pick decides which counties carry weight in every statistic after it. Queen leans on the big western counties. Fixed distance leans on the small central ones."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#does-the-projection-matter",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#does-the-projection-matter",
+    "title": "Hands-on Exercise 4",
+    "section": "7.2 Does the Projection Matter",
+    "text": "7.2 Does the Projection Matter\nThe book keeps the data in WGS 84 and asks nbdists() for great circle distances with longlat = TRUE. That is correct for distances. But st_centroid() on a lon/lat polygon is not quite right, and sf says so in a warning that warning: false hides. I wanted to know how far off it is.\n\nhunan_utm &lt;- st_transform(hunan, crs = 32649)\ncoords_utm &lt;- st_coordinates(st_centroid(hunan_utm))\n\nk1_utm &lt;- knn2nb(knearneigh(coords_utm))\nk1dists_utm &lt;- unlist(nbdists(k1_utm, coords_utm)) / 1000\nsummary(k1dists_utm)\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n  24.79   32.56   38.00   38.87   44.51   58.34 \n\n\n\ntibble(\n  method = c(\"WGS 84 centroids, great circle\", \"UTM 49N centroids, planar\"),\n  max_nn_km = c(max(k1dists), max(k1dists_utm)),\n  cutoff_county = c(hunan$County[which.max(k1dists)],\n                    hunan$County[which.max(k1dists_utm)])\n) %&gt;% kable(digits = 2)\n\n\n\n\nmethod\nmax_nn_km\ncutoff_county\n\n\n\n\nWGS 84 centroids, great circle\n61.79\nTaoyuan\n\n\nUTM 49N centroids, planar\n58.34\nYuanling\n\n\n\n\n\n\n\n\n\n\n\nTipAlternative explored\n\n\n\nHunan sits at about 112 east and 28 north, inside UTM zone 49 north, which is EPSG 32649. I expected the two methods to agree within a few hundred metres. They do not. Projecting first moves the cut-off from 61.8 km to 58.3 km, and a different county sets it, Yuanling instead of Taoyuan.\nThe distance formula is not the cause. Great circle and planar UTM agree to a few metres over 60 km. The cause is the centroids. st_centroid() on lon/lat treats degrees as if they were flat, and for a big irregular county that puts the centroid a few kilometres from where it belongs. Taoyuan is big and irregular, so its centroid moved the most, and its nearest neighbour got closer.\nThe book’s 62 km radius still works, because 62 is above both numbers. But the warning it hides is not about tiny errors. It is about which county is the loneliest, and that changed. I am projecting first from now on."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#a-preview-of-morans-i",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#a-preview-of-morans-i",
+    "title": "Hands-on Exercise 4",
+    "section": "7.3 A Preview of Moran’s I",
+    "text": "7.3 A Preview of Moran’s I\nThe next chapter asks whether GDPPC is spatially autocorrelated. The lag I just computed is half of that answer already. If a county’s value predicts its neighbours’ average, the points on this plot line up.\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nlag_df &lt;- hunan %&gt;%\n  st_drop_geometry() %&gt;%\n  select(NAME_3, GDPPC, lag = `lag GDPPC`)\n\nfit &lt;- lm(lag ~ GDPPC, data = lag_df)\n\nggplot(lag_df, aes(GDPPC, lag)) +\n  scale_x_continuous(expand = expansion(mult = c(0.05, 0.12))) +\n  geom_hline(yintercept = mean(lag_df$lag), colour = \"grey70\", linetype = 2) +\n  geom_vline(xintercept = mean(lag_df$GDPPC), colour = \"grey70\", linetype = 2) +\n  geom_point(colour = \"#D55E00\", alpha = 0.7) +\n  geom_smooth(method = \"lm\", se = FALSE, colour = \"#0072B2\", linewidth = 0.7) +\n  geom_text(data = lag_df %&gt;% filter(GDPPC &gt; 60000 | lag &gt; 45000),\n            aes(label = NAME_3), size = 3, vjust = -0.8) +\n  labs(x = \"GDPPC (RMB)\", y = \"Neighbour average GDPPC (RMB)\",\n       title = \"Each county against the average of its Queen neighbours\",\n       subtitle = paste0(\"Slope of the fitted line, \",\n                         round(coef(fit)[2], 3))) +\n  theme_minimal()\n\n\n\n\n\n\n\n\n\n\nTipAlternative explored\n\n\n\nThe slope of that line, with both variables standardised, is Moran’s I. With raw RMB it is not quite the same number but it is the same idea and the same sign. The slope here is 0.30 and positive, so rich counties do tend to have rich neighbours.\nThe labelled points are the ones off the line. Changsha, Wangcheng, Liuyang and Ningxiang sit top right, rich with rich neighbours, which is the capital and its ring. Zixing and Lengshuijiang sit bottom right, rich counties surrounded by poor ones. Both are mining and industrial towns, so the wealth is local to the pit and does not spill over. Pingjiang is the reverse, a poor county whose neighbours average over 55,000 because it borders the Changsha ring.\nThose off-line counties are what the local statistics in the next chapter pick out one by one. I am leaving the number itself for that chapter so I can compute it properly with a test."
+  },
+  {
+    "objectID": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#limitations",
+    "href": "Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html#limitations",
+    "title": "Hands-on Exercise 4",
+    "section": "7.4 Limitations",
+    "text": "7.4 Limitations\n\nThe centroids in Parts 2 and 3 were computed on lon/lat, which moves them by a few kilometres for the big counties. Part 6 shows that is enough to change which county sets the distance cut-off.\nThe 62 km cut-off is set by a single county. A different boundary file with a different centroid for that county would change the radius for everyone.\nRow standardising treats every neighbour as equal within a county. Inverse distance does not, but the book then uses it with binary style, so neither version here is a distance weighted average.\nAll of this is 2012 GDPPC. One year, one variable, no sense yet of whether the pattern is stable."
+  },
+  {
     "objectID": "Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.html",
     "href": "Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.html",
     "title": "Hands-on Exercise 2",
