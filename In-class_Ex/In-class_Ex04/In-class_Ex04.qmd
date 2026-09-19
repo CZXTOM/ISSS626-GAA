@@ -1,0 +1,184 @@
+---
+title: "In-class Ex04"
+author: "ZeXin Chen"
+format: html
+date: "September 18, 2026"
+date-modified: today
+execute: 
+  echo: true
+  eval: true
+  warning: false
+  freeze: true
+  message: false
+---
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)
+```
+
+::: panel-tabset
+## Importing Hunan shapefile
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial", layer = "Hunan")
+```
+
+## Importing Hunan_2012 table
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+## Joining Hunan and Hunan_2012
+
+```{r}
+hunan_sf <- left_join(hunan, hunan2012) %>%
+  select(1:3, 7, 15, 16, 31, 32)
+```
+
+:::
+
+## Mapping GDPPC
+
+::: panel-tabset
+## The code
+
+```{r}
+#| fig-width: 16
+#| fig-height: 6
+#| echo: false
+basemap <- tm_shape(hunan_sf) +
+  tm_polygons() +
+  tm_text("NAME_3", size = 0.5)
+
+gdppc <- qtm(hunan_sf, "GDPPC") +
+  tm_layout(
+    legend.position = c("left", "bottom"))
+
+tmap_arrange(basemap, gdppc, asp = 1, ncol = 2)
+```
+:::
+
+## Converting to SpatialPolygonDataFrame
+
+::: {.callout-note}
+GWmodel presently is built around the older sp and not sf formats for handling spatial data in R.
+:::
+
+```{r}
+hunan_sp <- hunan_sf %>%
+  as_Spatial()
+```
+
+# Geographically Weighted Summary Statistics (GWSS) with adaptive bandwidth
+
+## Determine adaptive bandwidth
+
+::: panel-tabset
+## Cross-validation
+
+```{r}
+bw_CV <- bw.gwr(GDPPC ~ 1,
+                data = hunan_sp,
+                approach = "CV",
+                adaptive = TRUE,
+                kernel = "bisquare",
+                longlat = T)
+```
+
+```{r}
+bw_CV
+```
+
+## AICc
+
+```{r}
+bw_AIC <- bw.gwr(GDPPC ~ 1,
+                 data = hunan_sp,
+                 approach = "AIC",
+                 adaptive = TRUE,
+                 kernel = "bisquare",
+                 longlat = T)
+```
+
+```{r}
+bw_AIC
+```
+:::
+
+## Computing geographically weighted summary statistics
+
+The code chunk below computes geographically weighted summary statistics by using `gwss()` of GWmodel package. The analysis is performed using adaptive distance weighted. The distance is derived using AICc method and the kernel method used is **bisquare**.
+
+```{r}
+gwstat <- gwss(data = hunan_sp,
+               vars = "GDPPC",
+               bw = bw_AIC,
+               kernel = "bisquare",
+               quantile = TRUE,
+               adaptive = TRUE,
+               longlat = T)
+```
+
+::: {.callout-note}
+gwss support five kernel methods, namely gaussian, exponential, bisquare, tricube, and boxcar. Repeat the code chunk above with different kernel methods and compare their results visually.
+:::
+
+## Preparing the output data
+
+::: {.callout-important}
+`gwss()` with quantile argument computes eight local summary statistics, namely local means, local standard deviations, local variance, local skew, local coefficients of variation, local Median, local medians, local interquartile ranges, and local quantile imbalances. They are output in SDF data frame.
+:::
+
+Code chunk below is used to extract SDF data table from **gwss** object output from `gwss()` for subsequent geovisilisation. It will be converted into data.frame by using `as.data.frame()`.
+
+```{r}
+gwstat_df <- as.data.frame(gwstat$SDF)
+```
+
+Next, `cbind()` is used to append the newly derived data.frame onto *hunan_sf* sf data.frame.
+
+```{r}
+hunan_gstat <- cbind(hunan_sf, gwstat_df)
+```
+
+## Visualising geographically weighted summary statistics
+
+::: panel-tabset
+## The Geographically Weighted Mean
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+tm_shape(hunan_gstat) +
+  tm_polygons(fill = "GDPPC_LM",
+              fill.scale = tm_scale_intervals(
+                style = "quantile",
+                n = 5,
+                values = "brewer.blues"),
+              fill.legend = tm_legend(
+                title = "local Mean")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Distribution of geographically wieghted mean") +
+  tm_layout(legend.position = c("left", "bottom"))
+```
+
+## The code
+
+```{r}
+#| eval: false
+tm_shape(hunan_gstat) +
+  tm_polygons(fill = "GDPPC_LM",
+              fill.scale = tm_scale_intervals(
+                style = "quantile",
+                n = 5,
+                values = "brewer.blues"),
+              fill.legend = tm_legend(
+                title = "local Mean")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Distribution of geographically wieghted mean") +
+  tm_layout(legend.position = c("left", "bottom"))
+```
+:::
+
