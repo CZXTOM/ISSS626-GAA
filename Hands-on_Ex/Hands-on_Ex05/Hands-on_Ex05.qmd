@@ -1,0 +1,1518 @@
+---
+title: "Hands-on Exercise 5"
+subtitle: "Global and Local Measures of Spatial Autocorrelation"
+author: "ZeXin Chen"
+format:
+  html:
+    toc: true
+    number-sections: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
+date: "September 23, 2026"
+date-modified: today
+execute:
+  echo: true
+  eval: true
+  warning: false
+  freeze: true
+  message: false
+---
+
+::: {.pagefacts}
+[88 counties of Hunan, GDP per capita 2012]{.fact}
+[Hunan shapefile, Hunan_2012.csv]{.fact .data}
+[`sf` `spdep` `sfdep` `tmap` `tidyverse` `knitr` `ggrepel`]{.fact .pkg}
+:::
+
+# Overview
+
+Hands-on Exercise 4 built the spatial weights for the 88 counties of Hunan and ended on a scatter plot with a slope of 0.30. This exercise puts a test behind that number and then takes it apart county by county. It covers two chapters of the book.
+
+Chapter 9 asks the global question. Is GDP per capita spread across Hunan at random, or do rich counties sit next to rich counties? Moran's I and Geary's C each give one answer for the whole province, and the correlogram shows how far the pattern reaches.
+
+Chapter 10 asks the local question. If there is clustering, where is it? Local Moran's I finds clusters and outliers, and Getis-Ord Gi* finds hot spots and cold spots.
+
+# Loading the Packages
+
+**sfdep** is the new package. It wraps **spdep** so that neighbours, weights and local statistics live as columns inside an sf data frame, which fits a tidyverse pipe much better than spdep's separate objects. Chapter 9 uses **spdep** directly and chapter 10 uses **sfdep**, so both are loaded. **sf**, **tmap** and **tidyverse** do the same jobs as before, **knitr** prints tables with `kable()`, and **ggrepel** labels points without covering them.
+
+```{r}
+#| output: false
+pacman::p_load(sf, spdep, sfdep, tmap, tidyverse, knitr, ggrepel)
+```
+
+# Preparing the Data
+
+Same three steps as Exercise 4, plus a projection at the start.
+
+::: panel-tabset
+## Importing the Hunan shapefile
+
+`st_read()` of **sf** reads the county boundaries, and `st_transform()` projects them to UTM zone 49 north straight away.
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial", layer = "Hunan") %>%
+  st_transform(crs = 32649)
+```
+
+## Importing the Hunan_2012 table
+
+`read_csv()` of **readr** reads the 2012 indicators.
+
+```{r}
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+## Performing the relational join
+
+`left_join()` of **dplyr** attaches the indicators by the shared `County` column, and `select()` keeps the name columns and GDPPC.
+
+```{r}
+hunan <- left_join(hunan, hunan2012) %>%
+  select(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)
+```
+
+:::
+
+::: {.callout-caution}
+## Where I differ from the book
+Chapter 9 keeps the data in WGS 84 and chapter 10 projects it to EPSG 32650, UTM zone 50 north. Hunan runs from about 108.8 to 114.3 degrees east, and zone 50 starts at 114, so almost the whole province sits in zone 49. I use EPSG 32649, the zone I settled on in Exercise 4, for both chapters. Contiguity does not care about the projection, but the distance band in the hot spot section does, so my cut-off will not match the book's 60,799.91 m exactly.
+
+I also select columns by name rather than `select(1:4, 7, 15)`, for the same reason as last time. The positions only work while the csv keeps its current layout.
+:::
+
+# Visualising Regional Development Indicator
+
+`tm_shape()` and `tm_polygons()` of **tmap** draw GDPPC twice, once with equal intervals and once with quantiles, and `tmap_arrange()` puts them side by side. Both legends sit outside their maps.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+equal <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(style = "equal", n = 5,
+                                              values = "brewer.blues"),
+              fill.legend = tm_legend(title = "GDPPC (RMB)",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Equal interval classification", size = 1.3, fontface = "bold")
+
+quantile <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "brewer.blues"),
+              fill.legend = tm_legend(title = "GDPPC (RMB)",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Quantile classification", size = 1.3, fontface = "bold")
+
+tmap_arrange(equal, quantile, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+equal <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(style = "equal", n = 5,
+                                              values = "brewer.blues"),
+              fill.legend = tm_legend(title = "GDPPC (RMB)",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Equal interval classification", size = 1.3, fontface = "bold")
+
+quantile <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5,
+                                              values = "brewer.blues"),
+              fill.legend = tm_legend(title = "GDPPC (RMB)",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Quantile classification", size = 1.3, fontface = "bold")
+
+tmap_arrange(equal, quantile, ncol = 2)
+```
+:::
+
+The two maps tell different stories from the same numbers. Changsha at 88,656 RMB stretches the equal interval range so far that most of the province lands in the bottom class, and only Changsha, its immediate ring and one county in the south east stand out. Quantile classes put 17 or 18 counties in each band, which brings out a gradient, a dark block in the north east, a second darker patch in the south east and a mostly pale west.
+
+The book asks whether the maps show clusters, outliers, hot spots or cold spots. The quantile map certainly looks clustered in the north east, and a few dark counties sit alone among pale ones, which could be outliers. But a choropleth cannot say whether that pattern is stronger than chance would produce, and the class breaks alone changed what I saw. That is the question the rest of this exercise answers with a test.
+
+# Global Measures of Spatial Autocorrelation
+
+## Computing Contiguity Spatial Weights
+
+`poly2nb()` of **spdep** builds the Queen contiguity neighbour list, where two counties are neighbours if they share any boundary point.
+
+```{r}
+wm_q <- poly2nb(hunan, queen = TRUE)
+summary(wm_q)
+```
+
+`r sum(card(wm_q))` links for 88 counties, the same as the unprojected Queen list in Exercise 4. Projecting did not change who touches whom.
+
+## Row-standardised Weights Matrix
+
+`nb2listw()` of **spdep** turns the neighbour list into weights. `style = "W"` divides each county's weights by its number of neighbours, so the lag of a county is the plain average of its neighbours.
+
+```{r}
+rswm_q <- nb2listw(wm_q, style = "W", zero.policy = TRUE)
+rswm_q
+```
+
+::: {.callout-note}
+## Learning diary
+`zero.policy = TRUE` tells spdep to accept a county with no neighbours instead of stopping with an error. Hunan has none, so it changes nothing here, but it is the book's habit and it would matter for any data with islands.
+:::
+
+# Global Measures of Spatial Autocorrelation: Moran's I
+
+## Moran's I Test
+
+`moran.test()` of **spdep** computes Moran's I and tests it against the null hypothesis that GDPPC is spread across the counties at random. The default alternative is `"greater"`, so the test only looks for positive autocorrelation.
+
+```{r}
+moran_gdppc <- moran.test(hunan$GDPPC,
+                          listw = rswm_q,
+                          zero.policy = TRUE,
+                          na.action = na.omit)
+moran_gdppc
+```
+
+Moran's I is `r round(moran_gdppc$estimate[["Moran I statistic"]], 3)` against an expected value of `r round(moran_gdppc$estimate[["Expectation"]], 4)` under randomness, and the p-value is `r format.pval(moran_gdppc$p.value, digits = 2)`. That is far below 0.05, so I reject the null hypothesis. GDPPC in Hunan is positively autocorrelated. Rich counties tend to sit next to rich counties and poor next to poor.
+
+::: {.callout-important}
+## Check that caught something
+Exercise 4 predicted this number before any test was run. The slope of the neighbour average on GDPPC came out at 0.301, and I argued that with row-standardised weights that slope is Moran's I itself. The test above returns the same value to three decimals, so the argument holds. The scatter plot was already the whole global statistic. What `moran.test()` adds is the p-value.
+:::
+
+## Computing Monte Carlo Moran's I
+
+`moran.mc()` of **spdep** runs a permutation test instead. It shuffles the GDPPC values across the 88 counties 999 times, computes Moran's I for each shuffle, and asks how often a shuffle beats the real map. `set.seed()` fixes the shuffles so the result is the same on every render.
+
+```{r}
+set.seed(1234)
+bperm <- moran.mc(hunan$GDPPC,
+                  listw = rswm_q,
+                  nsim = 999,
+                  zero.policy = TRUE,
+                  na.action = na.omit)
+bperm
+```
+
+The observed I ranks `r bperm$parameter` out of `r length(bperm$res)`, above every one of the 999 shuffles, which gives a p-value of `r bperm$p.value`. Same conclusion as the analytical test. The clustering is not something a random arrangement of these values produces.
+
+::: {.callout-note}
+## Learning diary
+The p-value of 0.001 is not a measurement, it is a floor. With 999 shuffles plus the real map there are 1,000 values, and the best rank the real map can get is first, so the smallest p-value possible is 1/1000. Running 9,999 shuffles would lower the floor, not change the conclusion. The analytical test can go much smaller because it leans on a normal approximation instead of counting.
+:::
+
+## Visualising Monte Carlo Moran's I
+
+`mean()`, `var()` and `summary()` describe the 999 simulated values. `bperm$res` also holds the observed I as its last element, which is why the book slices `[1:999]`.
+
+```{r}
+mean(bperm$res[1:999])
+var(bperm$res[1:999])
+summary(bperm$res[1:999])
+```
+
+The book asks for the histogram to be redrawn with **ggplot2** instead of base graphics. `geom_histogram()` draws the 999 simulated values, the dashed line marks the expected value under randomness, -1/(n - 1), and the orange line marks the observed I.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+mc_moran <- tibble(sim = bperm$res[1:999])
+
+ggplot(mc_moran, aes(x = sim)) +
+  geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+  geom_vline(xintercept = -1 / (nrow(hunan) - 1),
+             linetype = 2, colour = "grey30") +
+  geom_vline(xintercept = bperm$statistic,
+             colour = "#D55E00", linewidth = 1) +
+  annotate("text", x = bperm$statistic, y = Inf,
+           label = paste0("Observed I = ", round(bperm$statistic, 3)),
+           hjust = 1.05, vjust = 1.5, colour = "#D55E00", size = 4.5) +
+  labs(x = "Simulated Moran's I", y = "Frequency",
+       title = "Moran's I, 999 shuffles against the real map",
+       subtitle = "Dashed line, expected I under randomness, -1/87") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+mc_moran <- tibble(sim = bperm$res[1:999])
+
+ggplot(mc_moran, aes(x = sim)) +
+  geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+  geom_vline(xintercept = -1 / (nrow(hunan) - 1),
+             linetype = 2, colour = "grey30") +
+  geom_vline(xintercept = bperm$statistic,
+             colour = "#D55E00", linewidth = 1) +
+  annotate("text", x = bperm$statistic, y = Inf,
+           label = paste0("Observed I = ", round(bperm$statistic, 3)),
+           hjust = 1.05, vjust = 1.5, colour = "#D55E00", size = 4.5) +
+  labs(x = "Simulated Moran's I", y = "Frequency",
+       title = "Moran's I, 999 shuffles against the real map",
+       subtitle = "Dashed line, expected I under randomness, -1/87") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+The shuffles centre on `r round(mean(bperm$res[1:999]), 4)`, close to the expected -1/87, with a standard deviation of about `r round(sd(bperm$res[1:999]), 3)`. The highest of the 999 is `r round(max(bperm$res[1:999]), 3)`. The observed 0.301 sits past all of them, which is what a rank of 1000 looks like. The simulated distribution also leans slightly to the right, a reminder that the normal approximation behind `moran.test()` is only an approximation.
+
+# Global Measures of Spatial Autocorrelation: Geary's C
+
+## Geary's C Test
+
+`geary.test()` of **spdep** computes Geary's C. It runs the opposite way to Moran's I. The expected value under randomness is 1, values below 1 mean neighbours are similar, and values above 1 mean they are different.
+
+```{r}
+geary_gdppc <- geary.test(hunan$GDPPC, listw = rswm_q)
+geary_gdppc
+```
+
+Geary's C is `r round(geary_gdppc$estimate[["Geary C statistic"]], 3)`, below the expected 1, with a p-value of `r format.pval(geary_gdppc$p.value, digits = 2)`. So Geary's C also rejects randomness, and it points the same way as Moran's I, positive autocorrelation.
+
+::: {.callout-note}
+## Learning diary
+The two statistics are built differently, which is why they can disagree in general. Moran's I multiplies each county's deviation from the mean by its neighbours' deviations, so it is a covariance and responds to the overall trend across the province. Geary's C squares the difference between each pair of neighbours directly, so it is closer to a local variance and responds more to sharp differences between next-door counties. Here they agree.
+:::
+
+## Computing Monte Carlo Geary's C
+
+`geary.mc()` of **spdep** runs the same permutation idea for Geary's C.
+
+```{r}
+set.seed(1234)
+bperm_c <- geary.mc(hunan$GDPPC,
+                    listw = rswm_q,
+                    nsim = 999)
+bperm_c
+```
+
+::: {.callout-caution}
+## Where I differ from the book
+The book stores this result in `bperm` again, overwriting the Moran's I permutations. I call it `bperm_c` so both stay available, which the side-by-side reading below needs.
+:::
+
+The observed C ranks `r bperm_c$parameter`, lower than every shuffle. For Geary's C small is the extreme end, so a rank of 1 gives the same floor p-value of `r bperm_c$p.value`.
+
+## Visualising the Monte Carlo Geary's C
+
+The same summaries and the same histogram, this time with the expected value at 1.
+
+```{r}
+mean(bperm_c$res[1:999])
+var(bperm_c$res[1:999])
+summary(bperm_c$res[1:999])
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+mc_geary <- tibble(sim = bperm_c$res[1:999])
+
+ggplot(mc_geary, aes(x = sim)) +
+  geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+  geom_vline(xintercept = 1, linetype = 2, colour = "grey30") +
+  geom_vline(xintercept = bperm_c$statistic,
+             colour = "#D55E00", linewidth = 1) +
+  annotate("text", x = bperm_c$statistic, y = Inf,
+           label = paste0("Observed C = ", round(bperm_c$statistic, 3)),
+           hjust = -0.05, vjust = 1.5, colour = "#D55E00", size = 4.5) +
+  labs(x = "Simulated Geary's C", y = "Frequency",
+       title = "Geary's C, 999 shuffles against the real map",
+       subtitle = "Dashed line, expected C under randomness, 1") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+mc_geary <- tibble(sim = bperm_c$res[1:999])
+
+ggplot(mc_geary, aes(x = sim)) +
+  geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+  geom_vline(xintercept = 1, linetype = 2, colour = "grey30") +
+  geom_vline(xintercept = bperm_c$statistic,
+             colour = "#D55E00", linewidth = 1) +
+  annotate("text", x = bperm_c$statistic, y = Inf,
+           label = paste0("Observed C = ", round(bperm_c$statistic, 3)),
+           hjust = -0.05, vjust = 1.5, colour = "#D55E00", size = 4.5) +
+  labs(x = "Simulated Geary's C", y = "Frequency",
+       title = "Geary's C, 999 shuffles against the real map",
+       subtitle = "Dashed line, expected C under randomness, 1") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+Mirror image of the Moran plot. The shuffles centre on `r round(mean(bperm_c$res[1:999]), 3)`, the lowest of them is `r round(min(bperm_c$res[1:999]), 3)`, and the observed 0.691 sits below every one.
+
+# Spatial Correlogram
+
+A correlogram repeats the global statistic at higher orders of contiguity. Lag 1 is the direct neighbours, lag 2 is the neighbours of neighbours that are not already direct neighbours, and so on out to lag 6. It shows how far the similarity reaches before it fades.
+
+The book plots the result with base `plot()`. I pull the estimate, expectation and variance out of the object and redraw it with **ggplot2**, so each lag gets a two standard deviation bar and a colour for whether it is significant at 0.05. `corr_table()` does the extraction once for both statistics.
+
+```{r}
+corr_table <- function(corr) {
+  res <- as.data.frame(corr$res)
+  names(res) <- c("estimate", "expectation", "variance")
+  res %>%
+    mutate(lag = seq_len(n()),
+           sd = sqrt(variance),
+           z = (estimate - expectation) / sd,
+           signif = if_else(abs(z) > qnorm(0.975),
+                            "Significant at 0.05", "Not significant"))
+}
+
+plot_corr <- function(tbl, ylab, title) {
+  ggplot(tbl, aes(x = lag, y = estimate, colour = signif)) +
+    geom_hline(aes(yintercept = expectation), linetype = 2, colour = "grey40") +
+    geom_errorbar(aes(ymin = estimate - 2 * sd, ymax = estimate + 2 * sd),
+                  width = 0.15, linewidth = 0.8) +
+    geom_point(size = 3.5) +
+    scale_colour_manual(values = c("Significant at 0.05" = "#D55E00",
+                                   "Not significant" = "grey55")) +
+    scale_x_continuous(breaks = 1:6) +
+    labs(x = "Lag (order of contiguity)", y = ylab, colour = NULL,
+         title = title,
+         subtitle = "Bars span two standard deviations, dashed line is the value under randomness") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(size = 15, face = "bold"),
+          legend.position = "top")
+}
+```
+
+## Compute Moran's I Correlogram
+
+`sp.correlogram()` of **spdep** computes Moran's I at lags 1 to 6 with row-standardised weights.
+
+```{r}
+MI_corr <- sp.correlogram(wm_q,
+                          hunan$GDPPC,
+                          order = 6,
+                          method = "I",
+                          style = "W")
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.5
+plot_corr(corr_table(MI_corr), "Moran's I",
+          "Moran's I correlogram of GDPPC")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+plot_corr(corr_table(MI_corr), "Moran's I",
+          "Moran's I correlogram of GDPPC")
+```
+:::
+
+`print()` shows the numbers behind the plot, with a p-value for each lag.
+
+```{r}
+print(MI_corr)
+```
+
+Similarity fades with distance and then flips. Lags 1 to 3 are positive and significant, 0.30, 0.21 and 0.07, so a county resembles its neighbours and its neighbours' neighbours. Lag 4 is indistinguishable from randomness. Lags 5 and 6 are negative and significant, so counties five steps apart tend to be unlike each other. That is what one rich core and a poorer periphery look like from the inside. Five steps out from the Changsha block reaches the far west and south of the province, the other end of the income scale.
+
+The p-values in `print()` are two-sided and uncorrected. Six tests at 0.05 is a mild multiple testing problem, but lags 1, 2 and 5 are so far below any threshold that it does not change the story.
+
+## Compute Geary's C Correlogram
+
+The same six lags with Geary's C.
+
+```{r}
+GC_corr <- sp.correlogram(wm_q,
+                          hunan$GDPPC,
+                          order = 6,
+                          method = "C",
+                          style = "W")
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.5
+plot_corr(corr_table(GC_corr), "Geary's C",
+          "Geary's C correlogram of GDPPC")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+plot_corr(corr_table(GC_corr), "Geary's C",
+          "Geary's C correlogram of GDPPC")
+```
+:::
+
+```{r}
+print(GC_corr)
+```
+
+Geary's C tells the same story in reverse, below 1 at lags 1 and 2, near 1 at lags 3 and 4, and above 1 at lag 5. It is less sure at the edges. Lag 3 is significant for Moran's I but not here, and lag 6 is significant for Moran's I but not here either. That fits the learning diary above. Geary's C looks at squared differences between the counties being compared, so it is more sensitive to how alike those particular pairs are and less to the broad north east against south west trend that Moran's I picks up.
+
+# Local Indicators of Spatial Association (LISA)
+
+The global tests say GDPPC clusters somewhere in Hunan. They cannot say where. A LISA breaks the global statistic into one value per county. Anselin's condition for calling something a LISA is that the local values are proportional to the global one, so every local Moran's I is that county's share of the 0.30.
+
+## Computing Contiguity Spatial Weights with sfdep
+
+`st_contiguity()` of **sfdep** builds the Queen neighbour list and `st_weights()` row-standardises it. Both go straight into the sf data frame as list columns, and `.before = 1` puts them at the front.
+
+```{r}
+hunan_q <- hunan %>%
+  mutate(nb = st_contiguity(geometry),
+         wt = st_weights(nb, style = "W"),
+         .before = 1)
+
+summary(hunan_q$nb)
+```
+
+::: {.callout-caution}
+## Where I differ from the book
+The book names this object `wm_q`, which replaces the spdep neighbour list of the same name from chapter 9. I call it `hunan_q`, because it is the Hunan data with weights attached rather than a weights object, and because the correlograms above still need the old `wm_q`. The summary matches the spdep one, `r sum(card(hunan_q$nb))` links, since sfdep calls spdep underneath.
+:::
+
+## Computing Local Moran's I
+
+`local_moran()` of **sfdep** computes local Moran's I for every county and runs a permutation test for each. It returns a data frame per county, and `unnest()` of **tidyr** spreads that into ordinary columns.
+
+```{r}
+set.seed(1234)
+lisa <- hunan_q %>%
+  mutate(local_moran = local_moran(GDPPC, nb, wt, nsim = 999),
+         .before = 1) %>%
+  unnest(local_moran)
+
+glimpse(lisa)
+```
+
+The average of the 88 `ii` values is `r round(mean(lisa$ii), 3)`, the global Moran's I from chapter 9. That is Anselin's condition checked on real numbers. With row-standardised weights the local values average out to the global one exactly.
+
+::: {.callout-caution}
+## Where I differ from the book
+The book uses `nsim = 99`. With 99 permutations the smallest permutation p-value possible is 0.01, and with 88 counties tested at once that floor is too coarse to tell the strong clusters apart. 999 permutations cost a second or two here, so I use 999 throughout this exercise, including the Gi* section.
+:::
+
+The columns that matter are these.
+
+| Column | Meaning |
+|---|---|
+| `ii` | Local Moran's I for the county |
+| `eii` | Its expected value under randomness |
+| `var_ii` | Its variance |
+| `z_ii` | The standard deviate, `(ii - eii) / sqrt(var_ii)` |
+| `p_ii` | Analytical p-value from `z_ii` |
+| `p_ii_sim` | Permutation p-value from the `nsim` shuffles |
+| `p_folded_sim` | Permutation p-value using the folded method of pysal |
+| `mean`, `median`, `pysal` | The quadrant label, High-High, Low-Low, Low-High or High-Low, with the centre taken at the mean, the median or pysal's rule |
+
+## Mapping Local Moran's I Values
+
+`tm_polygons()` maps `ii` with pretty breaks. `midpoint = 0` centres the diverging palette on zero, so blue always means a county similar to its neighbours and red always means one that differs from them.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+tm_shape(lisa) +
+  tm_polygons(fill = "ii",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 5,
+                                              midpoint = 0,
+                                              values = "brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Local Moran's I",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Moran's I of GDPPC, Queen contiguity",
+           size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(lisa) +
+  tm_polygons(fill = "ii",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 5,
+                                              midpoint = 0,
+                                              values = "brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Local Moran's I",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Moran's I of GDPPC, Queen contiguity",
+           size = 1.5, fontface = "bold")
+```
+:::
+
+Most of the province sits just above zero, pale blue, so most counties are mildly like their neighbours and contribute a little to the global 0.30. The strong contributions all come from one place, a block of dark blue counties around Changsha with local values of 3 to 5. The red counties, with negative values, sit around the edge of that block and down the south east, counties that differ from their neighbours.
+
+## Mapping Local Moran's I p-values
+
+The same map for `p_ii`, with fixed breaks at the usual significance levels. The reversed reds make the smallest p-values darkest.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+tm_shape(lisa) +
+  tm_polygons(fill = "p_ii",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values of local Moran's I, Queen contiguity",
+           size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(lisa) +
+  tm_polygons(fill = "p_ii",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values of local Moran's I, Queen contiguity",
+           size = 1.5, fontface = "bold")
+```
+:::
+
+## Mapping Both Local Moran's I Values and p-values
+
+`tmap_arrange()` puts the two maps side by side so a county's value and its significance can be read together.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+ii_map <- tm_shape(lisa) +
+  tm_polygons(fill = "ii",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 5,
+                                              midpoint = 0,
+                                              values = "brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Local Moran's I",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Moran's I", size = 1.3, fontface = "bold")
+
+p_ii_map <- tm_shape(lisa) +
+  tm_polygons(fill = "p_ii",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values", size = 1.3, fontface = "bold")
+
+tmap_arrange(ii_map, p_ii_map, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+ii_map <- tm_shape(lisa) +
+  tm_polygons(fill = "ii",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 5,
+                                              midpoint = 0,
+                                              values = "brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Local Moran's I",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Moran's I", size = 1.3, fontface = "bold")
+
+p_ii_map <- tm_shape(lisa) +
+  tm_polygons(fill = "p_ii",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values", size = 1.3, fontface = "bold")
+
+tmap_arrange(ii_map, p_ii_map, ncol = 2)
+```
+:::
+
+Side by side, the dark blue block and the dark red p-values line up almost exactly, so the strongest local values are also the most significant. The south west is the interesting part. Its local values are small, but two counties there are still significant, because a modest positive value among consistently poor neighbours is still unlikely by chance. The value map alone would miss them.
+
+# Preparing and Visualising the LISA Map
+
+## Plotting the Moran Scatterplot
+
+`st_lag()` of **sfdep** computes the spatial lag, the average GDPPC of each county's neighbours.
+
+```{r}
+lisa <- lisa %>%
+  mutate(lag_GDPPC = st_lag(GDPPC, nb, wt),
+         .before = 1)
+```
+
+::: {.callout-caution}
+## Where I differ from the book
+The book follows `st_lag()` with `unnest(lag_GDPPC)`. `st_lag()` already returns a plain numeric vector, one value per county, so there is nothing to unnest and I leave that step out.
+:::
+
+The Moran scatterplot puts each county's GDPPC on the x axis and its lag on the y axis. Dashed lines cut it into four quadrants, and the colour is the quadrant sfdep assigned in the `mean` column. `geom_text_repel()` of **ggrepel** names the counties in the two outlier quadrants.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+ggplot(lisa, aes(x = GDPPC, y = lag_GDPPC)) +
+  geom_hline(yintercept = mean(lisa$GDPPC), linetype = 2, colour = "grey50") +
+  geom_vline(xintercept = mean(lisa$GDPPC), linetype = 2, colour = "grey50") +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", linewidth = 0.7) +
+  geom_point(aes(colour = mean), size = 2.5, alpha = 0.85) +
+  geom_text_repel(data = filter(lisa, mean %in% c("High-Low", "Low-High"),
+                                GDPPC > 40000 | lag_GDPPC > 40000),
+                  aes(label = NAME_3), size = 3.5, seed = 42,
+                  box.padding = 0.5, min.segment.length = 0) +
+  scale_colour_manual(values = c("High-High" = "#D55E00", "Low-Low" = "#0072B2",
+                                 "Low-High" = "#56B4E9", "High-Low" = "#CC79A7")) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "GDPPC (RMB)", y = "Spatial lag of GDPPC (RMB)", colour = "Quadrant",
+       title = "Moran scatterplot with LISA quadrants") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+ggplot(lisa, aes(x = GDPPC, y = lag_GDPPC)) +
+  geom_hline(yintercept = mean(lisa$GDPPC), linetype = 2, colour = "grey50") +
+  geom_vline(xintercept = mean(lisa$GDPPC), linetype = 2, colour = "grey50") +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", linewidth = 0.7) +
+  geom_point(aes(colour = mean), size = 2.5, alpha = 0.85) +
+  geom_text_repel(data = filter(lisa, mean %in% c("High-Low", "Low-High"),
+                                GDPPC > 40000 | lag_GDPPC > 40000),
+                  aes(label = NAME_3), size = 3.5, seed = 42,
+                  box.padding = 0.5, min.segment.length = 0) +
+  scale_colour_manual(values = c("High-High" = "#D55E00", "Low-Low" = "#0072B2",
+                                 "Low-High" = "#56B4E9", "High-Low" = "#CC79A7")) +
+  scale_x_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "GDPPC (RMB)", y = "Spatial lag of GDPPC (RMB)", colour = "Quadrant",
+       title = "Moran scatterplot with LISA quadrants") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+::: {.callout-caution}
+## Where I differ from the book
+The book's note says the upper right quadrant holds counties with high GDPPC "surrounded by average-level neighbouring areas". That is not what the quadrant means. Upper right is above the mean on both axes, so it is a county with high GDPPC whose neighbours are also high on average, a High-High county. Counties surrounded by average neighbours would sit near the horizontal dashed line, not in a corner.
+:::
+
+The book draws the horizontal line at the mean of the lag. I draw both lines at the mean of GDPPC, because that is where the quadrant labels are cut. spdep, which sfdep calls underneath, centres GDPPC at its mean and then lags the centred values, so a county counts as having high neighbours when its lag is above the mean of GDPPC, not above the mean of the lag. `summarise()` counts how many counties' labels agree with each line.
+
+```{r}
+lisa %>%
+  st_drop_geometry() %>%
+  mutate(label_high = str_detect(mean, "-High$")) %>%
+  summarise(`Line at mean of GDPPC` = sum((lag_GDPPC > mean(GDPPC)) == label_high),
+            `Line at mean of the lag` = sum((lag_GDPPC > mean(lag_GDPPC)) == label_high))
+```
+
+Both lines agree with all 88 labels. No county's lag falls in the narrow gap between the mean of GDPPC and the mean of the lag, so for this data the book's line and mine draw the same quadrants. The difference only matters when a county sits in that gap.
+
+The plot itself shows where the 0.30 comes from. Most counties sit bottom left, poor with poor neighbours, and the High-High group around Changsha pulls the line up. Pingjiang is the clearest Low-High county, a poor county whose neighbours average over 55,000 RMB. Zixing and Lengshuijiang are the clearest High-Low counties, rich mining towns among poorer ones. Which of these are significant is the LISA map's job.
+
+## Plotting the Moran Scatterplot with Standardised Variable
+
+`scale()` turns GDPPC into z-scores, so the axes read in standard deviations and the quadrant lines sit at zero. `st_lag()` then lags the z-scores themselves.
+
+```{r}
+lisa <- lisa %>%
+  mutate(z_GDPPC = as.numeric(scale(GDPPC)),
+         z_lag_GDPPC = st_lag(z_GDPPC, nb, wt),
+         .before = 1)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+ggplot(lisa, aes(x = z_GDPPC, y = z_lag_GDPPC)) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", linewidth = 0.7) +
+  geom_point(aes(colour = mean), size = 2.5, alpha = 0.85) +
+  scale_colour_manual(values = c("High-High" = "#D55E00", "Low-Low" = "#0072B2",
+                                 "Low-High" = "#56B4E9", "High-Low" = "#CC79A7")) +
+  labs(x = "Standardised GDPPC", y = "Standardised spatial lag of GDPPC",
+       colour = "Quadrant",
+       title = "Standardised Moran scatterplot with LISA quadrants") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+ggplot(lisa, aes(x = z_GDPPC, y = z_lag_GDPPC)) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", linewidth = 0.7) +
+  geom_point(aes(colour = mean), size = 2.5, alpha = 0.85) +
+  scale_colour_manual(values = c("High-High" = "#D55E00", "Low-Low" = "#0072B2",
+                                 "Low-High" = "#56B4E9", "High-Low" = "#CC79A7")) +
+  labs(x = "Standardised GDPPC", y = "Standardised spatial lag of GDPPC",
+       colour = "Quadrant",
+       title = "Standardised Moran scatterplot with LISA quadrants") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+::: {.callout-caution}
+## Where I differ from the book
+The book standardises the lag separately, `scale(lag_GDPPC)`, which divides it by its own standard deviation. That changes the slope of the fitted line into the plain correlation between a county and its neighbours, `r round(cor(lisa$GDPPC, lisa$lag_GDPPC), 3)`, and puts the horizontal zero at the mean of the lag, which is not where the quadrant labels are cut.
+
+Anselin's standardised Moran scatterplot lags the z-scores instead. Both axes are then divided by the same standard deviation, so the slope stays at Moran's I and zero on both axes is exactly the quadrant boundary. The fitted slope here is `r round(coef(lm(z_lag_GDPPC ~ z_GDPPC, data = lisa))[2], 3)`, the same as `moran.test()`. I also wrap `scale()` in `as.numeric()`, because it returns a one-column matrix rather than a vector.
+:::
+
+## Preparing LISA Map Classes
+
+`signif` holds the significance level so it is set in one place.
+
+```{r}
+signif <- 0.05
+```
+
+`mutate()` keeps the quadrant from the `mean` column where `p_ii` is below `signif` and labels everything else Insignificant. `factor()` fixes the order of the classes, which also fixes the order of the colours on the map.
+
+```{r}
+lisa <- lisa %>%
+  mutate(LISA_cluster = if_else(p_ii < signif,
+                                as.character(mean),
+                                "Insignificant"),
+         LISA_cluster = factor(LISA_cluster,
+                               levels = c("Insignificant", "Low-Low", "Low-High",
+                                          "High-Low", "High-High")))
+
+count(st_drop_geometry(lisa), LISA_cluster)
+```
+
+::: {.callout-note}
+## Learning diary
+The book defines `signif <- 0.05` and then writes `p_ii < 0.05` anyway, so changing the variable would not change the map. I use the variable.
+:::
+
+## Plotting and Visualising the LISA Map
+
+`tm_scale_categorical()` gives each class a fixed colour. The palette follows the scatterplot, and Insignificant is a light grey so the significant counties stand out.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+lisa_map <- tm_shape(lisa) +
+  tm_polygons(fill = "LISA_cluster",
+              fill.scale = tm_scale_categorical(
+                values = c("grey90",   # Insignificant
+                           "#0072B2",  # Low-Low
+                           "#56B4E9",  # Low-High
+                           "#CC79A7",  # High-Low
+                           "#D55E00"   # High-High
+                           )),
+              fill.legend = tm_legend(title = "LISA cluster",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Moran's I clusters (p < 0.05)", size = 1.5, fontface = "bold")
+
+lisa_map
+```
+
+## The Code
+
+```{r}
+#| eval: false
+lisa_map <- tm_shape(lisa) +
+  tm_polygons(fill = "LISA_cluster",
+              fill.scale = tm_scale_categorical(
+                values = c("grey90",   # Insignificant
+                           "#0072B2",  # Low-Low
+                           "#56B4E9",  # Low-High
+                           "#CC79A7",  # High-Low
+                           "#D55E00"   # High-High
+                           )),
+              fill.legend = tm_legend(title = "LISA cluster",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Moran's I clusters (p < 0.05)", size = 1.5, fontface = "bold")
+
+lisa_map
+```
+:::
+
+`filter()` and `kable()` list the counties behind the coloured polygons.
+
+```{r}
+lisa %>%
+  st_drop_geometry() %>%
+  filter(LISA_cluster != "Insignificant") %>%
+  arrange(LISA_cluster, p_ii) %>%
+  transmute(County = NAME_3,
+            Cluster = LISA_cluster,
+            GDPPC,
+            `Neighbour average` = round(lag_GDPPC),
+            `Local Moran's I` = round(ii, 2),
+            p_ii = signif(p_ii, 2)) %>%
+  kable()
+```
+
+Thirteen counties are significant at 0.05, which answers the book's question about what the map shows. Nine High-High counties form a single block, Changsha, Wangcheng, Xiangtan, Zhuzhou, Miluo, Liuyang, Liling, Xiangyin and Shaoshan, the capital and the Changsha, Zhuzhou and Xiangtan area around it. That is the only significant high cluster in Hunan. Two Low-High counties sit on its edge. Pingjiang has a GDPPC of 17,252 RMB against a neighbour average of 55,158, and Taojiang is the same story on a smaller scale. They are the poor counties next to the rich core. Wugang and Longhui in the south west are the only significant Low-Low cluster.
+
+No High-Low county is significant. Zixing and Lengshuijiang stand far from the line on the scatterplot, but neither passes 0.05, so being far from the line is not the same as being significant.
+
+Xiangtan and Zhuzhou are worth a second look. Their local values are small, 0.25 and 0.33, yet their p-values are among the smallest on the list. Their own GDPPC is only a little above average, but their neighbours are so consistently rich that even a small local value is hard to get by chance. Significance comes from the neighbourhood as much as from the county.
+
+# Hot Spot and Cold Spot Analysis (HCSA)
+
+Local Moran's I asks whether a county is like its neighbours. Getis-Ord Gi* asks a narrower question, whether a county and its neighbours together are unusually high or unusually low. It cannot see outliers, a rich county among poor ones, but it separates hot spots from cold spots cleanly.
+
+## Deriving Distance Weight Matrix
+
+Gi* is normally run with distance based weights. The book builds two.
+
+::: panel-tabset
+## Computing fixed distance weights
+
+`critical_threshold()` of **sfdep** finds the smallest distance at which every county has at least one neighbour.
+
+```{r}
+ct <- critical_threshold(st_geometry(hunan))
+ct
+```
+
+`st_dist_band()` makes every county within that distance a neighbour, `include_self()` adds each county to its own neighbour list, and `st_weights()` row-standardises.
+
+```{r}
+hunan_fdw <- hunan %>%
+  mutate(nb = include_self(st_dist_band(st_geometry(geometry), upper = ct)),
+         wt = st_weights(nb, style = "W"),
+         .before = 1)
+```
+
+## Computing adaptive distance weights
+
+`st_knn()` of **sfdep** takes each county's six nearest neighbours instead of a fixed radius.
+
+```{r}
+hunan_adw <- hunan %>%
+  mutate(nb = include_self(st_knn(st_geometry(geometry), k = 6)),
+         wt = st_weights(nb, style = "W"),
+         .before = 1)
+```
+
+:::
+
+::: {.callout-note}
+## Learning diary
+`include_self()` is the star in Gi*. The plain Gi statistic compares a county's neighbours with the rest of the province and leaves the county out. Gi* counts the county as part of its own neighbourhood, so a single very rich county can make its own area a hot spot. For Changsha, which is far richer than anything around it, that difference matters.
+
+My cut-off is `r round(ct / 1000, 1)` km, against the book's 60.8 km in zone 50. That also does not match Exercise 4, where the same UTM 49N projection with `st_centroid()` gave 58.3 km. The chunk below computes the cut-off from centroids and from `st_point_on_surface()`, to see which point sfdep is measuring from.
+:::
+
+```{r}
+nn_cutoff <- function(pts) {
+  xy <- st_coordinates(pts)
+  max(unlist(nbdists(knn2nb(knearneigh(xy, k = 1)), xy)))
+}
+
+round(c(centroid = nn_cutoff(st_centroid(st_geometry(hunan))),
+        point_on_surface = nn_cutoff(st_point_on_surface(st_geometry(hunan))),
+        sfdep = ct))
+```
+
+The sfdep cut-off matches the point on surface version exactly, and the centroid version reproduces the 58.3 km from Exercise 4. So sfdep measures from `st_point_on_surface()`, a point guaranteed to fall inside each polygon, not from the centroid. The difference between the two exercises was never the projection. It was the point each county is reduced to.
+
+## Computing Local Gi* Statistics
+
+`local_gstar_perm()` of **sfdep** computes Gi* for each county on the fixed distance weights and runs a permutation test for each, and `unnest()` spreads the result into columns.
+
+```{r}
+set.seed(1234)
+HCSA_fdw <- hunan_fdw %>%
+  mutate(gistar = local_gstar_perm(GDPPC, nb, wt, nsim = 999),
+         .before = 1) %>%
+  unnest(gistar)
+
+glimpse(HCSA_fdw)
+```
+
+`gi_star` is the statistic, a z-score, so large positive values mark high-value neighbourhoods and large negative values low-value ones. `p_sim` is its permutation p-value. `cluster` is a High or Low label, and it is not what it looks like, as the check below shows.
+
+## Mapping Gi* with Fixed Distance Weights
+
+`midpoint = 0` again centres the palette, and the reversed red-blue scale makes positive Gi* red, the usual colour for heat.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "gi_star",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 6,
+                                              midpoint = 0,
+                                              values = "-brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Gi*",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title(paste0("Gi* of GDPPC, fixed distance of ", round(ct / 1000, 1), " km"), size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "gi_star",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 6,
+                                              midpoint = 0,
+                                              values = "-brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Gi*",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title(paste0("Gi* of GDPPC, fixed distance of ", round(ct / 1000, 1), " km"), size = 1.5, fontface = "bold")
+```
+:::
+
+::: {.callout-caution}
+## Where I differ from the book
+The book hard-codes the distance into the title as "d = 60799.91m". Mine is built from `ct`, so the title stays true if the data or the projection changes.
+:::
+
+## Mapping Local Gi* p-values
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "p_sim",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "Simulated p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values of local Gi*, fixed distance", size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "p_sim",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "Simulated p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values of local Gi*, fixed distance", size = 1.5, fontface = "bold")
+```
+:::
+
+## Mapping Both Gi* Values and p-values
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+Gi_star_map <- tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "gi_star",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 5,
+                                              midpoint = 0,
+                                              values = "-brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Local Gi*",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Gi* of GDPPC", size = 1.3, fontface = "bold")
+
+p_values_map <- tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "p_sim",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values of local Gi*", size = 1.3, fontface = "bold")
+
+tmap_arrange(Gi_star_map, p_values_map, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+Gi_star_map <- tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "gi_star",
+              fill.scale = tm_scale_intervals(style = "pretty", n = 5,
+                                              midpoint = 0,
+                                              values = "-brewer.rd_bu"),
+              fill.legend = tm_legend(title = "Local Gi*",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Local Gi* of GDPPC", size = 1.3, fontface = "bold")
+
+p_values_map <- tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "p_sim",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                labels = c("below 0.001", "0.001 to 0.01", "0.01 to 0.05",
+                           "0.05 to 0.1", "above 0.1"),
+                values = "-brewer.reds"),
+              fill.legend = tm_legend(title = "p-value",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("p-values of local Gi*", size = 1.3, fontface = "bold")
+
+tmap_arrange(Gi_star_map, p_values_map, ncol = 2)
+```
+:::
+
+Gi* is highest, 5 to 6, in the counties around Changsha, and a band of positive values runs from there down the east side of the province. The west is negative almost everywhere. On the p-value map the Changsha area is the strongest signal, but two other patches in the west, one in the north west and one in the south west, are also below 0.05. On the value map they are pale blue, low-value neighbourhoods.
+
+## Plotting and Visualising the HCSA Map
+
+`case_when()` labels each county. Above 0.05 it is Insignificant, otherwise it is a hot spot when Gi* is positive and a cold spot when Gi* is negative. I wrap the rule in `classify_hcsa()` because Beyond the Exercise applies it again to the adaptive weights.
+
+```{r}
+classify_hcsa <- function(df) {
+  df %>%
+    mutate(HCSA_cluster = case_when(
+             p_sim > signif ~ "Insignificant",
+             gi_star > 0 ~ "Hot spot",
+             gi_star < 0 ~ "Cold spot"),
+           HCSA_cluster = factor(HCSA_cluster,
+                                 levels = c("Insignificant", "Hot spot", "Cold spot")),
+           .before = 1)
+}
+
+HCSA_fdw <- classify_hcsa(HCSA_fdw)
+count(st_drop_geometry(HCSA_fdw), HCSA_cluster)
+```
+
+::: {.callout-caution}
+## Where I differ from the book
+The book decides hot or cold from the `cluster` column. I decide it from the sign of Gi*, for the reason in the check below. The book's version also has a fourth branch, `TRUE ~ "Other"`, which can never fire, and colour comments that say Low-Low and High-High next to the hot and cold colours, left over from the LISA map. I drop the dead branch and name the colours for what they are.
+:::
+
+::: {.callout-important}
+## Check that caught something
+My first run used the book's rule, and the adaptive weights map in Beyond the Exercise came back with cold spots right next to Changsha, in the middle of the richest part of Hunan. That cannot be a cold spot. Reading the `glimpse()` output above, `cluster` does not follow Gi* at all. Anxiang has a positive Gi* and is labelled Low, and Hanshou has a negative Gi* and is labelled Low too. What `cluster` does track is the county's own GDPPC against the provincial mean, the same idea as the High and Low halves of a LISA quadrant.
+
+So the book's rule calls a poor county a cold spot even when it sits inside a significant high-value neighbourhood, and a rich county a hot spot inside a low one. Gi* is a statement about the neighbourhood, not the county, so its sign is what should decide. The table below crosses the two for the significant counties.
+:::
+
+```{r}
+HCSA_fdw %>%
+  st_drop_geometry() %>%
+  mutate(`Own GDPPC above mean` = GDPPC > mean(GDPPC)) %>%
+  count(cluster, `Own GDPPC above mean`)
+
+HCSA_fdw %>%
+  st_drop_geometry() %>%
+  filter(p_sim <= signif, (gi_star > 0) != (cluster == "High")) %>%
+  transmute(County = NAME_3, GDPPC, `Gi*` = round(gi_star, 2),
+            cluster, p_sim) %>%
+  kable()
+```
+
+The first table settles it. All 56 counties labelled Low are below the provincial mean GDPPC and all 32 labelled High are above it, so `cluster` is the county's own value and nothing else. On the fixed distance weights only one significant county is affected, Jishou. Its own GDPPC of 31,537 RMB is above average, so the book's rule calls it a hot spot, but its Gi* is -1.37, a low-value neighbourhood, so it is a cold spot. On the adaptive weights the book's rule mislabelled more counties, which is how I noticed.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+HCSA_map <- tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "HCSA_cluster",
+              fill.scale = tm_scale_categorical(
+                values = c("grey90",   # Insignificant
+                           "#D55E00",  # Hot spot
+                           "#0072B2"   # Cold spot
+                           )),
+              fill.legend = tm_legend(title = "HCSA cluster",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Hot and cold spots of GDPPC (p < 0.05)", size = 1.5, fontface = "bold")
+
+HCSA_map
+```
+
+## The Code
+
+```{r}
+#| eval: false
+HCSA_map <- tm_shape(HCSA_fdw) +
+  tm_polygons(fill = "HCSA_cluster",
+              fill.scale = tm_scale_categorical(
+                values = c("grey90",   # Insignificant
+                           "#D55E00",  # Hot spot
+                           "#0072B2"   # Cold spot
+                           )),
+              fill.legend = tm_legend(title = "HCSA cluster",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Hot and cold spots of GDPPC (p < 0.05)", size = 1.5, fontface = "bold")
+
+HCSA_map
+```
+:::
+
+`tmap_arrange()` puts the Gi* values next to the classes, so the strength of each hot spot shows alongside its label.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+tmap_arrange(Gi_star_map, HCSA_map, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tmap_arrange(Gi_star_map, HCSA_map, ncol = 2)
+```
+:::
+
+```{r}
+HCSA_fdw %>%
+  st_drop_geometry() %>%
+  filter(HCSA_cluster != "Insignificant") %>%
+  arrange(HCSA_cluster, desc(abs(gi_star))) %>%
+  transmute(County = NAME_3,
+            Class = HCSA_cluster,
+            GDPPC,
+            `Gi*` = round(gi_star, 2),
+            p_sim) %>%
+  kable()
+```
+
+Seven hot spots and seven cold spots. The hot spots are Wangcheng, Changsha, Xiangyin, Shaoshan, Miluo, Ningxiang and Xiangtan, with Wangcheng and Changsha strongest at Gi* above 5. The cold spots form two groups in the west, Yongshun and Sangzhi in the north west with Jishou just south of them, and Longhui, Suining, Dongkou and Wugang in the south west.
+
+Against the LISA map, the two methods agree on the core and differ at the edges. Ningxiang is a hot spot but not High-High, while Liuyang, Zhuzhou and Liling are High-High but not hot spots. Gi* finds a cold spot in the north west that LISA missed. And Gi* cannot flag Pingjiang or Taojiang as different from their surroundings, because a poor county surrounded by rich ones simply becomes part of its neighbourhood's average. Each method is doing what it was built to do, which is why the chapter teaches both.
+
+# Beyond the Exercise
+
+## Does Moran's I Survive a Different Weights Matrix
+
+Exercise 4 ended on the point that the weights matrix is a decision, not a fact. Every test above used Queen contiguity. `moran.test()` is run again below with four of the neighbour rules from that exercise, all row-standardised, to see whether the answer depends on the choice. The distance rules use the county centroids in UTM 49N and the cut-off `ct` from the hot spot section.
+
+```{r}
+coords <- st_centroid(st_geometry(hunan))
+
+w_list <- list(
+  "Queen contiguity"     = nb2listw(poly2nb(hunan, queen = TRUE), style = "W"),
+  "Rook contiguity"      = nb2listw(poly2nb(hunan, queen = FALSE), style = "W"),
+  "Fixed distance"       = nb2listw(dnearneigh(coords, 0, ct),
+                                    style = "W", zero.policy = TRUE),
+  "Six nearest neighbours" = nb2listw(knn2nb(knearneigh(coords, k = 6)),
+                                      style = "W")
+)
+
+moran_by_w <- imap_dfr(w_list, function(lw, rule) {
+  t <- moran.test(hunan$GDPPC, listw = lw, zero.policy = TRUE)
+  tibble(`Neighbour rule` = rule,
+         `Average neighbours` = round(mean(card(lw$neighbours)), 1),
+         `Moran's I` = round(t$estimate[["Moran I statistic"]], 3),
+         `Standard deviate` = round(t$statistic[[1]], 2),
+         `p-value` = format.pval(t$p.value, digits = 2, eps = 1e-8))
+})
+
+kable(moran_by_w)
+```
+
+Every rule gives a positive Moran's I far beyond chance, so the headline does not depend on the weights. The size does. Queen, Rook and six nearest neighbours land within 0.02 of each other, between 0.30 and 0.32, but the fixed distance rule gives 0.41. It is also the rule with the fewest neighbours, 3.8 on average, all of them close. Fewer and nearer neighbours are more alike, so the statistic goes up.
+
+::: {.callout-tip}
+## Alternative explored
+Exercise 4 ended on the claim that the weights matrix is a decision, not a fact. This is that claim measured. The decision did not change whether GDPPC is clustered, but it moved Moran's I by more than a third, from 0.30 to 0.41. So a single Moran's I without its weights rule is not a number anyone can compare, and a report should name the rule every time it quotes one.
+:::
+
+## Analytical Against Permutation p-values
+
+The LISA map above follows the book and uses `p_ii`, the analytical p-value. That p-value comes from treating `z_ii` as a standard normal, which assumes GDPPC behaves roughly normally. It does not. Changsha is at 88,656 RMB and the median county is near 20,000, so the distribution has a long right tail. The permutation p-value `p_ii_sim` makes no such assumption, and Anselin (1995) recommends the permutation approach for exactly this reason.
+
+There is a second problem. The map runs 88 tests at 0.05 at once, so about four counties would come out significant even if GDPPC were scattered at random. `p.adjust()` with the false discovery rate method is one standard correction for that.
+
+`summarise()` counts how many counties fall below 0.05 under each version.
+
+```{r}
+lisa %>%
+  st_drop_geometry() %>%
+  summarise(`Analytical, p_ii` = sum(p_ii < signif),
+            `Permutation, p_ii_sim` = sum(p_ii_sim < signif),
+            `Folded permutation, p_folded_sim` = sum(p_folded_sim < signif),
+            `Permutation after FDR correction` =
+              sum(p.adjust(p_ii_sim, method = "fdr") < signif)) %>%
+  pivot_longer(everything(),
+               names_to = "p-value used",
+               values_to = "Counties below 0.05") %>%
+  kable()
+```
+
+The two cluster maps side by side, the book's on the left and the permutation version on the right, on the same colours.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+lisa <- lisa %>%
+  mutate(LISA_sim = if_else(p_ii_sim < signif,
+                            as.character(mean), "Insignificant"),
+         LISA_sim = factor(LISA_sim, levels = levels(LISA_cluster)))
+
+cluster_map <- function(var, title) {
+  tm_shape(lisa) +
+    tm_polygons(fill = var,
+                fill.scale = tm_scale_categorical(
+                  values = c("grey90",   # Insignificant
+                           "#0072B2",  # Low-Low
+                           "#56B4E9",  # Low-High
+                           "#CC79A7",  # High-Low
+                           "#D55E00"   # High-High
+                           )),
+                fill.legend = tm_legend(title = "LISA cluster",
+                                        position = tm_pos_out("right", "center")),
+                col = "grey60") +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(cluster_map("LISA_cluster", "Analytical p-values"),
+             cluster_map("LISA_sim", "Permutation p-values"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+lisa <- lisa %>%
+  mutate(LISA_sim = if_else(p_ii_sim < signif,
+                            as.character(mean), "Insignificant"),
+         LISA_sim = factor(LISA_sim, levels = levels(LISA_cluster)))
+
+cluster_map <- function(var, title) {
+  tm_shape(lisa) +
+    tm_polygons(fill = var,
+                fill.scale = tm_scale_categorical(
+                  values = c("grey90",   # Insignificant
+                           "#0072B2",  # Low-Low
+                           "#56B4E9",  # Low-High
+                           "#CC79A7",  # High-Low
+                           "#D55E00"   # High-High
+                           )),
+                fill.legend = tm_legend(title = "LISA cluster",
+                                        position = tm_pos_out("right", "center")),
+                col = "grey60") +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(cluster_map("LISA_cluster", "Analytical p-values"),
+             cluster_map("LISA_sim", "Permutation p-values"),
+             ncol = 2)
+```
+:::
+
+::: {.callout-tip}
+## Alternative explored
+The choice of p-value changes the map. The analytical p-value finds 13 significant counties, the permutation p-value 16, and the folded permutation p-value 23, because the folded version is effectively one-sided and roughly halves every p-value. Between the two maps, the permutation version drops the Low-High county west of Changsha and adds a larger Low-Low area in the south west and a new one in the north west. The High-High core around Changsha is the only part that survives every version.
+
+After the false discovery rate correction, none of the 88 counties is significant. With 999 permutations no p-value can go below about 0.001, and the correction needs a whole run of values that small before it lets any through. The correction also assumes the tests are independent, which they are not, since neighbouring counties share neighbours. So the honest reading is that the LISA map is a guide to where to look, not a list of proven clusters. Anselin says the same in the 1995 paper, where he treats the local p-values as approximate and suggests a Bonferroni style bound as the conservative option.
+:::
+
+## Fixed Against Adaptive Hot Spots
+
+The book builds `hunan_adw`, the six nearest neighbour weights, and never uses it. The same Gi* test on those weights shows whether the hot and cold spots depend on the neighbour rule.
+
+```{r}
+set.seed(1234)
+HCSA_adw <- hunan_adw %>%
+  mutate(gistar = local_gstar_perm(GDPPC, nb, wt, nsim = 999),
+         .before = 1) %>%
+  unnest(gistar) %>%
+  classify_hcsa()
+
+count(st_drop_geometry(HCSA_adw), HCSA_cluster)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+hcsa_map <- function(df, title) {
+  tm_shape(df) +
+    tm_polygons(fill = "HCSA_cluster",
+                fill.scale = tm_scale_categorical(
+                  values = c("grey90",   # Insignificant
+                           "#D55E00",  # Hot spot
+                           "#0072B2"   # Cold spot
+                           )),
+                fill.legend = tm_legend(title = "HCSA cluster",
+                                        position = tm_pos_out("right", "center")),
+                col = "grey60") +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(hcsa_map(HCSA_fdw, paste0("Fixed distance, ", round(ct / 1000, 1), " km")),
+             hcsa_map(HCSA_adw, "Six nearest neighbours"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+hcsa_map <- function(df, title) {
+  tm_shape(df) +
+    tm_polygons(fill = "HCSA_cluster",
+                fill.scale = tm_scale_categorical(
+                  values = c("grey90",   # Insignificant
+                           "#D55E00",  # Hot spot
+                           "#0072B2"   # Cold spot
+                           )),
+                fill.legend = tm_legend(title = "HCSA cluster",
+                                        position = tm_pos_out("right", "center")),
+                col = "grey60") +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(hcsa_map(HCSA_fdw, paste0("Fixed distance, ", round(ct / 1000, 1), " km")),
+             hcsa_map(HCSA_adw, "Six nearest neighbours"),
+             ncol = 2)
+```
+:::
+
+::: {.callout-tip}
+## Alternative explored
+The hot and cold spots move with the neighbour rule. With six nearest neighbours there are `r sum(HCSA_adw$HCSA_cluster == "Hot spot")` hot spots and `r sum(HCSA_adw$HCSA_cluster == "Cold spot")` cold spots, against `r sum(HCSA_fdw$HCSA_cluster == "Hot spot")` and `r sum(HCSA_fdw$HCSA_cluster == "Cold spot")` on the fixed band. The hot core grows east to take in Pingjiang and west to take in Taojiang, the south western cold belt gets longer, and the north western cold group shrinks to a single county.
+
+The north west is where the rules disagree most. Its counties are large and far apart, so the fixed band gives them few neighbours and a handful of poor counties dominate their own neighbourhood. Six nearest neighbours always reach six counties, often further away, which dilutes them. The core around Changsha and the south western belt survive both rules, so those are the results I would stand behind. The north western cold spot depends on the rule.
+:::
+
+# Limitations
+
+- One year and one variable. Everything here is GDPPC in 2012, with no sense of whether the clusters are stable.
+- The local maps run 88 tests at once. After a false discovery rate correction nothing survives, so the LISA and Gi* maps are exploratory, a guide to where to look.
+- Permutation p-values move with the seed and the number of shuffles. Wugang and Sangzhi sit at exactly 0.050, and my rule counts 0.050 as significant, so another seed could drop them.
+- The weights rule changes the answers. Moran's I ranges from 0.30 to 0.41 across four reasonable rules, and the hot and cold spots shift between fixed and adaptive weights.
+- County boundaries are administrative. The rich core around Changsha is made of small units while the western counties are large, so the same wealth is counted in more units in the east. Different boundaries could change which clusters come out significant.
+
+# Reflections
+
+Four things I am taking from this one.
+
+**The scatter plot was already the test.** Exercise 4's fitted slope was 0.301. `moran.test()` returned 0.301, and the 88 local values average to 0.301. The two chapters are one idea seen from three sides, and seeing that made the local statistics much easier to trust.
+
+**Read the output, not the column name.** A column called `cluster` with values High and Low looks like the answer to the hot spot question. It is the county's own value against the mean. I only found out because a map showed cold spots next to Changsha, which could not be right. Checking `glimpse()` against what the map claimed caught it.
+
+**Significant depends on how you ask.** Thirteen counties, sixteen, twenty-three or none, depending on the p-value and the correction. The High-High core survives every version. The edges do not, and the write-up should say which parts are solid and which are fragile.
+
+**LISA and Gi* answer different questions.** LISA picks out Pingjiang, a poor county beside a rich core. Gi* cannot single it out, but it finds a cold spot in the north west that LISA missed. Neither map is the answer on its own, and using both is what the chapter is really teaching.

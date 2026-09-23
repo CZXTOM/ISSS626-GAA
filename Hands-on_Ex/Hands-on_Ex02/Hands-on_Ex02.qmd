@@ -2,18 +2,21 @@
 title: "Hands-on Exercise 2"
 subtitle: "Spatial Point Patterns Analysis"
 author: "ZeXin Chen"
-date: "2026-09-05"
-date-modified: "last-modified"
 format:
   html:
     toc: true
     number-sections: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
+date: "September 5, 2026"
+date-modified: today
 execute:
   echo: true
   eval: true
   warning: false
-  message: false
   freeze: true
+  message: false
 ---
 
 ::: {.pagefacts}
@@ -22,15 +25,15 @@ execute:
 [`sf` `spatstat` `terra` `tmap` `tidyverse`]{.fact .pkg}
 :::
 
-# Getting Started
+# Overview
 
 The question behind both chapters is simple. Are childcare centres spread evenly across Singapore, and if not, where do they bunch up.
 
 Chapter 4 answers the first half by looking at how many centres sit in each part of the map. Chapter 5 answers it a different way, by looking at how far each centre is from its neighbours. The two get at the same thing from different directions, and the readings turn out to have something to say about whether they can be separated at all.
 
-## Installing and Loading R Packages
+# Loading the Packages
 
-Five packages this time. **sf** for the vector data, **spatstat** for everything to do with point patterns, **terra** to turn spatstat's raster output into something tmap can draw, **tmap** for the maps and **tidyverse** for the wrangling.
+Five packages this time, loaded with `p_load()` of **pacman**, which also installs any that are missing. **sf** for the vector data, **spatstat** for everything to do with point patterns, **terra** to turn spatstat's raster output into something tmap can draw, **tmap** for the maps and **tidyverse** for the wrangling.
 
 ```{r}
 pacman::p_load(sf, spatstat, terra, tmap, tidyverse)
@@ -43,18 +46,21 @@ Loading terra after spatstat prints a masking warning. terra takes over eight na
 It matters because this exercise calls `rescale()` on point patterns a lot. Writing `rescale.ppp()` in full, as the book does, sidesteps it. I did not understand why the book was being so explicit until I read that warning properly.
 :::
 
-# Part 1, First-order Analysis
+# Preparing the Data
 
-First order means intensity. How many points per unit of area, and does that number change as you move across the map.
+data.gov.sg offers both KML and geojson. I took the geojson, and that decision removes a chunk of the book's code. Both layers are reprojected to SVY21 (EPSG 3414) as they are read, so every distance later on is in metres.
 
-## Importing the Data
+::: panel-tabset
+## Importing the childcare centres
 
-data.gov.sg offers both KML and geojson. I took the geojson, and that decision removes a chunk of the book's code.
+`st_read()` of **sf** reads the geojson and `st_transform()` reprojects it to EPSG 3414.
 
 ```{r}
 childcare_sf <- st_read("data/geospatial/ChildCareServices.geojson") %>%
   st_transform(crs = 3414)
 ```
+
+`names()` lists the attribute columns, to see what the geojson carries compared with the book's KML.
 
 ```{r}
 names(childcare_sf)
@@ -67,12 +73,18 @@ Same finding as Exercise 1. The book reads the KML, which buries every attribute
 So I skip the helper and drop rvest from the package list. Two other differences. The KML is XYZ, which is why the book calls `st_zm(drop = TRUE)` to strip the elevation, and my geojson is already XY so that step is unnecessary. And there is a `DESCRIPTION` column here holding the literal text "Child Care Services", which is not the same thing as the KML's `Description` blob at all.
 :::
 
+## Importing the subzone boundary
+
+The Master Plan 2019 subzones come in the same way, again reprojected to EPSG 3414.
+
 ```{r}
 mpsz_sf <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson") %>%
   st_transform(crs = 3414)
 ```
 
-The offshore subzones have to go before anything else. They sit far from the mainland and would stretch the observation window across a lot of empty sea, which drags every density estimate down.
+## Dropping the offshore islands
+
+The offshore subzones have to go before anything else. They sit far from the mainland and would stretch the observation window across a lot of empty sea, which drags every density estimate down. `filter()` of **dplyr** drops them, and the two `nrow()` calls show the count going from 332 to 327.
 
 ```{r}
 mpsz_cl <- mpsz_sf %>%
@@ -83,19 +95,24 @@ mpsz_cl <- mpsz_sf %>%
 nrow(mpsz_sf)
 nrow(mpsz_cl)
 ```
+:::
 
-### Mapping both layers
+## Mapping the geospatial data sets
+
+`tm_shape()`, `tm_polygons()` and `tm_dots()` of **tmap** draw the centres over the cleaned subzones.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 5
 tm_shape(mpsz_cl) +
   tm_polygons(col = "grey85", fill = "#F7F4EC") +
   tm_shape(childcare_sf) +
-  tm_dots(size = 0.02, fill = "#0072B2", fill_alpha = 0.55) +
-  tm_title("Childcare centres over the 2019 subzone boundaries") +
+  tm_dots(size = 0.08, fill = "#0072B2", fill_alpha = 0.7) +
+  tm_title("Childcare centres over the 2019 subzone boundaries", size = 1.5, fontface = "bold") +
   tm_credits("Source: data.gov.sg", position = c("left", "bottom"))
 ```
 
@@ -106,32 +123,54 @@ tm_shape(mpsz_cl) +
 tm_shape(mpsz_cl) +
   tm_polygons(col = "grey85", fill = "#F7F4EC") +
   tm_shape(childcare_sf) +
-  tm_dots(size = 0.02, fill = "#0072B2", fill_alpha = 0.55) +
-  tm_title("Childcare centres over the 2019 subzone boundaries") +
+  tm_dots(size = 0.08, fill = "#0072B2", fill_alpha = 0.7) +
+  tm_title("Childcare centres over the 2019 subzone boundaries", size = 1.5, fontface = "bold") +
   tm_credits("Source: data.gov.sg", position = c("left", "bottom"))
 ```
 :::
 
 Both layers land on the same extent, which is the check that they share a coordinate system.
 
-## Converting to spatstat Objects
+## Geospatial data wrangling
 
 spatstat does not speak sf. It wants a `ppp` for the points and an `owin` for the region they are allowed to occupy.
+
+::: panel-tabset
+## Converting sf data frames to ppp class
+
+`as.ppp()` of **spatstat** turns the sf points into a `ppp` object, and `class()` confirms it.
 
 ```{r}
 childcare_ppp <- as.ppp(childcare_sf)
 class(childcare_ppp)
 ```
 
+`summary()` shows what came across, 1925 points with every attribute carried along as a mark.
+
 ```{r}
 summary(childcare_ppp)
 ```
+
+## Creating the owin and combining
+
+`as.owin()` turns the cleaned subzone polygons into the observation window, and indexing the `ppp` by that window keeps only the centres inside it.
 
 ```{r}
 sg_owin <- as.owin(mpsz_cl)
 childcareSG_ppp <- childcare_ppp[sg_owin]
 childcareSG_ppp
 ```
+
+## Checking for duplicates
+
+`duplicated()` flags points that share an exact location, and `any()` reduces that to one answer.
+
+```{r}
+any(duplicated(childcareSG_ppp))
+```
+
+Worth checking. Duplicated points break several of the distance methods, since a nearest neighbour at distance zero is not something the theory allows for. Here the answer is FALSE, so there is nothing to jitter.
+:::
 
 ::: {.callout-note}
 ## Learning diary
@@ -140,18 +179,17 @@ The `owin` matters more than it looks. Every function later in this exercise mea
 Floch, Marcon and Puech call this the edge effect and spend a section on it. It is the reason `Gest()`, `Kest()` and the rest all take a `correction` argument. Before I read that, I would have treated those arguments as noise.
 :::
 
-```{r}
-any(duplicated(childcareSG_ppp))
-```
-
-Worth checking. Duplicated points break several of the distance methods, since a nearest neighbour at distance zero is not something the theory allows for.
-
-## Clark-Evans Test
+# Clark-Evans Test for Nearest Neighbour Analysis
 
 The Clark-Evans index R compares the average nearest neighbour distance to what it would be under complete spatial randomness. Below 1 means clustered, above 1 means spread out, around 1 means random.
 
 - H0: childcare centres are randomly distributed.
 - H1: childcare centres are not randomly distributed.
+
+::: panel-tabset
+## Without CSR simulation
+
+`clarkevans.test()` of **spatstat** runs the test, here with the p-value from a normal approximation and a one-sided alternative.
 
 ```{r}
 clarkevans.test(childcareSG_ppp,
@@ -159,7 +197,9 @@ clarkevans.test(childcareSG_ppp,
                 alternative = "clustered")
 ```
 
-Now the same test with the p-value from simulation rather than from a normal approximation.
+## With CSR simulation
+
+Now the same test with the p-value from simulation rather than from a normal approximation. `method = "MonteCarlo"` with `nsim = 99` compares R against 99 random patterns.
 
 ```{r}
 clarkevans.test(childcareSG_ppp,
@@ -168,28 +208,31 @@ clarkevans.test(childcareSG_ppp,
                 method = "MonteCarlo",
                 nsim = 99)
 ```
+:::
 
-::: {.callout-important}
-## Check that caught it
+::: {.callout-note}
+## Learning diary
 The two p-values are not the same and they cannot be. The Monte Carlo version compares R against 99 simulated patterns, so the smallest p-value it can possibly report is 0.01. It is not more or less significant than the first, it is a different test with a floor set by how many simulations I asked for.
 
 The required reading gives the rule. For a two-sided test, alpha works out as 2 divided by the number of simulations plus 1, so 39 simulations gives 5 percent. Every simulation count in this exercise is therefore a choice about alpha, and the book changes it between sections without comment.
 :::
 
 ::: {.callout-caution}
-## Where I disagree with the exercise
+## Where I differ from the book
 R comes out well below 1 and the p-value is tiny, so the test says clustered. I am not sure that tells me much.
 
 The null here is that childcare centres could be anywhere in Singapore with equal probability. That includes reservoirs, the airport, industrial land and military areas. Childcare centres go where children live.
 
-Floch et al. make exactly this point about pharmacies in France, whose locations are regulated by population, and conclude the CSR reference "does not appear to be the most relevant in this case". I think the same applies here. I come back to it in Part 3 with a null that is not a strawman.
+Floch et al. make exactly this point about pharmacies in France, whose locations are regulated by population, and conclude the CSR reference "does not appear to be the most relevant in this case". I think the same applies here. I come back to it in Beyond the Exercise with a null that is not a strawman.
 :::
 
-## Kernel Density Estimation
+# Kernel Density Estimation Method
 
 Clark-Evans gives one number for the whole island. KDE gives a surface, so it can show *where*.
 
-### Automatic bandwidth selection
+## Working with automatic bandwidth selection method
+
+`density()` of **spatstat** computes the kernel density surface. `sigma = bw.diggle` lets the data pick the bandwidth, `edge = TRUE` corrects for the window edge, and the kernel is Gaussian.
 
 ```{r}
 kde_childcareSG_bw <- density(childcareSG_ppp,
@@ -198,29 +241,39 @@ kde_childcareSG_bw <- density(childcareSG_ppp,
                               kernel = "gaussian")
 ```
 
+`plot()` draws the resulting `im` object, with the colour ribbon on the right giving centres per square metre.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 5
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(0.5, 0.5, 2, 3))
 plot(kde_childcareSG_bw,
-     main = "Childcare density, bw.diggle bandwidth")
+     main = "Childcare centres per sq m, bw.diggle bandwidth")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(0.5, 0.5, 2, 3))
 plot(kde_childcareSG_bw,
-     main = "Childcare density, bw.diggle bandwidth")
+     main = "Childcare centres per sq m, bw.diggle bandwidth")
 ```
 :::
+
+`bw.diggle()` on its own prints the bandwidth it chose, in metres.
 
 ```{r}
 bw.diggle(childcareSG_ppp)
 ```
 
-The density values come out in points per square metre, which is why the legend is full of numbers like 3e-05. Rescaling to kilometres fixes the readability without changing anything real.
+## Rescaling KDE values
+
+The density values come out in points per square metre, which is why the legend is full of numbers like 3e-05. Rescaling to kilometres fixes the readability without changing anything real. `rescale.ppp()` converts the coordinates to km and `density()` runs again on the result.
 
 ```{r}
 childcareSG_ppp.km <- rescale.ppp(childcareSG_ppp, 1000, "km")
@@ -231,11 +284,16 @@ kde_childcareSG.km <- density(childcareSG_ppp.km,
                               kernel = "gaussian")
 ```
 
+The same map again, the ribbon now reading in centres per square kilometre.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 5
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(0.5, 0.5, 2, 3))
 plot(kde_childcareSG.km,
      main = "Same surface, now in centres per square kilometre")
 ```
@@ -244,12 +302,15 @@ plot(kde_childcareSG.km,
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(0.5, 0.5, 2, 3))
 plot(kde_childcareSG.km,
      main = "Same surface, now in centres per square kilometre")
 ```
 :::
 
-### Comparing the four bandwidth rules
+## Working with different automatic bandwidth methods
+
+`bw.CvL()`, `bw.scott()`, `bw.ppl()` and `bw.diggle()` are four rules for choosing sigma. Each prints its choice in km.
 
 ```{r}
 bw.CvL(childcareSG_ppp.km)
@@ -258,17 +319,23 @@ bw.ppl(childcareSG_ppp.km)
 bw.diggle(childcareSG_ppp.km)
 ```
 
+The two surfaces side by side, diggle against ppl. Both panels share one colour scale, so the same colour means the same density in each.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 10
+#| fig-height: 3.8
 kde_ppl <- density(childcareSG_ppp.km, sigma = bw.ppl,
                    edge = TRUE, kernel = "gaussian")
-par(mfrow = c(1, 2), mar = c(2, 2, 3, 4))
-plot(kde_childcareSG.km, main = "bw.diggle, tighter")
-plot(kde_ppl,            main = "bw.ppl, smoother")
-par(mfrow = c(1, 1))
+zl <- range(c(kde_childcareSG.km$v, kde_ppl$v), na.rm = TRUE)
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.3)
+plot(kde_childcareSG.km, main = "bw.diggle, tighter (per km sq)", zlim = zl)
+plot(kde_ppl,            main = "bw.ppl, smoother (per km sq)",   zlim = zl)
+mtext("Two automatic bandwidths, one colour scale", outer = TRUE, cex = 1.5, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
@@ -277,10 +344,12 @@ par(mfrow = c(1, 1))
 #| eval: false
 kde_ppl <- density(childcareSG_ppp.km, sigma = bw.ppl,
                    edge = TRUE, kernel = "gaussian")
-par(mfrow = c(1, 2), mar = c(2, 2, 3, 4))
-plot(kde_childcareSG.km, main = "bw.diggle, tighter")
-plot(kde_ppl,            main = "bw.ppl, smoother")
-par(mfrow = c(1, 1))
+zl <- range(c(kde_childcareSG.km$v, kde_ppl$v), na.rm = TRUE)
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.3)
+plot(kde_childcareSG.km, main = "bw.diggle, tighter (per km sq)", zlim = zl)
+plot(kde_ppl,            main = "bw.ppl, smoother (per km sq)",   zlim = zl)
+mtext("Two automatic bandwidths, one colour scale", outer = TRUE, cex = 1.5, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
@@ -293,61 +362,85 @@ Baddeley recommends ppl when the pattern is mostly tight clusters, and diggle wh
 Same problem as picking the classification method in Exercise 1. It looks like a setting you leave alone, and it is really a decision about what the map says.
 :::
 
-### Comparing kernel shapes
+## Working with different kernel methods
+
+`density()` again with sigma held at 0.6 km, swapping the `kernel` argument through the four shapes it offers. All four panels share one colour scale.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-par(mfrow = c(2, 2), mar = c(2, 2, 3, 4))
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "gaussian"),     main = "Gaussian")
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "epanechnikov"), main = "Epanechnikov")
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "quartic"),      main = "Quartic")
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "disc"),         main = "Disc")
-par(mfrow = c(1, 1))
+#| fig-width: 10
+#| fig-height: 7
+kde_gau <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "gaussian")
+kde_epa <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "epanechnikov")
+kde_qua <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "quartic")
+kde_dsc <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "disc")
+zl <- range(c(kde_gau$v, kde_epa$v, kde_qua$v, kde_dsc$v), na.rm = TRUE)
+
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.5)
+plot(kde_gau, main = "Gaussian (per km sq)",     zlim = zl)
+plot(kde_epa, main = "Epanechnikov (per km sq)", zlim = zl)
+plot(kde_qua, main = "Quartic (per km sq)",      zlim = zl)
+plot(kde_dsc, main = "Disc (per km sq)",         zlim = zl)
+mtext("Four kernels at a 600 m bandwidth, one colour scale", outer = TRUE, cex = 1.8, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-par(mfrow = c(2, 2), mar = c(2, 2, 3, 4))
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "gaussian"),     main = "Gaussian")
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "epanechnikov"), main = "Epanechnikov")
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "quartic"),      main = "Quartic")
-plot(density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
-             kernel = "disc"),         main = "Disc")
-par(mfrow = c(1, 1))
+kde_gau <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "gaussian")
+kde_epa <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "epanechnikov")
+kde_qua <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "quartic")
+kde_dsc <- density(childcareSG_ppp.km, sigma = 0.6, edge = TRUE,
+                   kernel = "disc")
+zl <- range(c(kde_gau$v, kde_epa$v, kde_qua$v, kde_dsc$v), na.rm = TRUE)
+
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.5)
+plot(kde_gau, main = "Gaussian (per km sq)",     zlim = zl)
+plot(kde_epa, main = "Epanechnikov (per km sq)", zlim = zl)
+plot(kde_qua, main = "Quartic (per km sq)",      zlim = zl)
+plot(kde_dsc, main = "Disc (per km sq)",         zlim = zl)
+mtext("Four kernels at a 600 m bandwidth, one colour scale", outer = TRUE, cex = 1.8, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
 Holding the bandwidth at 0.6 and swapping the kernel, the four maps come out near enough identical. Floch et al. said the kernel choice has limited impact, and this is that claim made visible.
 
-## Fixed and Adaptive Bandwidth
+# Fixed and Adaptive KDE
 
 A single bandwidth over the whole island assumes the pattern is equally busy everywhere. It is not. Adaptive bandwidth narrows the window where points are dense and widens it where they are sparse.
+
+`density()` with `sigma = 0.6` gives the fixed version and `adaptive.density()` of **spatstat** the adaptive one. The two panels share one colour scale so their peaks compare directly.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 10
+#| fig-height: 3.8
 kde_fb <- density(childcareSG_ppp.km, sigma = 0.6,
                   edge = TRUE, kernel = "gaussian")
 kde_ab <- adaptive.density(childcareSG_ppp.km, method = "kernel")
 
-par(mfrow = c(1, 2), mar = c(2, 2, 3, 4))
-plot(kde_fb, main = "Fixed bandwidth, 600 m")
-plot(kde_ab, main = "Adaptive bandwidth")
-par(mfrow = c(1, 1))
+zl <- range(c(kde_fb$v, kde_ab$v), na.rm = TRUE)
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.3)
+plot(kde_fb, main = "Fixed bandwidth, 600 m (per km sq)", zlim = zl)
+plot(kde_ab, main = "Adaptive bandwidth (per km sq)",     zlim = zl)
+mtext("Fixed against adaptive bandwidth, one colour scale", outer = TRUE, cex = 1.5, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
@@ -358,38 +451,53 @@ kde_fb <- density(childcareSG_ppp.km, sigma = 0.6,
                   edge = TRUE, kernel = "gaussian")
 kde_ab <- adaptive.density(childcareSG_ppp.km, method = "kernel")
 
-par(mfrow = c(1, 2), mar = c(2, 2, 3, 4))
-plot(kde_fb, main = "Fixed bandwidth, 600 m")
-plot(kde_ab, main = "Adaptive bandwidth")
-par(mfrow = c(1, 1))
+zl <- range(c(kde_fb$v, kde_ab$v), na.rm = TRUE)
+par(mfrow = c(1, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.3)
+plot(kde_fb, main = "Fixed bandwidth, 600 m (per km sq)", zlim = zl)
+plot(kde_ab, main = "Adaptive bandwidth (per km sq)",     zlim = zl)
+mtext("Fixed against adaptive bandwidth, one colour scale", outer = TRUE, cex = 1.5, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
-## A Cartographic KDE Map
+# Plotting Cartographic Quality KDE Map
 
-spatstat's `im` object is not something tmap can draw. terra converts it.
+## Converting gridded output into raster
+
+spatstat's `im` object is not something tmap can draw. `rast()` of **terra** converts it. The surface was computed on km coordinates, so `ext()` multiplies the extent by 1000 to put the coordinates back in metres before `crs()` assigns EPSG 3414. The cell values stay in centres per km sq.
 
 ```{r}
 kde_terra <- rast(kde_childcareSG.km)
+ext(kde_terra) <- as.vector(ext(kde_terra)) * 1000
 crs(kde_terra) <- "EPSG:3414"
 kde_terra
 ```
 
+::: {.callout-caution}
+## Where I differ from the book
+Following the book, my first version assigned EPSG 3414 straight onto the raster built from the km surface. EPSG 3414 is in metres, so that raster was a thousand times too small, about 53 by 29 metres, sitting at the grid's zero point south-west of Singapore. The graticules gave it away, labelling the whole island as lying between 103.5818 and 103.5822 E.
+
+Scaling the extent by 1000 fixes the coordinates and leaves the values alone, so the legend still reads in centres per km sq.
+:::
+
+## Plotting KDE map with tmap
+
+`tm_raster()` of **tmap** draws the raster, with the legend outside the map on the right and the compass in the empty top left corner.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 5
 tm_shape(kde_terra) +
-  tm_raster(col.scale = tm_scale_continuous(values = "viridis"),
+  tm_raster(col.scale = tm_scale_continuous(values = "-magma"),
             col.legend = tm_legend(title = "Centres per km sq",
-                                   position = tm_pos_in("right", "bottom"),
-                                   bg.color = "white", bg.alpha = 0.7,
-                                   frame = TRUE)) +
+                                   position = tm_pos_out("right", "center"))) +
   tm_graticules(labels.size = 0.7) +
-  tm_compass() +
-  tm_title("Where childcare provision concentrates") +
-  tm_layout(scale = 1.0)
+  tm_compass(position = tm_pos_in("left", "top")) +
+  tm_title("Where childcare provision concentrates", size = 1.5, fontface = "bold")
 ```
 
 ## The Code
@@ -397,21 +505,25 @@ tm_shape(kde_terra) +
 ```{r}
 #| eval: false
 tm_shape(kde_terra) +
-  tm_raster(col.scale = tm_scale_continuous(values = "viridis"),
+  tm_raster(col.scale = tm_scale_continuous(values = "-magma"),
             col.legend = tm_legend(title = "Centres per km sq",
-                                   position = tm_pos_in("right", "bottom"),
-                                   bg.color = "white", bg.alpha = 0.7,
-                                   frame = TRUE)) +
+                                   position = tm_pos_out("right", "center"))) +
   tm_graticules(labels.size = 0.7) +
-  tm_compass() +
-  tm_title("Where childcare provision concentrates") +
-  tm_layout(scale = 1.0)
+  tm_compass(position = tm_pos_in("left", "top")) +
+  tm_title("Where childcare provision concentrates", size = 1.5, fontface = "bold")
 ```
 :::
 
-## Four Planning Areas
+# First Order SPPA at the Planning Area Level
 
-The island-wide view flattens a lot. Four planning areas, chosen by the book, at a scale where individual centres are visible.
+The island-wide view flattens a lot. Four planning areas, chosen by the book, at a scale where individual centres are visible. The book titles this section the planning subzone level, but all four units are planning areas, so I name it that way.
+
+## Geospatial data wrangling
+
+::: panel-tabset
+## Extracting study area
+
+`filter()` pulls each planning area out of the cleaned subzones.
 
 ```{r}
 pg <- mpsz_cl %>% filter(PLN_AREA_N == "PUNGGOL")
@@ -419,6 +531,10 @@ tm <- mpsz_cl %>% filter(PLN_AREA_N == "TAMPINES")
 ck <- mpsz_cl %>% filter(PLN_AREA_N == "CHOA CHU KANG")
 jw <- mpsz_cl %>% filter(PLN_AREA_N == "JURONG WEST")
 ```
+
+## Creating owin objects and combining
+
+Each area becomes an `owin` through `as.owin()`, the centres are clipped to it, and `rescale.ppp()` converts each pattern to km for the density maps.
 
 ```{r}
 childcare_pg_ppp <- childcare_ppp[as.owin(pg)]
@@ -432,6 +548,10 @@ childcare_ck_ppp.km <- rescale.ppp(childcare_ck_ppp, 1000, "km")
 childcare_jw_ppp.km <- rescale.ppp(childcare_jw_ppp, 1000, "km")
 ```
 
+## Counting centres per area
+
+`npoints()` counts the centres that landed inside each window, collected into one `tibble()`.
+
 ```{r}
 tibble(
   area   = c("Punggol", "Tampines", "Choa Chu Kang", "Jurong West"),
@@ -439,44 +559,68 @@ tibble(
               npoints(childcare_ck_ppp), npoints(childcare_jw_ppp))
 )
 ```
+:::
+
+`plot()` on each pattern after `unmark()` shows the centres themselves, without the attribute columns that would otherwise decide the symbols.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-par(mfrow = c(2, 2), mar = c(1, 1, 3, 1))
+#| fig-width: 10
+#| fig-height: 8
+par(mfrow = c(2, 2), mar = c(1, 1, 3, 1), oma = c(0, 0, 3, 0), cex.main = 1.5)
 plot(unmark(childcare_pg_ppp.km), main = "Punggol",       pch = 20, cex = 0.7, cols = "#0072B2")
 plot(unmark(childcare_tm_ppp.km), main = "Tampines",      pch = 20, cex = 0.7, cols = "#0072B2")
 plot(unmark(childcare_ck_ppp.km), main = "Choa Chu Kang", pch = 20, cex = 0.7, cols = "#0072B2")
 plot(unmark(childcare_jw_ppp.km), main = "Jurong West",   pch = 20, cex = 0.7, cols = "#0072B2")
-par(mfrow = c(1, 1))
+mtext("Childcare centres in the four planning areas", outer = TRUE, cex = 1.8, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-par(mfrow = c(2, 2), mar = c(1, 1, 3, 1))
+par(mfrow = c(2, 2), mar = c(1, 1, 3, 1), oma = c(0, 0, 3, 0), cex.main = 1.5)
 plot(unmark(childcare_pg_ppp.km), main = "Punggol",       pch = 20, cex = 0.7, cols = "#0072B2")
 plot(unmark(childcare_tm_ppp.km), main = "Tampines",      pch = 20, cex = 0.7, cols = "#0072B2")
 plot(unmark(childcare_ck_ppp.km), main = "Choa Chu Kang", pch = 20, cex = 0.7, cols = "#0072B2")
 plot(unmark(childcare_jw_ppp.km), main = "Jurong West",   pch = 20, cex = 0.7, cols = "#0072B2")
-par(mfrow = c(1, 1))
+mtext("Childcare centres in the four planning areas", outer = TRUE, cex = 1.8, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
-### Clark-Evans by planning area
+## Clark and Evans Test
+
+`clarkevans.test()` again, now two-sided, for the two areas the book picks.
+
+::: panel-tabset
+## Choa Chu Kang planning area
+
+Choa Chu Kang first, with `alternative = "two.sided"`.
 
 ```{r}
 clarkevans.test(childcare_ck_ppp, correction = "none",
-                alternative = "two.sided", nsim = 999)
+                alternative = "two.sided")
 ```
+
+## Tampines planning area
+
+Tampines with the same settings.
 
 ```{r}
 clarkevans.test(childcare_tm_ppp, correction = "none",
-                alternative = "two.sided", nsim = 999)
+                alternative = "two.sided")
 ```
+:::
+
+::: {.callout-caution}
+## Where I differ from the book
+The book passes `nsim = 999` to both of these calls. `clarkevans.test()` only uses `nsim` when `method = "MonteCarlo"`, so those 999 simulations never run, and the header of each result still says Z-test. Nothing I read from these two results depends on simulation, so I dropped the argument rather than keep a setting that does nothing.
+:::
 
 ::: {.callout-note}
 ## Learning diary
@@ -485,61 +629,77 @@ Note the alternative changed from `"clustered"` to `"two.sided"` between the isl
 Neither the book nor I flagged this at first. Deciding the direction of the test before you look is part of the test, not a formatting detail.
 :::
 
-### KDE by planning area
+## Computing KDE surfaces by planning area
+
+`density()` with `bw.diggle` for each of the four areas, drawn as a 2 by 2 grid. Each panel has its own colour scale, because Tampines peaks far higher than the other three and one shared scale would wash them out. Read the shapes within each panel, not the colours across panels.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-par(mfrow = c(2, 2), mar = c(2, 2, 3, 4))
+#| fig-width: 10
+#| fig-height: 8
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.5)
 plot(density(childcare_pg_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Punggol")
+             kernel = "gaussian"), main = "Punggol (per km sq)")
 plot(density(childcare_tm_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Tampines")
+             kernel = "gaussian"), main = "Tampines (per km sq)")
 plot(density(childcare_ck_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Choa Chu Kang")
+             kernel = "gaussian"), main = "Choa Chu Kang (per km sq)")
 plot(density(childcare_jw_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Jurong West")
-par(mfrow = c(1, 1))
+             kernel = "gaussian"), main = "Jurong West (per km sq)")
+mtext("Kernel density in the four planning areas, each on its own scale", outer = TRUE, cex = 1.8, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-par(mfrow = c(2, 2), mar = c(2, 2, 3, 4))
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 2, 3), oma = c(0, 0, 3, 0), cex.main = 1.5)
 plot(density(childcare_pg_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Punggol")
+             kernel = "gaussian"), main = "Punggol (per km sq)")
 plot(density(childcare_tm_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Tampines")
+             kernel = "gaussian"), main = "Tampines (per km sq)")
 plot(density(childcare_ck_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Choa Chu Kang")
+             kernel = "gaussian"), main = "Choa Chu Kang (per km sq)")
 plot(density(childcare_jw_ppp.km, sigma = bw.diggle, edge = TRUE,
-             kernel = "gaussian"), main = "Jurong West")
-par(mfrow = c(1, 1))
+             kernel = "gaussian"), main = "Jurong West (per km sq)")
+mtext("Kernel density in the four planning areas, each on its own scale", outer = TRUE, cex = 1.8, font = 2)
+par(mfrow = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
-# Part 2, Second-order Analysis
+# Second-order Spatial Point Patterns Analysis
 
 First order asked how many points are here. Second order asks whether points sit closer to each other than chance would put them. Four functions, all measuring distances, all compared against simulated randomness.
+
+`set.seed()` fixes the random number stream, so the simulated envelopes below come out the same on every render.
 
 ```{r}
 set.seed(1234)
 ```
 
-## G Function
+# Analysing Spatial Point Process Using G-Function
 
 G measures the distance from each point to its nearest neighbour, then plots the cumulative distribution of those distances. A curve above the theoretical line means neighbours are closer than random, so clustered.
+
+## Choa Chu Kang planning area
+
+`Gest()` of **spatstat** computes G with the border correction. The black line is the estimate and the orange dashed line is G under CSR.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_CK <- Gest(childcare_ck_ppp, correction = "border")
-plot(G_CK, xlim = c(0, 500),
+plot(G_CK, xlim = c(0, 500), xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "G function, Choa Chu Kang")
 ```
 
@@ -547,8 +707,10 @@ plot(G_CK, xlim = c(0, 500),
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_CK <- Gest(childcare_ck_ppp, correction = "border")
-plot(G_CK, xlim = c(0, 500),
+plot(G_CK, xlim = c(0, 500), xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "G function, Choa Chu Kang")
 ```
 :::
@@ -556,92 +718,141 @@ plot(G_CK, xlim = c(0, 500),
 - H0: childcare centres in Choa Chu Kang are randomly distributed.
 - H1: they are not.
 
-Reject if p is below 0.001.
+::: {.callout-caution}
+## Where I differ from the book
+The book says to reject if p is below 0.001. An envelope never prints a p-value, and with 999 simulations 0.001 is out of reach anyway. By the rule in the Clark-Evans diary, a pointwise envelope from 999 simulations at the default rank of 1 is a two-sided test at alpha = 2/1000 = 0.002 at each single distance.
+
+So I reject at a given distance if the black curve leaves the grey band, and I read that as 0.002 there, not 0.001.
+:::
+
+`envelope()` of **spatstat** simulates 999 CSR patterns in the same window and computes G for each. The black line is the observed G, the orange dashed line is G under CSR and the grey band is the range of the simulations.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_CK.csr <- envelope(childcare_ck_ppp, Gest, nsim = 999, verbose = FALSE)
-plot(G_CK.csr, main = "G against 999 simulations of CSR, Choa Chu Kang")
+plot(G_CK.csr, xlab = "d (m)", col = c("black", "#D55E00", "grey", "grey"),
+     main = "G against 999 simulations of CSR, Choa Chu Kang")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_CK.csr <- envelope(childcare_ck_ppp, Gest, nsim = 999, verbose = FALSE)
-plot(G_CK.csr, main = "G against 999 simulations of CSR, Choa Chu Kang")
+plot(G_CK.csr, xlab = "d (m)", col = c("black", "#D55E00", "grey", "grey"),
+     main = "G against 999 simulations of CSR, Choa Chu Kang")
 ```
 :::
 
+The black curve leaves the band only at the shortest distances. It jumps straight to about 0.19 within the first metre or two, so roughly a fifth of the centres have another centre almost on top of them, most likely two operators in the same block. The band catches up at about 45 m, and from there the curve stays inside it.
+
 ::: {.callout-caution}
-## Where I disagree with the exercise
+## Where I differ from the book
 The grey band is not a confidence interval, even though it is drawn like one and everyone reads it as one.
 
 Floch et al. are explicit. "The envelope should not be interpreted as a confidence interval around the indicator being studied: it indicates the critical values of the test." It is the range the simulated patterns covered, not a range of plausible values for my curve.
 
-I have written the captions to say critical values rather than confidence, because the difference changes what the picture is claiming.
+So the plot titles name the simulations rather than calling the band a confidence band, and I read every grey band on this page as critical values. The difference changes what the picture is claiming.
 :::
+
+## Tampines planning area
+
+`Gest()` with `correction = "best"` lets spatstat choose the edge correction, which for G is Kaplan-Meier.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_tm <- Gest(childcare_tm_ppp, correction = "best")
-plot(G_tm, main = "G function, Tampines")
+plot(G_tm, xlab = "d (m)", col = c("black", "#D55E00"),
+     main = "G function, Tampines")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_tm <- Gest(childcare_tm_ppp, correction = "best")
-plot(G_tm, main = "G function, Tampines")
+plot(G_tm, xlab = "d (m)", col = c("black", "#D55E00"),
+     main = "G function, Tampines")
 ```
 :::
 
-## F Function
+# Analysing Spatial Point Process Using F-Function
 
 F is the mirror image. Instead of measuring from each point to its nearest neighbour, it drops a grid of arbitrary locations and measures from each of those to the nearest point. It maps empty space rather than occupied space.
 
-::: panel-tabset
-## The Plot
+## Choa Chu Kang planning area
 
-```{r}
-#| echo: false
-F_CK <- Fest(childcare_ck_ppp)
-plot(F_CK, main = "F function, Choa Chu Kang")
-```
-
-## The Code
-
-```{r}
-#| eval: false
-F_CK <- Fest(childcare_ck_ppp)
-plot(F_CK, main = "F function, Choa Chu Kang")
-```
-:::
+`Fest()` of **spatstat** computes F with its three default edge corrections, drawn together with F under CSR.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-F_CK.csr <- envelope(childcare_ck_ppp, Fest, nsim = 999, verbose = FALSE)
-plot(F_CK.csr, main = "F against 999 simulations of CSR, Choa Chu Kang")
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
+F_CK <- Fest(childcare_ck_ppp)
+plot(F_CK, xlab = "d (m)",
+     col = c("black", "#D55E00", "#0072B2", "#CC79A7"),
+     main = "F function, Choa Chu Kang")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-F_CK.csr <- envelope(childcare_ck_ppp, Fest, nsim = 999, verbose = FALSE)
-plot(F_CK.csr, main = "F against 999 simulations of CSR, Choa Chu Kang")
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
+F_CK <- Fest(childcare_ck_ppp)
+plot(F_CK, xlab = "d (m)",
+     col = c("black", "#D55E00", "#0072B2", "#CC79A7"),
+     main = "F function, Choa Chu Kang")
 ```
 :::
+
+## Performing Complete Spatial Randomness Test
+
+`envelope()` with `Fest` runs the same 999-simulation test for F. Black is observed, orange dashed is CSR and grey is the range of the simulations.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
+F_CK.csr <- envelope(childcare_ck_ppp, Fest, nsim = 999, verbose = FALSE)
+plot(F_CK.csr, xlab = "d (m)", col = c("black", "#D55E00", "grey", "grey"),
+     main = "F against 999 simulations of CSR, Choa Chu Kang")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
+F_CK.csr <- envelope(childcare_ck_ppp, Fest, nsim = 999, verbose = FALSE)
+plot(F_CK.csr, xlab = "d (m)", col = c("black", "#D55E00", "grey", "grey"),
+     main = "F against 999 simulations of CSR, Choa Chu Kang")
+```
+:::
+
+Observed F runs below the CSR line, which is the direction clustering predicts, but it stays inside the grey band at every distance. On its own, F finds nothing.
 
 ::: {.callout-note}
 ## Learning diary
@@ -650,36 +861,63 @@ G and F point opposite ways for the same pattern, which confused me until I drew
 Clustered points have close neighbours, so G climbs fast. But clustering also leaves big empty gaps, so a random location is far from any point and F climbs slowly. Clustered means G above the line and F below it. Once I had that straight the two plots stopped looking contradictory.
 :::
 
+## Tampines planning area
+
+`Fest()` with `correction = "best"` for Tampines.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 F_tm <- Fest(childcare_tm_ppp, correction = "best")
-plot(F_tm, main = "F function, Tampines")
+plot(F_tm, xlab = "d (m)", col = c("black", "#D55E00"),
+     main = "F function, Tampines")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 F_tm <- Fest(childcare_tm_ppp, correction = "best")
-plot(F_tm, main = "F function, Tampines")
+plot(F_tm, xlab = "d (m)", col = c("black", "#D55E00"),
+     main = "F function, Tampines")
 ```
 :::
 
-## K Function
+# Analysing Spatial Point Process Using K-Function
 
 G and F only look at the nearest neighbour. K counts every neighbour within distance r, for every r, so it works at all scales at once.
 
+Under CSR, K(d) equals pi d^2. So I plot K(d) minus pi d^2, divided by a million to read in km sq. Zero is randomness, above zero means more neighbours than chance would give and below zero fewer.
+
+::: {.callout-caution}
+## Where I differ from the book
+The book plots K with the formula `. - r ~ r` and labels it K(d) - r. K is an area and r is a length, so subtracting r only nudges the curve down by a few hundred square metres against values in the millions. What comes out is still just K, rising like a parabola, not a curve centred on zero.
+
+Subtracting r makes sense for L, which is already a distance. For K the matching reference is its CSR value, pi d^2, so that is what I subtract, with the formula `(. - pi * r^2) / 1e6 ~ r`.
+:::
+
+## Choa Chu Kang planning area
+
+`Kest()` of **spatstat** with Ripley's isotropic correction. The orange dashed line is CSR, flat at zero.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 K_ck <- Kest(childcare_ck_ppp, correction = "Ripley")
-plot(K_ck, . - r ~ r,
-     ylab = "K(d) - r", xlab = "d (m)",
+plot(K_ck, (. - pi * r^2) / 1e6 ~ r,
+     ylab = "K(d) - pi d^2 (km sq)", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "K function, Choa Chu Kang")
 ```
 
@@ -687,21 +925,30 @@ plot(K_ck, . - r ~ r,
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 K_ck <- Kest(childcare_ck_ppp, correction = "Ripley")
-plot(K_ck, . - r ~ r,
-     ylab = "K(d) - r", xlab = "d (m)",
+plot(K_ck, (. - pi * r^2) / 1e6 ~ r,
+     ylab = "K(d) - pi d^2 (km sq)", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "K function, Choa Chu Kang")
 ```
 :::
 
+`envelope()` with `Kest`, 99 simulations and `global = TRUE` builds one simultaneous band for all distances. The black line is the observed K, the orange dashed line at zero is CSR and the grey band is the global envelope. The legend is off so it cannot cover the band.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 K_ck.csr <- envelope(childcare_ck_ppp, Kest, nsim = 99, rank = 1,
-                     glocal = TRUE, verbose = FALSE)
-plot(K_ck.csr, . - r ~ r, xlab = "d", ylab = "K(d) - r",
+                     global = TRUE, verbose = FALSE)
+plot(K_ck.csr, (. - pi * r^2) / 1e6 ~ r, xlab = "d (m)",
+     ylab = "K(d) - pi d^2 (km sq)", legend = FALSE,
+     col = c("black", "#D55E00", "grey", "grey"),
      main = "K against CSR, global envelope, Choa Chu Kang")
 ```
 
@@ -709,29 +956,43 @@ plot(K_ck.csr, . - r ~ r, xlab = "d", ylab = "K(d) - r",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 K_ck.csr <- envelope(childcare_ck_ppp, Kest, nsim = 99, rank = 1,
-                     glocal = TRUE, verbose = FALSE)
-plot(K_ck.csr, . - r ~ r, xlab = "d", ylab = "K(d) - r",
+                     global = TRUE, verbose = FALSE)
+plot(K_ck.csr, (. - pi * r^2) / 1e6 ~ r, xlab = "d (m)",
+     ylab = "K(d) - pi d^2 (km sq)", legend = FALSE,
+     col = c("black", "#D55E00", "grey", "grey"),
      main = "K against CSR, global envelope, Choa Chu Kang")
 ```
 :::
 
-::: {.callout-warning}
-## Issue I hit
-`glocal = TRUE` appears here and for L, but not for G or F earlier. I copied it across without noticing, then went back to work out what it does.
+The observed curve drifts above zero, to about 0.3 km sq by 800 m, but the global band is about 0.58 km sq wide on each side at every distance, so it never comes close to leaving. Tested at all distances together, K does not reject CSR for Choa Chu Kang.
 
-The test is repeated at every value of r. Running the same test at dozens of values of r, then reporting the ones that cross, inflates the false positive rate well above the stated alpha. A global envelope corrects for that. A pointwise one does not.
+::: {.callout-caution}
+## Where I differ from the book
+The book writes `glocal = TRUE` here and for L. That is a typo for `global = TRUE`. `envelope()` has no `glocal` argument, so R passes it on through `...` to `Kest()`, which ignores it without a word. The book's K and L envelopes are therefore pointwise, even though the code looks like it asks for a global one. I copied it across without noticing at first, which shows how easy it is to miss. I use `global = TRUE`.
 
-So the G and F results above are on a weaker footing than the K and L results below, and the book never says so. I redo one of them properly in Part 3.
+The reason global matters is sound. The test is repeated at every value of r. Running the same test at dozens of values of r, then reporting the ones that cross, inflates the false positive rate well above the stated alpha. A global envelope corrects for that. A pointwise one does not. With `rank = 1` and 99 simulations the global band is a single test at alpha = 1/100 across all distances at once.
+
+A global band contains the pointwise band built from the same simulations, so it is harder for the curve to leave it. The G and F results above use pointwise bands, so they are on a weaker footing than the K and L results here, and the book never says so. I redo G properly in Beyond the Exercise.
 :::
+
+## Tampines planning area
+
+`Kest()` for Tampines, cut at 1000 m.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 K_tm <- Kest(childcare_tm_ppp, correction = "Ripley")
-plot(K_tm, . - r ~ r, ylab = "K(d) - r", xlab = "d (m)",
+plot(K_tm, (. - pi * r^2) / 1e6 ~ r,
+     ylab = "K(d) - pi d^2 (km sq)", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      xlim = c(0, 1000), main = "K function, Tampines")
 ```
 
@@ -739,23 +1000,34 @@ plot(K_tm, . - r ~ r, ylab = "K(d) - r", xlab = "d (m)",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 K_tm <- Kest(childcare_tm_ppp, correction = "Ripley")
-plot(K_tm, . - r ~ r, ylab = "K(d) - r", xlab = "d (m)",
+plot(K_tm, (. - pi * r^2) / 1e6 ~ r,
+     ylab = "K(d) - pi d^2 (km sq)", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      xlim = c(0, 1000), main = "K function, Tampines")
 ```
 :::
 
-## L Function
+# Analysing Spatial Point Process Using L-Function
 
 L is K with the shape taken out. K under randomness grows as pi r squared, which is a curve and hard to eyeball. L is the square root of K over pi, so under randomness it is a straight line, and plotting `L(r) - r` makes randomness a flat line at zero.
 
+## Choa Chu Kang planning area
+
+`Lest()` of **spatstat** computes L directly, plotted as L(d) - d with CSR as the orange dashed line at zero.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 L_ck <- Lest(childcare_ck_ppp, correction = "Ripley")
 plot(L_ck, . - r ~ r, ylab = "L(d) - r", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "L function, Choa Chu Kang")
 ```
 
@@ -763,8 +1035,10 @@ plot(L_ck, . - r ~ r, ylab = "L(d) - r", xlab = "d (m)",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 L_ck <- Lest(childcare_ck_ppp, correction = "Ripley")
 plot(L_ck, . - r ~ r, ylab = "L(d) - r", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "L function, Choa Chu Kang")
 ```
 :::
@@ -776,14 +1050,20 @@ Floch et al. give the reading of `L(r) - r` that finally made it concrete for me
 So the height of the curve is not an abstract test statistic. It is how much further you would have to walk, under randomness, to meet the same number of neighbours.
 :::
 
+`envelope()` with `Lest`, again 99 simulations with `global = TRUE`. Black is the observed L(d) - d, the orange dashed line at zero is CSR and the grey band is the global envelope. The legend is off so it cannot hide the lower half of the band.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 L_ck.csr <- envelope(childcare_ck_ppp, Lest, nsim = 99, rank = 1,
-                     glocal = TRUE, verbose = FALSE)
-plot(L_ck.csr, . - r ~ r, xlab = "d", ylab = "L(d) - r",
+                     global = TRUE, verbose = FALSE)
+plot(L_ck.csr, . - r ~ r, xlab = "d (m)", ylab = "L(d) - r",
+     legend = FALSE, col = c("black", "#D55E00", "grey", "grey"),
      main = "L against CSR, global envelope, Choa Chu Kang")
 ```
 
@@ -791,20 +1071,32 @@ plot(L_ck.csr, . - r ~ r, xlab = "d", ylab = "L(d) - r",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 L_ck.csr <- envelope(childcare_ck_ppp, Lest, nsim = 99, rank = 1,
-                     glocal = TRUE, verbose = FALSE)
-plot(L_ck.csr, . - r ~ r, xlab = "d", ylab = "L(d) - r",
+                     global = TRUE, verbose = FALSE)
+plot(L_ck.csr, . - r ~ r, xlab = "d (m)", ylab = "L(d) - r",
+     legend = FALSE, col = c("black", "#D55E00", "grey", "grey"),
      main = "L against CSR, global envelope, Choa Chu Kang")
 ```
 :::
+
+Same answer on the L scale. The biggest excursion is the spike right at the start, about 70 m against a band edge near 75 m, which is the same set of near-duplicate centres that G picked up. Nothing leaves the band.
+
+## Tampines planning area
+
+`Lest()` for Tampines, cut at 1000 m.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 L_tm <- Lest(childcare_tm_ppp, correction = "Ripley")
 plot(L_tm, . - r ~ r, ylab = "L(d) - r", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      xlim = c(0, 1000), main = "L function, Tampines")
 ```
 
@@ -812,25 +1104,29 @@ plot(L_tm, . - r ~ r, ylab = "L(d) - r", xlab = "d (m)",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 L_tm <- Lest(childcare_tm_ppp, correction = "Ripley")
 plot(L_tm, . - r ~ r, ylab = "L(d) - r", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      xlim = c(0, 1000), main = "L function, Tampines")
 ```
 :::
 
-# Part 3, Beyond the Exercise
+# Beyond the Exercise
 
-Four things bothered me by the end of Part 2. All of them came out of the required reading rather than from me.
+Four things bothered me by the end of the chapter sections. All of them came out of the required reading rather than from me.
 
 ## Testing Against a Null That Is Not a Strawman
 
-Everything so far compares childcare centres to a pattern where any point in Singapore is equally likely. Reservoirs, the airport, Jurong Island, military land.
+Everything so far compares childcare centres to a pattern where any point in Singapore is equally likely. Reservoirs, the airport, industrial estates, military land. Jurong Island at least is gone, dropped with the offshore subzones at the start.
 
 Floch et al. raise this about pharmacies in France, whose siting is set by regulation tied to population, and say plainly that CSR "does not appear to be the most relevant" reference there. Childcare centres are the same kind of thing. They follow housing.
 
 So the finding that they are clustered may be telling me only that Singapore's residents are clustered, which I already knew.
 
 The reading offers a fix. `Kinhom()` drops the assumption that intensity is constant and compares the pattern against a null with the intensity actually observed. If the centres still clump beyond that, the clustering is real. If they stop, it was population all along.
+
+`density()` with `bw.diggle` estimates the intensity surface for Choa Chu Kang, and `range()` checks its values.
 
 ```{r}
 lambda_ck <- density(childcare_ck_ppp, sigma = bw.diggle, edge = TRUE)
@@ -848,6 +1144,8 @@ It stops mattering right up until you feed the surface to `rpoispp()` for the si
 One line now is cheaper than working that out later.
 :::
 
+The clamp sets any negative cell to zero, then counts how many there were.
+
 ```{r}
 lambda_pos <- lambda_ck
 lambda_pos$v[lambda_pos$v < 0] <- 0
@@ -856,14 +1154,21 @@ lambda_pos$v[lambda_pos$v < 0] <- 0
 sum(lambda_ck$v < 0, na.rm = TRUE)
 ```
 
+`Kinhom()` of **spatstat** computes the inhomogeneous K with that surface as lambda, plotted against pi d^2 the same way as K above.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 Kinhom_ck <- Kinhom(childcare_ck_ppp, lambda = lambda_pos,
                     correction = "Ripley")
-plot(Kinhom_ck, . - r ~ r, ylab = "Kinhom(d) - r", xlab = "d (m)",
+plot(Kinhom_ck, (. - pi * r^2) / 1e6 ~ r,
+     ylab = "Kinhom(d) - pi d^2 (km sq)", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "Inhomogeneous K, intensity taken from the data")
 ```
 
@@ -871,22 +1176,34 @@ plot(Kinhom_ck, . - r ~ r, ylab = "Kinhom(d) - r", xlab = "d (m)",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 Kinhom_ck <- Kinhom(childcare_ck_ppp, lambda = lambda_pos,
                     correction = "Ripley")
-plot(Kinhom_ck, . - r ~ r, ylab = "Kinhom(d) - r", xlab = "d (m)",
+plot(Kinhom_ck, (. - pi * r^2) / 1e6 ~ r,
+     ylab = "Kinhom(d) - pi d^2 (km sq)", xlab = "d (m)",
+     col = c("black", "#D55E00"),
      main = "Inhomogeneous K, intensity taken from the data")
 ```
 :::
 
+Once intensity comes from the data, the curve falls below zero and keeps falling, to about -0.7 km sq by 800 m. Read literally, that says the centres have fewer neighbours than the local intensity predicts.
+
+`envelope()` with `Kinhom` and `simulate = expression(rpoispp(lambda_pos))` draws 39 patterns from the estimated intensity instead of from CSR. Black is observed, the orange dashed line is the mean of the simulated patterns and the grey band is their pointwise range. The legend is off so it cannot cover the band.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 Kinhom_ck.csr <- envelope(childcare_ck_ppp, Kinhom,
                           simulate = expression(rpoispp(lambda_pos)),
                           nsim = 39, verbose = FALSE)
-plot(Kinhom_ck.csr, . - r ~ r, xlab = "d", ylab = "Kinhom(d) - r",
+plot(Kinhom_ck.csr, (. - pi * r^2) / 1e6 ~ r, xlab = "d (m)",
+     ylab = "Kinhom(d) - pi d^2 (km sq)", legend = FALSE,
+     col = c("black", "#D55E00", "grey", "grey"),
      main = "Inhomogeneous K against a population-shaped null")
 ```
 
@@ -894,12 +1211,22 @@ plot(Kinhom_ck.csr, . - r ~ r, xlab = "d", ylab = "Kinhom(d) - r",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 Kinhom_ck.csr <- envelope(childcare_ck_ppp, Kinhom,
                           simulate = expression(rpoispp(lambda_pos)),
                           nsim = 39, verbose = FALSE)
-plot(Kinhom_ck.csr, . - r ~ r, xlab = "d", ylab = "Kinhom(d) - r",
+plot(Kinhom_ck.csr, (. - pi * r^2) / 1e6 ~ r, xlab = "d (m)",
+     ylab = "Kinhom(d) - pi d^2 (km sq)", legend = FALSE,
+     col = c("black", "#D55E00", "grey", "grey"),
      main = "Inhomogeneous K against a population-shaped null")
 ```
+:::
+
+Here the observed curve stays close to zero and inside the band the whole way out. Measured against the intensity the centres already follow, Choa Chu Kang shows no clustering on top of it.
+
+::: {.callout-important}
+## Check that caught something
+The black curve here ends near -0.05 km sq, while the previous plot of the same data ended near -0.7. They are not the same estimate. In the plot above I passed `lambda_pos`, a surface built from these same points with a narrow bw.diggle bandwidth, so the intensity at each centre includes that centre's own kernel and comes out too high, which drags K down. Inside `envelope()` I did not pass lambda, so `Kinhom()` estimated it itself, leaving each point out of its own intensity. That leave-one-out estimate is the one to trust, and it is why the deep dip above is mostly an artefact.
 :::
 
 ::: {.callout-tip}
@@ -917,14 +1244,20 @@ K counts every neighbour out to r. That is cumulative, so a bump at 400 metres c
 
 The pair correlation function is the same idea measured in a ring at distance r rather than a disc out to r, so it shows where clustering actually happens rather than where it has accumulated.
 
+`pcf()` of **spatstat** estimates it. The estimate shoots up close to zero distance, so I cap the y axis at 4 to keep the rest of the curve readable.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 pcf_ck <- pcf(childcare_ck_ppp)
 plot(pcf_ck, main = "Pair correlation, Choa Chu Kang",
-     xlab = "d (m)")
+     xlab = "d (m)", ylim = c(0, 4), legendpos = "topright",
+     col = c("black", "#0072B2", "#D55E00"))
 abline(h = 1, lty = 2, col = "#D55E00")
 ```
 
@@ -932,9 +1265,11 @@ abline(h = 1, lty = 2, col = "#D55E00")
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 pcf_ck <- pcf(childcare_ck_ppp)
 plot(pcf_ck, main = "Pair correlation, Choa Chu Kang",
-     xlab = "d (m)")
+     xlab = "d (m)", ylim = c(0, 4), legendpos = "topright",
+     col = c("black", "#0072B2", "#D55E00"))
 abline(h = 1, lty = 2, col = "#D55E00")
 ```
 :::
@@ -948,38 +1283,48 @@ The advantage over K is that it localises. The disadvantage is that a cumulative
 
 ## Redoing G With a Global Envelope
 
-The G test in Part 2 used a pointwise envelope, which inflates the false positive rate across all the r values tested. Same test, corrected.
+The G test earlier used a pointwise envelope, which inflates the false positive rate across all the r values tested. Same test, corrected, with `envelope()` set to `global = TRUE` and `rank = 1` over 39 simulations.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
+#| fig-width: 8
+#| fig-height: 6
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_ck.global <- envelope(childcare_ck_ppp, Gest, nsim = 39, rank = 1,
                         global = TRUE, verbose = FALSE)
-plot(G_ck.global, main = "G with a global envelope, Choa Chu Kang")
+plot(G_ck.global, xlab = "d (m)", ylim = c(0, 1),
+     col = c("black", "#D55E00", "grey", "grey"),
+     main = "G with a global envelope, Choa Chu Kang")
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1, mar = c(5, 5, 4, 2))
 G_ck.global <- envelope(childcare_ck_ppp, Gest, nsim = 39, rank = 1,
                         global = TRUE, verbose = FALSE)
-plot(G_ck.global, main = "G with a global envelope, Choa Chu Kang")
+plot(G_ck.global, xlab = "d (m)", ylim = c(0, 1),
+     col = c("black", "#D55E00", "grey", "grey"),
+     main = "G with a global envelope, Choa Chu Kang")
 ```
 :::
 
+The curve stays inside the global band everywhere, including the short-distance jump that left the pointwise band. The upper edge at zero distance is already about 0.27, above the 0.19 jump.
+
 ::: {.callout-tip}
 ## Alternative explored
-The global band is wider than the pointwise one, which is the correction doing its job. It is harder to reject the null, and that is the point.
+A global band is wider than a pointwise one, which is the correction doing its job. It is harder to reject the null, and that is the point.
 
 If the curve still leaves the band, the result survives the multiple testing problem. If it no longer does, the original finding was partly an artefact of testing at every r and reporting the crossings.
 :::
 
 ## A Second Opinion on Randomness
 
-Everything so far is distance based. A quadrat test is the other family, dividing the region into cells and comparing counts against a Poisson expectation.
+Everything so far is distance based. A quadrat test is the other family, dividing the region into cells and comparing counts against a Poisson expectation. `quadrat.test()` of **spatstat** does it on a 4 by 4 grid.
 
 ```{r}
 quadrat_ck <- quadrat.test(childcare_ck_ppp, nx = 4, ny = 4)
@@ -994,8 +1339,8 @@ Same class of mistake as naming something `c` or `df`. Worth checking a name is 
 :::
 
 ::: {.callout-important}
-## Check that caught it
-The quadrat test does not agree with Clark-Evans, and that is the most useful result in Part 3.
+## Check that caught something
+The quadrat test does not agree with Clark-Evans, and that is the most useful result in this whole section.
 
 Clark-Evans gave R of 0.84 with p of 0.0089, so it rejected randomness for Choa Chu Kang. The quadrat test on the same points gives p of 0.084, so it does not. Two tests, one dataset, opposite conclusions at the five percent level.
 
@@ -1011,9 +1356,9 @@ The quadrat answer depends entirely on the grid I picked, and a different `nx` a
 That is the Modifiable Areal Unit Problem again, the same thing I hit in Exercise 1 aggregating subzones up to planning areas. Avoiding it is one of the main reasons the reading gives for preferring distance-based methods.
 :::
 
-## Limitations
+# Limitations
 
-- Every test in Parts 1 and 2 uses CSR as the null, which for a facility that follows housing is a weak comparison. Part 3 addresses this for one planning area only, not the whole island.
+- Every test in the chapter sections uses CSR as the null, which for a facility that follows housing is a weak comparison. Beyond the Exercise addresses this for one planning area only, not the whole island.
 - The `Kinhom` null is estimated from the same data it tests. It is a better question than CSR, not an independent one.
 - Simulation counts vary through the exercise, 99 here and 999 there, and each choice sets a different alpha.
 - The four planning areas come from the book. They are not a sample of anything, so nothing here generalises to Singapore's other planning areas.
@@ -1023,11 +1368,11 @@ That is the Modifiable Areal Unit Problem again, the same thing I hit in Exercis
 
 Five things I am taking from this one.
 
-**The null hypothesis mattered more than the test did.** Every result in Parts 1 and 2 compares childcare centres against a pattern that could put them in the middle of a reservoir. The tests came back clustered with tiny p-values, and I am not sure that told me anything beyond the fact that people live in some places and not others. Reading Floch et al. on French pharmacies is what made me see it, because the situation is identical.
+**The null hypothesis mattered more than the test did.** Every result in the chapter sections compares childcare centres against a pattern that could put them in the middle of a reservoir. The tests came back clustered with tiny p-values, and I am not sure that told me anything beyond the fact that people live in some places and not others. Reading Floch et al. on French pharmacies is what made me see it, because the situation is identical.
 
 **The two chapters promise something they cannot deliver together.** Chapter 4 is first order, intensity. Chapter 5 is second order, interaction. Floch et al. state that from a single observed pattern the two cannot be told apart, and cite work showing that natural advantage and genuine attraction produce indistinguishable results. So I can say the centres are clustered. I cannot say whether that is because they are drawn to the same places or drawn to each other.
 
-**Several arguments I was copying turned out to be decisions.** The `correction` argument exists because of edge effects. `glocal` exists because testing at every r inflates the error rate. `nsim` sets alpha. None of these are formatting, and I had been treating all three as boilerplate to be pasted along with everything else.
+**Several arguments I was copying turned out to be decisions.** The `correction` argument exists because of edge effects. `global` exists because testing at every r inflates the error rate, and the book's `glocal` typo showed me that R will quietly accept a misspelt argument that does nothing at all. `nsim` sets alpha. None of these are formatting, and I had been treating all three as boilerplate to be pasted along with everything else.
 
 **Two methods disagreed and that was more useful than agreement.** Clark-Evans rejected randomness for Choa Chu Kang and the quadrat test did not, on the same points at the same alpha. Working out why, that one reads distances between points and the other only counts them in boxes, taught me more about what each test can see than either result on its own.
 

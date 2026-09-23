@@ -2,18 +2,21 @@
 title: "Hands-on Exercise 3"
 subtitle: "Spatio-Temporal Point Patterns Analysis"
 author: "ZeXin Chen"
-date: "2026-09-10"
-date-modified: "last-modified"
 format:
   html:
     toc: true
     number-sections: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
+date: "September 10, 2026"
+date-modified: today
 execute:
   echo: true
   eval: true
   warning: false
-  message: false
   freeze: true
+  message: false
 ---
 
 ::: {.pagefacts}
@@ -22,15 +25,15 @@ execute:
 [`sf` `spatstat` `sparr` `stpp` `tmap` `tidyverse`]{.fact .pkg}
 :::
 
-# Getting Started
+# Overview
 
 Exercises 1 and 2 treated every point as if it happened at the same instant. This one adds time. A fire on 3 August and a fire on 4 August a kilometre apart are a different pattern from the same two fires six months apart, and the methods here can tell them apart.
 
 The two questions the chapter asks are simple. Are the fires in Kepulauan Bangka Belitung independent in space and time, and if not, where and when do they cluster.
 
-## Installing and Loading R Packages
+# Loading the Packages
 
-Two packages are new. **sparr** computes the spatio-temporal kernel density and picks its bandwidths. **stpp** computes the spatio-temporal K function.
+Six packages, two of them new. **sf** reads and transforms the boundary and the fire points. **spatstat** supplies the `ppp` and `owin` objects and the L function envelope. **sparr** computes the spatio-temporal kernel density and picks its bandwidths. **stpp** computes the spatio-temporal K function. **tmap** draws the point maps. **tidyverse** does the reading, filtering and counting.
 
 ```{r}
 pacman::p_load(sf, spatstat, sparr, stpp, tmap, tidyverse)
@@ -43,11 +46,16 @@ pacman::p_load(sf, spatstat, sparr, stpp, tmap, tidyverse)
 The fix is XQuartz, then logging out and back in so the display variable gets set. After that it loads with a warning about display `:0` that can be ignored. None of the X11 machinery is used for anything in this exercise. It is only there so `rpanel` can draw sliders I will never open.
 :::
 
-# Part 1, Data
+# Preparing the Data
 
-## The Study Area
+## Importing and Preparing Study Area
 
 The book uses a kelurahan shapefile from an Indonesian portal. That download ran at 44 kilobytes a second on the day I tried it, with three hours on the clock for 553 MB. I used GADM level 2 instead, which is regency boundaries for the whole country in 4.6 MB.
+
+::: panel-tabset
+## Importing the study area
+
+`st_read()` of **sf** reads the national GADM file. The chain then keeps the province, merges it into one outline, drops the Z dimension and projects it to UTM.
 
 ```{r}
 kbb_sf <- st_read("data/rawdata/gadm/gadm41_IDN_2.json") %>%
@@ -63,21 +71,31 @@ Three things in that chain.
 
 The province name in GADM is `BangkaBelitung`, no space. I found that by printing the unique values rather than guessing, which saved a silent empty filter.
 
-`st_union()` merges the seven regencies into one outline. Since the rest of the exercise only needs the outer boundary, the admin level underneath does not matter. Kelurahan, kecamatan, kabupaten, all merge to the same shape.
+`st_union()` merges the seven level-2 units (six regencies and the city of Pangkal Pinang) into one outline. Since the rest of the exercise only needs the outer boundary, the admin level underneath does not matter. Kelurahan, kecamatan, kabupaten, all merge to the same shape.
 
 And the CRS is 32748, not 3414. That is UTM zone 48 south. Bangka Belitung sits at 106 east and 2 south, which puts it in zone 48, and the S is because it is below the equator. Using Singapore's SVY21 here would put the whole island somewhere it is not.
 :::
+
+## Converting to owin
+
+`as.owin()` of **spatstat** turns the merged outline into an observation window, the object every point pattern below gets clipped to.
 
 ```{r}
 kbb_owin <- as.owin(kbb_sf)
 class(kbb_owin)
 ```
+:::
+
+A quick `plot()` of the window checks that the union and the projection both worked before any points go on it.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
+#| fig-width: 8
+#| fig-height: 6
 #| echo: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1)
 plot(kbb_owin, main = "Kepulauan Bangka Belitung, the observation window",
      col = "#EFE9DB", border = "grey40")
 ```
@@ -86,34 +104,48 @@ plot(kbb_owin, main = "Kepulauan Bangka Belitung, the observation window",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1)
 plot(kbb_owin, main = "Kepulauan Bangka Belitung, the observation window",
      col = "#EFE9DB", border = "grey40")
 ```
 :::
 
-## The Fire Data
+## Importing and Preparing Forest Fire Data
 
 FIRMS publishes MODIS detections one file per country per year. The whole-countries bundle I tried first arrived truncated at 43 of 82 MB and Indonesia was in the missing part, so I fetched the Indonesia file directly instead.
+
+::: panel-tabset
+## Importing the Indonesia file
+
+`read_csv()` of **readr** (part of **tidyverse**) reads the file, and `nrow()` counts the rows.
 
 ```{r}
 fire_all <- read_csv("data/rawdata/modis/modis_2023_Indonesia.csv")
 nrow(fire_all)
 ```
 
-That is every detection in Indonesia for 2023. Before clipping to the study area, one column the book never mentions.
+## Checking the type column
+
+That is every detection in Indonesia for 2023. Before clipping to the study area, one column the book never mentions. `table()` counts the rows of each `type`.
 
 ```{r}
 table(fire_all$type)
 ```
+:::
 
 ::: {.callout-caution}
-## Where I disagree with the exercise
+## Where I differ from the book
 The book keeps every row and calls them forest fires. The `type` column says otherwise.
 
-Type 0 is a presumed vegetation fire. Type 1 is an active volcano. Type 2 is another static land source, which means gas flares, industrial heat, that kind of thing. Type 3 is offshore. Indonesia has a lot of volcanoes and a lot of flares, and 4,273 of these detections are one or the other.
+Type 0 is a presumed vegetation fire. Type 1 is an active volcano. Type 2 is another static land source, which means gas flares, industrial heat, that kind of thing. Type 3 is offshore. Indonesia has a lot of volcanoes and a lot of flares, and 4,250 of these detections are one or the other (1,495 volcano, 2,755 static source), with another 23 offshore.
 
 A volcano showing up every day at the same spot would look like extreme spatio-temporal clustering. It is, but not of fires. I keep type 0 only.
 :::
+
+::: panel-tabset
+## Filtering and clipping
+
+`filter()` keeps type 0, `st_as_sf()` turns the longitude and latitude into points, `st_transform()` projects them to the same UTM zone as the boundary, and `st_filter()` of **sf** keeps only the points inside Bangka Belitung.
 
 ```{r}
 fire_sf <- fire_all %>%
@@ -129,10 +161,12 @@ nrow(fire_sf)
 ## Learning diary
 The book's csv was already cut to Bangka Belitung, so it has no clipping step. Mine is all of Indonesia, so `st_filter()` does the cut. It keeps points that intersect the boundary polygon and drops the rest.
 
-I checked the count against the book's 741. Mine is different, and it should be. Different boundary source, and the type filter removed some rows that the book kept.
+I checked the count against the book's 741. Mine is different, and it should be. Different boundary source, and the type filter removed one static-source row that the book's approach would have kept.
 :::
 
-`as.ppp()` only accepts numbers or text as marks, so the date has to become a number. Three versions, for three different uses later.
+## Deriving the time fields
+
+`as.ppp()` only accepts numbers or text as marks, so the date has to become a number. `yday()` and `month()` of **lubridate** (part of **tidyverse**) give three versions, for three different uses later.
 
 ```{r}
 fire_sf <- fire_sf %>%
@@ -141,19 +175,26 @@ fire_sf <- fire_sf %>%
          Month_num = month(acq_date),
          Month_fac = month(acq_date, label = TRUE, abbr = FALSE))
 ```
+:::
 
-## Visualising the Fire Points
+# Visualising the Fire Points
+
+## Overall Plot
+
+`tm_shape()` and `tm_dots()` of **tmap** put every 2023 detection on the merged outline.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
+#| fig-width: 8
+#| fig-height: 6
 #| echo: false
 tm_shape(kbb_sf) +
   tm_polygons(fill = "#F7F4EC", col = "grey60") +
   tm_shape(fire_sf) +
   tm_dots(fill = "#D55E00", fill_alpha = 0.5, size = 0.15) +
-  tm_title("MODIS fire detections, Bangka Belitung, 2023") +
+  tm_title("MODIS fire detections, Bangka Belitung, 2023", size = 1.5, fontface = "bold") +
   tm_credits("Source: NASA FIRMS, GADM", position = c("left", "bottom"))
 ```
 
@@ -165,24 +206,29 @@ tm_shape(kbb_sf) +
   tm_polygons(fill = "#F7F4EC", col = "grey60") +
   tm_shape(fire_sf) +
   tm_dots(fill = "#D55E00", fill_alpha = 0.5, size = 0.15) +
-  tm_title("MODIS fire detections, Bangka Belitung, 2023") +
+  tm_title("MODIS fire detections, Bangka Belitung, 2023", size = 1.5, fontface = "bold") +
   tm_credits("Source: NASA FIRMS, GADM", position = c("left", "bottom"))
 ```
 :::
 
-Now by month, which is where the time dimension first shows.
+## Visualising Geographic Distribution of Forest Fires by Month
+
+Now by month, which is where the time dimension first shows. `tm_facets()` of **tmap** splits the same map into one panel per value of `Month_fac`.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
+#| fig-width: 10
+#| fig-height: 7
 #| echo: false
 tm_shape(kbb_sf) +
   tm_polygons(fill = "#F7F4EC", col = "grey70") +
   tm_shape(fire_sf) +
-  tm_dots(fill = "#D55E00", fill_alpha = 0.6, size = 0.1) +
+  tm_dots(fill = "#D55E00", fill_alpha = 0.6, size = 0.2) +
   tm_facets(by = "Month_fac", free.coords = FALSE, drop.units = TRUE) +
-  tm_title("Fires by month, the dry season lights up from July")
+  tm_title("Fires by month, the dry season lights up from July", size = 1.3, fontface = "bold") +
+  tm_layout(panel.label.size = 1.2)
 ```
 
 ## The Code
@@ -192,11 +238,14 @@ tm_shape(kbb_sf) +
 tm_shape(kbb_sf) +
   tm_polygons(fill = "#F7F4EC", col = "grey70") +
   tm_shape(fire_sf) +
-  tm_dots(fill = "#D55E00", fill_alpha = 0.6, size = 0.1) +
+  tm_dots(fill = "#D55E00", fill_alpha = 0.6, size = 0.2) +
   tm_facets(by = "Month_fac", free.coords = FALSE, drop.units = TRUE) +
-  tm_title("Fires by month, the dry season lights up from July")
+  tm_title("Fires by month, the dry season lights up from July", size = 1.3, fontface = "bold") +
+  tm_layout(panel.label.size = 1.2)
 ```
 :::
+
+To put numbers on the panels, `st_drop_geometry()` strips the points back to a table and `count()` tallies the detections per month.
 
 ```{r}
 fire_sf %>%
@@ -204,13 +253,18 @@ fire_sf %>%
   count(Month_fac, name = "fires")
 ```
 
-The first half of the year is nearly empty and August to October carry most of the fires. That is the dry season, and it is the first hint that time matters at least as much as location here.
+The first half of the year is nearly empty, 101 of the 897 detections, and August to October carry most of the fires, 589 of them. That is the dry season, and it is the first hint that time matters at least as much as location here.
 
-# Part 2, Spatio-temporal KDE
+# Computing STKDE by Month
 
 Exercise 2's KDE gave one density surface for the whole year. Here there is one surface for every point in time, so the estimate at any location depends on how many fires happened nearby *and* recently.
 
-## By Month
+## Creating ppp and Including Owin Object
+
+::: panel-tabset
+## Creating the ppp inside the owin
+
+`as.ppp()` of **spatstat** turns the points into a point pattern with `Month_num` as the mark, and indexing it by `kbb_owin` clips it to the observation window.
 
 ```{r}
 fire_month_ppp <- fire_sf %>%
@@ -221,9 +275,18 @@ fire_month_owin <- fire_month_ppp[kbb_owin]
 summary(fire_month_owin)
 ```
 
+## Checking for duplicates
+
+`duplicated()` flags points that share both location and mark, which kernel estimators handle badly.
+
 ```{r}
 any(duplicated(fire_month_owin))
 ```
+:::
+
+## Computing Spatio-Temporal KDE
+
+`spattemp.density()` of **sparr** estimates the density over space and time with its default bandwidths, and `summary()` prints them.
 
 ```{r}
 st_kde <- spattemp.density(fire_month_owin)
@@ -239,43 +302,71 @@ A day of smoothing on data recorded in whole months is odd. It means month 8 bar
 I did not understand why until the day-of-year section below, where the same function picks a very different lambda. The default rule reacts to how the time values are spaced, and whole months are very coarse.
 :::
 
+## Plotting the Spatio-Temporal KDE Object
+
+**sparr**'s `plot()` method draws one time slice per call. It also adds `axis(1)`, `axis(2)` and an L-shaped box after every panel, so my first version framed each small map in projected metres like 9.7e+06, which mean nothing to a reader and got cut off at the panel edges. The small function below does what that method does, one slice drawn with **spatstat**'s `plot()` for pixel images plus the window outline, just without the axes. It takes the colour range as an argument so that panels can share one scale.
+
+```{r}
+plot_slice <- function(kde, t, zlim, main) {
+  tt <- as.numeric(names(kde$z))
+  slice <- kde$z[[which.min(abs(tt - t))]]
+  plot(slice, main = main, zlim = zlim, box = FALSE,
+       ribargs = list(box = TRUE))
+  plot(as.polygonal(Window(kde$pp)), add = TRUE)
+}
+```
+
+::: {.callout-note}
+## Learning diary
+The obvious fix, `par(xaxt = "n", yaxt = "n")` before the loop, would also have blanked the numbers on the colour ribbon. spatstat draws those with `axis()` on side 4, and a global `yaxt = "n"` switches that off too. Reading the source of `plot.stden()` showed it is a short loop around a `plot.im()` call, so copying the two lines I needed was simpler than fighting the axes.
+:::
+
+The panels show July to December. The colour key is the estimated joint density, the share of the year's detections per square metre per month, which is why the numbers are so small (the peak is about 6.4e-10). `zlim_month` is the range over all twelve monthly surfaces, so the six panels share one colour scale.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
-#| echo: false
 #| fig-width: 10
-#| fig-height: 6
+#| fig-height: 5.5
+#| echo: false
+zlim_month <- range(sapply(st_kde$z, range))
 tims <- c(7, 8, 9, 10, 11, 12)
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (i in tims) {
-  plot(st_kde, i,
-       override.par = FALSE,
-       fix.range = TRUE,
-       main = paste("Month", i))
+  plot_slice(st_kde, i, zlim = zlim_month,
+             main = paste(month.name[i], "2023"))
 }
-par(mfcol = c(1, 1))
+mtext("Monthly fire intensity, July to December 2023", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+zlim_month <- range(sapply(st_kde$z, range))
 tims <- c(7, 8, 9, 10, 11, 12)
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (i in tims) {
-  plot(st_kde, i,
-       override.par = FALSE,
-       fix.range = TRUE,
-       main = paste("Month", i))
+  plot_slice(st_kde, i, zlim = zlim_month,
+             main = paste(month.name[i], "2023"))
 }
-par(mfcol = c(1, 1))
+mtext("Monthly fire intensity, July to December 2023", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
-`fix.range = TRUE` holds the colour scale constant across the six panels. Without it each month gets its own scale and a quiet December looks as busy as a peak September.
+The shared `zlim` does the job of sparr's `fix.range = TRUE`, which takes the same range over every time slice. Without it each month gets its own scale and a quiet December looks as busy as a peak September.
 
-## By Day of Year
+# Computing STKDE by Day of Year
+
+## Computing Spatio-Temporal KDE
+
+::: panel-tabset
+## Creating the ppp inside the owin
+
+Same steps as the monthly version, with `DayofYear` as the mark this time.
 
 ```{r}
 fire_yday_owin <- fire_sf %>%
@@ -286,55 +377,71 @@ fire_yday_owin <- fire_sf %>%
 summary(fire_yday_owin)
 ```
 
+## Computing the KDE
+
+`spattemp.density()` again with its default bandwidths, now on a time axis measured in days.
+
 ```{r}
 kde_yday <- spattemp.density(fire_yday_owin)
 summary(kde_yday)
 ```
+:::
 
 ::: {.callout-warning}
 ## Issue I hit
 The book's next line is `plot(kde_yday)` and it produces 343 separate plots, one for every day in the temporal bound. The rendered chapter page has 343 image tags in a row. I know because I fetched it and counted.
 
-Do not do that. `plot()` on a sparr object accepts a `tselect` argument for which times to draw. Six days from the dry season say everything 343 would.
+Do not do that. `plot()` on a sparr object accepts a `tselect` argument for which times to draw, and `plot_slice()` above takes one time the same way. Six days from the dry season say everything 343 would.
 :::
+
+## Plotting the Spatio-Temporal KDE Object
+
+Six days at fifteen-day steps, from 1 August to 15 October. The colour key is now the share of the year's detections per square metre per day (the peak is about 1.9e-12), and `zlim_yday` gives all six panels one scale.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
-#| echo: false
 #| fig-width: 10
-#| fig-height: 6
+#| fig-height: 5.5
+#| echo: false
+zlim_yday <- range(sapply(kde_yday$z, range))
 days <- c(213, 228, 243, 258, 273, 288)
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (d in days) {
-  plot(kde_yday, d,
-       override.par = FALSE,
-       fix.range = TRUE,
-       main = paste("Day", d, format(as.Date("2023-01-01") + d - 1, "%d %b")))
+  plot_slice(kde_yday, d, zlim = zlim_yday,
+             main = paste0("Day ", d, " (", format(as.Date("2023-01-01") + d - 1, "%d %b"), ")"))
 }
-par(mfcol = c(1, 1))
+mtext("Daily fire intensity, default bandwidths", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
+zlim_yday <- range(sapply(kde_yday$z, range))
 days <- c(213, 228, 243, 258, 273, 288)
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (d in days) {
-  plot(kde_yday, d,
-       override.par = FALSE,
-       fix.range = TRUE,
-       main = paste("Day", d, format(as.Date("2023-01-01") + d - 1, "%d %b")))
+  plot_slice(kde_yday, d, zlim = zlim_yday,
+             main = paste0("Day ", d, " (", format(as.Date("2023-01-01") + d - 1, "%d %b"), ")"))
 }
-par(mfcol = c(1, 1))
+mtext("Daily fire intensity, default bandwidths", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
-## Choosing the Bandwidths Properly
+# Computing STKDE by Day of Year: Improved Method
 
-The two defaults above came from a rule of thumb. `BOOT.spattemp()` picks them by bootstrap instead, minimising the estimated error of the whole surface.
+## Computing Spatio-Temporal KDE
+
+The two defaults above came from a rule of thumb. `BOOT.spattemp()` of **sparr** picks them by bootstrap instead, minimising the estimated error of the whole surface.
+
+::: panel-tabset
+## Choosing the bandwidths by bootstrap
+
+`set.seed()` fixes the resampling so the result repeats, then `BOOT.spattemp()` searches over both bandwidths at once.
 
 ```{r}
 set.seed(1234)
@@ -342,14 +449,9 @@ bw_boot <- BOOT.spattemp(fire_yday_owin)
 bw_boot
 ```
 
-::: {.callout-note}
-## Learning diary
-Slow. It prints thirty odd iterations before settling, and each one refits the surface. This is the chunk that made me set `freeze: true` at the top of the file, otherwise every render rerun it.
+## Refitting with the rounded bandwidths
 
-The book's bootstrap lands at h of 9000 and lambda of 19, and the chapter rounds them before use. Mine lands somewhere else, about 45.6 km and 17 days. Those are different samples, so I round my own numbers to 45000 and 17 rather than borrow the book's.
-
-Rounding is the right call either way. Six decimal places from a bootstrap pretend to a precision the method does not have.
-:::
+`spattemp.density()` again, with `h` and `lambda` passed in by hand.
 
 ```{r}
 kde_yday_boot <- spattemp.density(fire_yday_owin,
@@ -357,61 +459,75 @@ kde_yday_boot <- spattemp.density(fire_yday_owin,
                                   lambda = 17)
 summary(kde_yday_boot)
 ```
+:::
+
+::: {.callout-note}
+## Learning diary
+The bootstrap is slow. It prints thirty odd iterations before settling, and each one refits the surface. This is the chunk that made me set `freeze: true` at the top of the file, otherwise every render would rerun it.
+
+The book's bootstrap lands at h of 9000 and lambda of 19, and the chapter rounds them before use. Mine lands somewhere else, about 45.6 km and 17 days. Those are different samples, so I round my own numbers to 45000 and 17 rather than borrow the book's.
+
+Rounding is the right call either way. Six decimal places from a bootstrap pretend to a precision the method does not have.
+:::
+
+## Plotting the Output Spatio-Temporal KDE
+
+The same six days drawn from the bootstrap surface. The unit is the same as the default version above, but this figure has its own `zlim_boot`, so compare patterns between the two figures rather than colours.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
-#| echo: false
 #| fig-width: 10
-#| fig-height: 6
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+#| fig-height: 5.5
+#| echo: false
+zlim_boot <- range(sapply(kde_yday_boot$z, range))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (d in days) {
-  plot(kde_yday_boot, d,
-       override.par = FALSE,
-       fix.range = TRUE,
-       main = paste("Day", d, format(as.Date("2023-01-01") + d - 1, "%d %b")))
+  plot_slice(kde_yday_boot, d, zlim = zlim_boot,
+             main = paste0("Day ", d, " (", format(as.Date("2023-01-01") + d - 1, "%d %b"), ")"))
 }
-par(mfcol = c(1, 1))
+mtext("Daily fire intensity, bootstrap bandwidths", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+zlim_boot <- range(sapply(kde_yday_boot$z, range))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (d in days) {
-  plot(kde_yday_boot, d,
-       override.par = FALSE,
-       fix.range = TRUE,
-       main = paste("Day", d, format(as.Date("2023-01-01") + d - 1, "%d %b")))
+  plot_slice(kde_yday_boot, d, zlim = zlim_boot,
+             main = paste0("Day ", d, " (", format(as.Date("2023-01-01") + d - 1, "%d %b"), ")"))
 }
-par(mfcol = c(1, 1))
+mtext("Daily fire intensity, bootstrap bandwidths", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
-::: {.callout-tip}
-## Alternative explored
-Same six days, two bandwidth choices, stacked so they can be compared.
+::: {.callout-note}
+## Learning diary
+Same six days, two bandwidth choices, one figure above the other so they can be compared.
 
 The default gave h of about 19 km and lambda of about 6 days. The bootstrap gave 45 km and 17 days. So the bootstrap smooths harder on both axes, more than twice the spatial bandwidth and nearly three times the temporal one.
 
 Both sets of maps tell the same story. A hotspot starts in west Bangka in early August and moves to the south of the island by late September. Belitung stays quiet throughout.
 
-The difference is how they tell it. The default keeps the hotspot tight and Belitung dark. The bootstrap spreads the same hotspot across half of Bangka, halves its peak, and lets Belitung glow, because a 45 km kernel reaches across the strait.
+The difference is how they tell it. The default keeps the hotspot tight and Belitung dark. The bootstrap spreads the same hotspot across half of Bangka, halves its peak (the summaries give a maximum of 1.9e-12 for the default and 1.0e-12 for the bootstrap), and lets Belitung glow, because a 45 km kernel reaches across the strait.
 
 Which is right depends on the question. For where fires happen, the default's sharper space is more useful. For when, the bootstrap's smoother time is. The bootstrap minimises one overall error and does not know which question I am asking.
 
 The book got 9 km and 19 days on its 741 points, which is sharper space than its own default. Same method, different sample, opposite call on the spatial axis. Bandwidth is a property of the data in hand, not of the method.
 :::
 
-# Part 3, Spatio-temporal K Function
+# Spatio-Temporal Point Patterns Analysis: stpp Methods
 
 The KDE is first order. It says where and when fires are dense. The K function is second order. It says whether fires happen near other fires, in space and time together, more than they would if location and timing were unrelated.
 
-## Building the stpp Object
+## Preparing Spatio-Temporal Point Process Object of stpp
 
-stpp wants a plain three-column matrix, x, y and an integer time.
+stpp wants a plain three-column matrix, x, y and an integer time. `st_coordinates()` of **sf** pulls out the projected x and y, and `as.3dpoints()` of **stpp** wraps the three columns as an `stpp` object.
 
 ```{r}
 coords <- st_coordinates(fire_sf)
@@ -424,25 +540,41 @@ fire_stpp <- as.3dpoints(fire_df)
 class(fire_stpp)
 ```
 
+stpp's own `plot()` for this object gives two panels titled "xy-locations" and "cumulative number", with axes labelled x, y and t and a stretched map. I draw the same two panels by hand with base `plot()`, from `fire_df`, which holds the same three columns. The map uses `asp = 1` so a kilometre east is as long as a kilometre north, and the count is a step line.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
+#| fig-width: 10
+#| fig-height: 5
 #| echo: false
-plot(fire_stpp, pch = 20, cex = 0.5)
+par(mfrow = c(1, 2), cex.main = 1.3, cex.lab = 1.1)
+plot(fire_df$x, fire_df$y, asp = 1, pch = 20, cex = 0.5, col = "#D55E00",
+     main = "Fire locations", xlab = "Easting (m)", ylab = "Northing (m)")
+plot(sort(fire_df$t), seq_len(nrow(fire_df)), type = "s",
+     main = "Cumulative fires through 2023", xlab = "Day of year", ylab = "Fires")
+par(mfrow = c(1, 1))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-plot(fire_stpp, pch = 20, cex = 0.5)
+par(mfrow = c(1, 2), cex.main = 1.3, cex.lab = 1.1)
+plot(fire_df$x, fire_df$y, asp = 1, pch = 20, cex = 0.5, col = "#D55E00",
+     main = "Fire locations", xlab = "Easting (m)", ylab = "Northing (m)")
+plot(sort(fire_df$t), seq_len(nrow(fire_df)), type = "s",
+     main = "Cumulative fires through 2023", xlab = "Day of year", ylab = "Fires")
+par(mfrow = c(1, 1))
 ```
 :::
 
-The left panel is the map. The right panel is the cumulative count of fires against day of year, and the dry season shows as the steep climb from about day 200.
+The left panel places every detection in UTM metres, Bangka on the left and Belitung on the right. The right panel counts the fires cumulatively through the year, and the dry season shows as the steep climb from about day 200.
 
-## Space-time Inhomogeneous K
+## Computing Spatio-Temporal K-Function
+
+`STIKhat()` of **stpp** estimates the space-time K function on a default grid of spatial and temporal distances.
 
 ```{r}
 kbb_stik <- STIKhat(fire_stpp)
@@ -457,25 +589,30 @@ The function source explains it. `plotK()` closes the current graphics device an
 The fix is to skip `plotK()` and draw the surface myself. The object holds `Khat`, the estimate, and `Ktheo`, the value expected if space and time were independent, both over `dist` and `times`. I plot the difference, since that is what the reading below is about, and I get to label the axes properly.
 :::
 
+`filled.contour()` from base **graphics** draws the difference as a coloured surface, and `contour()` adds labelled lines on top. `STIKhat()` returns distances in metres, so I divide `u` by 1000 to put the x axis in kilometres. The colour key, titled "K excess", is `Khat` minus `Ktheo` in the K function's own units, square metres times days.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
-#| echo: false
 #| fig-width: 8
 #| fig-height: 6
-u <- kbb_stik$dist
+#| echo: false
+u <- kbb_stik$dist / 1000
 v <- kbb_stik$times
 k_excess <- kbb_stik$Khat - kbb_stik$Ktheo
 
+par(cex.main = 1.3)
 filled.contour(u, v, k_excess,
                color.palette = function(n) hcl.colors(n, "YlOrRd", rev = TRUE),
-               xlab = "u, spatial distance (m)",
+               xlab = "u, spatial distance (km)",
                ylab = "v, temporal distance (days)",
                main = "Space-time K minus the independence expectation",
+               key.title = title(main = "K excess", cex.main = 0.9),
                plot.axes = {
                  axis(1); axis(2)
-                 contour(u, v, k_excess, add = TRUE, col = "grey25", lwd = 0.6)
+                 contour(u, v, k_excess, add = TRUE, col = "grey10", lwd = 0.6,
+                         labcex = 0.9)
                })
 ```
 
@@ -483,27 +620,32 @@ filled.contour(u, v, k_excess,
 
 ```{r}
 #| eval: false
-u <- kbb_stik$dist
+u <- kbb_stik$dist / 1000
 v <- kbb_stik$times
 k_excess <- kbb_stik$Khat - kbb_stik$Ktheo
 
+par(cex.main = 1.3)
 filled.contour(u, v, k_excess,
                color.palette = function(n) hcl.colors(n, "YlOrRd", rev = TRUE),
-               xlab = "u, spatial distance (m)",
+               xlab = "u, spatial distance (km)",
                ylab = "v, temporal distance (days)",
                main = "Space-time K minus the independence expectation",
+               key.title = title(main = "K excess", cex.main = 0.9),
                plot.axes = {
                  axis(1); axis(2)
-                 contour(u, v, k_excess, add = TRUE, col = "grey25", lwd = 0.6)
+                 contour(u, v, k_excess, add = TRUE, col = "grey10", lwd = 0.6,
+                         labcex = 0.9)
                })
 ```
 :::
+
+## Guide to Interpreting the Plot
 
 ::: {.callout-note}
 ## Learning diary
 This took me a while to read, so here is the version I wish the book had given.
 
-The plot is a surface over two axes. `u` is distance in metres and `v` is distance in days. The height at any point is how many more fires sit within `u` metres and `v` days of a typical fire than you would expect if space and time were independent. That is the `Khat` minus `Ktheo` I drew above.
+The plot is a surface over two axes. `u` is distance in space, which I plotted in kilometres, and `v` is distance in days. The height at any point is how many more fires sit within `u` kilometres and `v` days of a typical fire than you would expect if space and time were independent. That is the `Khat` minus `Ktheo` I drew above.
 
 A surface that rises steeply near the origin, at small `u` and small `v`, means fires happen close to other fires and soon after them. That is space-time clustering. A flat surface means no such interaction.
 
@@ -514,13 +656,13 @@ The surface shows it. The excess is positive everywhere and keeps climbing with 
 A proper inhomogeneous version would feed the spatio-temporal KDE back in as `lambda`. That is the version I want for the take-home.
 :::
 
-# Part 4, Beyond the Exercise
+# Beyond the Exercise
 
 Three things I wanted to check that the chapter does not.
 
 ## Does the Type Filter Change the Answer
 
-I dropped volcanoes and static sources in Part 1. Worth showing what they would have done.
+I dropped volcanoes and static sources while preparing the data. Worth showing what they would have done. The same `st_as_sf()`, `st_transform()` and `st_filter()` chain runs on the unfiltered table, and a `tibble()` sets the two counts side by side.
 
 ```{r}
 fire_all_kbb <- fire_all %>%
@@ -535,6 +677,8 @@ tibble(
 )
 ```
 
+`count()` on the unfiltered points shows which types were there to drop.
+
 ```{r}
 fire_all_kbb %>%
   st_drop_geometry() %>%
@@ -543,18 +687,20 @@ fire_all_kbb %>%
 
 ::: {.callout-tip}
 ## Alternative explored
-For Bangka Belitung specifically the filter removes only a handful of rows, so the maps above would look almost the same either way. There are no volcanoes on the island.
+For Bangka Belitung specifically the filter removes exactly one row, a single type 2 static-source detection, taking 898 down to 897. The maps above would look the same either way. There are no volcanoes on the island.
 
-That is a finding, not a failure. The filter was cheap, it was justified by the data dictionary, and for a Kalimantan regency in the take-home it will matter a great deal more, because Kalimantan has both volcanoes and oil and gas flares. Better to have the habit before it matters.
+That is a finding, not a failure. The filter was cheap, it was justified by the data dictionary, and for a Kalimantan regency in the take-home it will matter a great deal more, because Kalimantan has oil and gas flares and other industrial heat sources that FIRMS tags as type 2. Better to have the habit before it matters.
 :::
 
 ## Does Detection Confidence Change the Answer
 
-MODIS reports a confidence score from 0 to 100 on every detection. The book ignores it.
+MODIS reports a confidence score from 0 to 100 on every detection. The book ignores it. `quantile()` shows how the scores spread.
 
 ```{r}
 quantile(fire_sf$confidence, c(0, 0.25, 0.5, 0.75, 1))
 ```
+
+`filter()` keeps the detections at 80 or above, and the `tibble()` compares the counts.
 
 ```{r}
 fire_hi <- fire_sf %>% filter(confidence >= 80)
@@ -565,41 +711,48 @@ tibble(
 )
 ```
 
+The subset goes through the same `as.ppp()` and `spattemp.density()` steps, with the bootstrap bandwidths from above so that only the data change.
+
+```{r}
+fire_hi_owin <- fire_hi %>% select(DayofYear) %>% as.ppp() %>% .[kbb_owin]
+kde_hi <- spattemp.density(fire_hi_owin, h = 45000, lambda = 17)
+```
+
+Three of the six days, every detection on the top row and the high confidence subset below. `zlim_conf` is the range over both surfaces, so all six panels share one colour scale, in the same share of detections per square metre per day as before.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
-#| echo: false
 #| fig-width: 10
-#| fig-height: 6
-fire_hi_owin <- fire_hi %>% select(DayofYear) %>% as.ppp() %>% .[kbb_owin]
-kde_hi <- spattemp.density(fire_hi_owin, h = 45000, lambda = 17)
-
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+#| fig-height: 5.5
+#| echo: false
+zlim_conf <- range(c(sapply(kde_yday_boot$z, range), sapply(kde_hi$z, range)))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (d in days[c(2, 4, 6)]) {
-  plot(kde_yday_boot, d, override.par = FALSE, fix.range = TRUE,
-       main = paste("All, day", d))
-  plot(kde_hi, d, override.par = FALSE, fix.range = TRUE,
-       main = paste("Conf >= 80, day", d))
+  plot_slice(kde_yday_boot, d, zlim = zlim_conf,
+             main = paste("All, day", d))
+  plot_slice(kde_hi, d, zlim = zlim_conf,
+             main = paste("Conf >= 80, day", d))
 }
-par(mfcol = c(1, 1))
+mtext("All fires against confidence 80 and above, one scale", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-fire_hi_owin <- fire_hi %>% select(DayofYear) %>% as.ppp() %>% .[kbb_owin]
-kde_hi <- spattemp.density(fire_hi_owin, h = 45000, lambda = 17)
-
-par(mfcol = c(2, 3), mar = c(1, 1, 2, 4))
+zlim_conf <- range(c(sapply(kde_yday_boot$z, range), sapply(kde_hi$z, range)))
+par(mfcol = c(2, 3), mar = c(0.5, 0.5, 2, 4), oma = c(0, 0, 3, 0), cex.main = 1.8)
 for (d in days[c(2, 4, 6)]) {
-  plot(kde_yday_boot, d, override.par = FALSE, fix.range = TRUE,
-       main = paste("All, day", d))
-  plot(kde_hi, d, override.par = FALSE, fix.range = TRUE,
-       main = paste("Conf >= 80, day", d))
+  plot_slice(kde_yday_boot, d, zlim = zlim_conf,
+             main = paste("All, day", d))
+  plot_slice(kde_hi, d, zlim = zlim_conf,
+             main = paste("Conf >= 80, day", d))
 }
-par(mfcol = c(1, 1))
+mtext("All fires against confidence 80 and above, one scale", outer = TRUE, cex = 2.1, font = 2)
+par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ```
 :::
 
@@ -607,14 +760,14 @@ par(mfcol = c(1, 1))
 ## Alternative explored
 Eighty is FIRMS's own line for high confidence, and it is a hard one. Half the detections sit below 67 and only 164 of 897 clear 80, so the bottom row is drawn from under a fifth of the data.
 
-Top row is every detection, bottom row is the high confidence subset. Even with four fifths of the points gone the hotspots sit in the same places, the surface just gets lower and thinner around them.
+Top row is every detection, bottom row is the high confidence subset. Even with four fifths of the points gone the hotspots sit in the same places and move the same way through the season. Both surfaces are densities that integrate to one over space and time, so the smaller subset does not simply come out dimmer. What would matter is the bright patches moving, and they do not.
 
 That is a useful sanity check. If the high confidence subset had shown a completely different pattern, the full-data maps would have been driven by noise. It does not, so they are not. The question of which threshold to use is a data quality decision the chapter skips, and for the take-home it has to be stated and justified.
 :::
 
 ## Is It Space, Time, or Both
 
-The K surface in Part 3 says whether there is space-time interaction. It does not say whether there would have been spatial clustering anyway, with time ignored. Exercise 2's tools answer that.
+The K surface above says whether there is space-time interaction. It does not say whether there would have been spatial clustering anyway, with time ignored. Exercise 2's tools answer that. `unmark()` drops the day marks, and `envelope()` of **spatstat** simulates 39 random patterns in the same window around `Lest`, with `global = TRUE` for a simultaneous envelope.
 
 ```{r}
 fire_sp <- unmark(fire_yday_owin)
@@ -623,11 +776,16 @@ L_sp <- envelope(fire_sp, Lest, nsim = 39, rank = 1,
                  global = TRUE, correction = "Ripley", verbose = FALSE)
 ```
 
+The plot shows L(d) minus d against distance in metres. The solid line is the observed pattern, the dashed line at zero is complete spatial randomness, and the grey band is the global envelope.
+
 ::: panel-tabset
 ## The Plot
 
 ```{r}
+#| fig-width: 8
+#| fig-height: 6
 #| echo: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1)
 plot(L_sp, . - r ~ r, xlab = "d (m)", ylab = "L(d) - r",
      main = "Spatial L function, time ignored, global envelope")
 ```
@@ -636,6 +794,7 @@ plot(L_sp, . - r ~ r, xlab = "d (m)", ylab = "L(d) - r",
 
 ```{r}
 #| eval: false
+par(cex.main = 1.3, cex.sub = 1.1, cex.lab = 1.1)
 plot(L_sp, . - r ~ r, xlab = "d (m)", ylab = "L(d) - r",
      main = "Spatial L function, time ignored, global envelope")
 ```
@@ -652,7 +811,7 @@ Here both show clustering. But the K surface was computed with a constant intens
 The chapter runs the second test without the first, so it cannot make that distinction. Running both is what makes the space-time result readable.
 :::
 
-## Limitations
+# Limitations
 
 - GADM's boundary and the book's kelurahan shapefile are different sources, so the observation window is not identical to the book's and the point count differs.
 - MODIS detects heat, not fire. A detection is a hot pixel about a kilometre across, so a single fire may appear as several points and several fires as one.
@@ -665,7 +824,7 @@ The chapter runs the second test without the first, so it cannot make that disti
 
 Five things I am taking from this one.
 
-**The `type` column was the most important thing in the file and the chapter never mentions it.** Volcanoes, gas flares and offshore pixels are all in the same table as vegetation fires, and FIRMS labels them. Keeping everything and calling it forest fires would have been wrong, and for Kalimantan in the take-home it would have been badly wrong. Reading the data dictionary before the data is a habit I am glad I picked up on Exercise 1.
+**The `type` column was the most important thing in the file and the chapter never mentions it.** Volcanoes, gas flares and offshore pixels are all in the same table as vegetation fires, and FIRMS labels them. Keeping everything and calling it forest fires would have been wrong, and for Kalimantan in the take-home it would have been badly wrong. Reading the data dictionary before the data is a habit that starts here, and I mean to keep it.
 
 **Two downloads failed before one worked.** A 553 MB shapefile at 44 kilobytes a second, then a bundle that arrived truncated with Indonesia in the missing part. The per-country FIRMS file and GADM level 2 got me the same analysis from 9 MB total. Worth remembering that the book's data path is one route, not the only one.
 

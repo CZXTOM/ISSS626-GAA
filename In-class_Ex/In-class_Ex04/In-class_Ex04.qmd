@@ -1,10 +1,17 @@
 ---
-title: "In-class Ex04"
+title: "In-class Exercise 4"
+subtitle: "Geographically Weighted Summary Statistics"
 author: "ZeXin Chen"
-format: html
+format:
+  html:
+    toc: true
+    number-sections: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
 date: "September 18, 2026"
 date-modified: today
-execute: 
+execute:
   echo: true
   eval: true
   warning: false
@@ -12,12 +19,33 @@ execute:
   message: false
 ---
 
+::: {.pagefacts}
+[88 counties of Hunan, GDP per capita 2012]{.fact}
+[Hunan shapefile, Hunan_2012.csv]{.fact .data}
+[`sf` `spdep` `tmap` `tidyverse` `knitr` `GWmodel` `ggstatsplot`]{.fact .pkg}
+:::
+
+# Overview
+
+Hands-on Exercise 4 built spatial weights for the 88 counties of Hunan. This in-class exercise uses the same data for a different question. Instead of one summary number for the whole province, geographically weighted summary statistics give every county its own local mean, standard deviation and so on, computed from the counties around it and weighted by distance.
+
+# Loading the Packages
+
+**GWmodel** is the new package. It computes the geographically weighted statistics and chooses the bandwidth. **sf**, **spdep**, **tmap** and **tidyverse** do the same jobs as in the hands-on exercises, and **knitr** and **ggstatsplot** are on the list given in class.
+
 ```{r}
+#| output: false
 pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)
 ```
 
+# Preparing the Data
+
+Three steps. Read the boundaries, read the indicators, then join them and keep the columns needed.
+
 ::: panel-tabset
 ## Importing Hunan shapefile
+
+`st_read()` of **sf** reads the county boundaries into an sf polygon object.
 
 ```{r}
 hunan <- st_read(dsn = "data/geospatial", layer = "Hunan")
@@ -25,11 +53,15 @@ hunan <- st_read(dsn = "data/geospatial", layer = "Hunan")
 
 ## Importing Hunan_2012 table
 
+`read_csv()` of **readr** reads the 2012 indicators into a tibble.
+
 ```{r}
 hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
 ```
 
 ## Joining Hunan and Hunan_2012
+
+`left_join()` of **dplyr** attaches the indicators to the polygons by the shared `County` column. `select()` keeps NAME_2, ID_3, NAME_3, County, GDPPC, GIO, Agri and Service, which sit at positions 1 to 3, 7, 15, 16, 31 and 32 after the join.
 
 ```{r}
 hunan_sf <- left_join(hunan, hunan2012) %>%
@@ -38,41 +70,69 @@ hunan_sf <- left_join(hunan, hunan2012) %>%
 
 :::
 
-## Mapping GDPPC
+# Mapping GDPPC
+
+`qtm()` of **tmap** draws the choropleth in one line, next to a reference map with the county names. `tmap_arrange()` places the two side by side. The legend sits outside the map so it never covers a county.
 
 ::: panel-tabset
-## The code
+## The Plot
 
 ```{r}
-#| fig-width: 16
-#| fig-height: 6
 #| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
 basemap <- tm_shape(hunan_sf) +
-  tm_polygons() +
-  tm_text("NAME_3", size = 0.5)
+  tm_polygons(fill = "#F7F4EC", col = "grey60") +
+  tm_text("NAME_3", size = 0.6,
+          options = opt_tm_text(remove_overlap = TRUE)) +
+  tm_title("Hunan, 88 counties", size = 1.3, fontface = "bold")
 
-gdppc <- qtm(hunan_sf, "GDPPC") +
-  tm_layout(
-    legend.position = c("left", "bottom"))
+gdppc <- qtm(hunan_sf, "GDPPC",
+             fill.legend = tm_legend(title = "GDP per capita (RMB)",
+                                     position = tm_pos_out("right", "center"))) +
+  tm_title("GDP per capita, 2012", size = 1.3, fontface = "bold")
 
-tmap_arrange(basemap, gdppc, asp = 1, ncol = 2)
+tmap_arrange(basemap, gdppc, ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+basemap <- tm_shape(hunan_sf) +
+  tm_polygons(fill = "#F7F4EC", col = "grey60") +
+  tm_text("NAME_3", size = 0.6,
+          options = opt_tm_text(remove_overlap = TRUE)) +
+  tm_title("Hunan, 88 counties", size = 1.3, fontface = "bold")
+
+gdppc <- qtm(hunan_sf, "GDPPC",
+             fill.legend = tm_legend(title = "GDP per capita (RMB)",
+                                     position = tm_pos_out("right", "center"))) +
+  tm_title("GDP per capita, 2012", size = 1.3, fontface = "bold")
+
+tmap_arrange(basemap, gdppc, ncol = 2)
 ```
 :::
 
-## Converting to SpatialPolygonDataFrame
+# Converting to SpatialPolygonDataFrame
 
 ::: {.callout-note}
-GWmodel presently is built around the older sp and not sf formats for handling spatial data in R.
+## Learning diary
+GWmodel is still built around the older **sp** classes, not **sf**, so the data has to be converted before any GWmodel function will take it.
 :::
+
+`as_Spatial()` of **sf** converts the sf object into an sp SpatialPolygonsDataFrame.
 
 ```{r}
 hunan_sp <- hunan_sf %>%
   as_Spatial()
 ```
 
-# Geographically Weighted Summary Statistics (GWSS) with adaptive bandwidth
+# Geographically Weighted Summary Statistics with Adaptive Bandwidth
 
-## Determine adaptive bandwidth
+## Determining the Adaptive Bandwidth
+
+`bw.gwr()` of **GWmodel** searches for the bandwidth. With `adaptive = TRUE` the bandwidth is a number of nearest neighbours rather than a distance. `GDPPC ~ 1` means no explanatory variable, only the variable being summarised. The two tabs choose the bandwidth two ways, by cross-validation and by AICc.
 
 ::: panel-tabset
 ## Cross-validation
@@ -106,9 +166,14 @@ bw_AIC
 ```
 :::
 
-## Computing geographically weighted summary statistics
+::: {.callout-note}
+## Learning diary
+Both approaches land on the same answer, `r bw_CV` nearest neighbours for CV and `r bw_AIC` for AICc. So each county's local statistics are computed from roughly a quarter of the province. `longlat = T` matters here because the data is still in WGS 84, so distances have to be great circle distances in kilometres.
+:::
 
-The code chunk below computes geographically weighted summary statistics by using `gwss()` of GWmodel package. The analysis is performed using adaptive distance weighted. The distance is derived using AICc method and the kernel method used is **bisquare**.
+## Computing Geographically Weighted Summary Statistics
+
+`gwss()` of **GWmodel** computes the geographically weighted summary statistics. The bandwidth is the adaptive one chosen by AICc above, and the kernel is **bisquare**.
 
 ```{r}
 gwstat <- gwss(data = hunan_sp,
@@ -120,32 +185,31 @@ gwstat <- gwss(data = hunan_sp,
                longlat = T)
 ```
 
+## Preparing the Output Data
+
 ::: {.callout-note}
-gwss support five kernel methods, namely gaussian, exponential, bisquare, tricube, and boxcar. Repeat the code chunk above with different kernel methods and compare their results visually.
+## Learning diary
+With `quantile = TRUE`, `gwss()` computes eight local summary statistics for each county, the local mean, standard deviation, variance, skewness, coefficient of variation, median, interquartile range and quantile imbalance. They come back in `gwstat$SDF`, which is a SpatialPolygonsDataFrame, with column names such as `GDPPC_LM` for the local mean.
 :::
 
-## Preparing the output data
-
-::: {.callout-important}
-`gwss()` with quantile argument computes eight local summary statistics, namely local means, local standard deviations, local variance, local skew, local coefficients of variation, local Median, local medians, local interquartile ranges, and local quantile imbalances. They are output in SDF data frame.
-:::
-
-Code chunk below is used to extract SDF data table from **gwss** object output from `gwss()` for subsequent geovisilisation. It will be converted into data.frame by using `as.data.frame()`.
+`as.data.frame()` pulls the attribute table out of `gwstat$SDF` so it can be used for mapping.
 
 ```{r}
 gwstat_df <- as.data.frame(gwstat$SDF)
 ```
 
-Next, `cbind()` is used to append the newly derived data.frame onto *hunan_sf* sf data.frame.
+`cbind()` then appends those columns onto *hunan_sf*. The rows are still in the same county order, so no join key is needed.
 
 ```{r}
 hunan_gstat <- cbind(hunan_sf, gwstat_df)
 ```
 
-## Visualising geographically weighted summary statistics
+## Visualising Geographically Weighted Summary Statistics
+
+`tm_shape()` and `tm_polygons()` of **tmap** map the local mean with quantile classes.
 
 ::: panel-tabset
-## The Geographically Weighted Mean
+## The Plot
 
 ```{r}
 #| echo: false
@@ -158,13 +222,13 @@ tm_shape(hunan_gstat) +
                 n = 5,
                 values = "brewer.blues"),
               fill.legend = tm_legend(
-                title = "local Mean")) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of geographically wieghted mean") +
-  tm_layout(legend.position = c("left", "bottom"))
+                title = "Local mean GDPPC (RMB)",
+                position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Geographically weighted mean of GDPPC", size = 1.5, fontface = "bold")
 ```
 
-## The code
+## The Code
 
 ```{r}
 #| eval: false
@@ -175,10 +239,83 @@ tm_shape(hunan_gstat) +
                 n = 5,
                 values = "brewer.blues"),
               fill.legend = tm_legend(
-                title = "local Mean")) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of geographically wieghted mean") +
-  tm_layout(legend.position = c("left", "bottom"))
+                title = "Local mean GDPPC (RMB)",
+                position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_title("Geographically weighted mean of GDPPC", size = 1.5, fontface = "bold")
 ```
 :::
 
+## Comparing the Five Kernels
+
+`gwss()` supports five kernels, gaussian, exponential, bisquare, tricube and boxcar. The lesson asked for the chunk above to be repeated with each kernel and the results compared visually. `sapply()` runs `gwss()` once per kernel with the same adaptive bandwidth and keeps only the local mean, and `pivot_longer()` of **tidyr** stacks the five results so `tm_facets()` can draw one small map per kernel on one shared scale.
+
+```{r}
+kernels <- c("gaussian", "exponential", "bisquare", "tricube", "boxcar")
+
+kernel_lm <- sapply(kernels, function(k) {
+  gwss(data = hunan_sp,
+       vars = "GDPPC",
+       bw = bw_AIC,
+       kernel = k,
+       adaptive = TRUE,
+       longlat = T)$SDF$GDPPC_LM
+})
+
+hunan_kernels <- cbind(hunan_sf, as.data.frame(kernel_lm)) %>%
+  pivot_longer(cols = all_of(kernels),
+               names_to = "kernel",
+               values_to = "local_mean") %>%
+  mutate(kernel = factor(kernel, levels = kernels))
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 7
+tm_shape(hunan_kernels) +
+  tm_polygons(fill = "local_mean",
+              fill.scale = tm_scale_intervals(
+                style = "quantile",
+                n = 5,
+                values = "brewer.blues"),
+              fill.legend = tm_legend(
+                title = "Local mean GDPPC (RMB)",
+                position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_facets(by = "kernel", ncol = 3, free.coords = FALSE) +
+  tm_layout(panel.label.size = 1.2) +
+  tm_title("Local mean of GDPPC under five kernels", size = 1.3, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(hunan_kernels) +
+  tm_polygons(fill = "local_mean",
+              fill.scale = tm_scale_intervals(
+                style = "quantile",
+                n = 5,
+                values = "brewer.blues"),
+              fill.legend = tm_legend(
+                title = "Local mean GDPPC (RMB)",
+                position = tm_pos_out("right", "center")),
+              col = "grey60") +
+  tm_facets(by = "kernel", ncol = 3, free.coords = FALSE) +
+  tm_layout(panel.label.size = 1.2) +
+  tm_title("Local mean of GDPPC under five kernels", size = 1.3, fontface = "bold")
+```
+:::
+
+The five maps share one set of quantile classes, so the same shade means the same local mean in every panel.
+
+The Changsha block in the north-east is the darkest class under all five kernels, so the main pattern does not depend on the kernel. What changes is how sharp the contrast looks. Bisquare, tricube and boxcar give zero weight beyond the 22nd nearest neighbour, so the western counties only average other poor western counties and drop into the lowest class. Gaussian and exponential never quite reach zero, so every county borrows a little from the whole province, the west sits a class higher and the map comes out flatter.
+
+::: {.callout-note}
+## Learning diary
+The kernel matters less than the bandwidth, but it is not nothing. With a bounded kernel the bandwidth really is a cut-off, and with Gaussian or exponential it only sets how fast the weight fades. The bandwidth of 22 was chosen with bisquare, so it is only the best bandwidth for bisquare. A fair comparison would rerun `bw.gwr()` for each kernel first.
+:::

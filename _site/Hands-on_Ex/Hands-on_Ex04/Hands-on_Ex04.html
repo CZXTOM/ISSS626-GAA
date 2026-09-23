@@ -156,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html">
  <span class="dropdown-text">Hands-on Exercise 4</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.html">
+ <span class="dropdown-text">Hands-on Exercise 5</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -210,50 +214,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#getting-started" id="toc-getting-started" class="nav-link active" data-scroll-target="#getting-started"><span class="header-section-number">1</span> Getting Started</a>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview"><span class="header-section-number">1</span> Overview</a></li>
+  <li><a href="#loading-the-packages" id="toc-loading-the-packages" class="nav-link" data-scroll-target="#loading-the-packages"><span class="header-section-number">2</span> Loading the Packages</a></li>
+  <li><a href="#preparing-the-data" id="toc-preparing-the-data" class="nav-link" data-scroll-target="#preparing-the-data"><span class="header-section-number">3</span> Preparing the Data</a></li>
+  <li><a href="#visualising-regional-development-indicator" id="toc-visualising-regional-development-indicator" class="nav-link" data-scroll-target="#visualising-regional-development-indicator"><span class="header-section-number">4</span> Visualising Regional Development Indicator</a></li>
+  <li><a href="#computing-contiguity-spatial-weights" id="toc-computing-contiguity-spatial-weights" class="nav-link" data-scroll-target="#computing-contiguity-spatial-weights"><span class="header-section-number">5</span> Computing Contiguity Spatial Weights</a>
   <ul class="collapse">
-  <li><a href="#installing-and-loading-r-packages" id="toc-installing-and-loading-r-packages" class="nav-link" data-scroll-target="#installing-and-loading-r-packages"><span class="header-section-number">1.1</span> Installing and Loading R Packages</a></li>
+  <li><a href="#computing-queen-and-rook-contiguity-based-neighbours" id="toc-computing-queen-and-rook-contiguity-based-neighbours" class="nav-link" data-scroll-target="#computing-queen-and-rook-contiguity-based-neighbours"><span class="header-section-number">5.1</span> Computing Queen and Rook contiguity based neighbours</a></li>
+  <li><a href="#visualising-contiguity-weights" id="toc-visualising-contiguity-weights" class="nav-link" data-scroll-target="#visualising-contiguity-weights"><span class="header-section-number">5.2</span> Visualising contiguity weights</a></li>
   </ul></li>
-  <li><a href="#part-1-data" id="toc-part-1-data" class="nav-link" data-scroll-target="#part-1-data"><span class="header-section-number">2</span> Part 1, Data</a>
+  <li><a href="#computing-distance-based-neighbours" id="toc-computing-distance-based-neighbours" class="nav-link" data-scroll-target="#computing-distance-based-neighbours"><span class="header-section-number">6</span> Computing Distance Based Neighbours</a>
   <ul class="collapse">
-  <li><a href="#importing-the-study-area" id="toc-importing-the-study-area" class="nav-link" data-scroll-target="#importing-the-study-area"><span class="header-section-number">2.1</span> Importing the Study Area</a></li>
-  <li><a href="#importing-the-indicators" id="toc-importing-the-indicators" class="nav-link" data-scroll-target="#importing-the-indicators"><span class="header-section-number">2.2</span> Importing the Indicators</a></li>
-  <li><a href="#joining-them" id="toc-joining-them" class="nav-link" data-scroll-target="#joining-them"><span class="header-section-number">2.3</span> Joining Them</a></li>
-  <li><a href="#visualising-gdp-per-capita" id="toc-visualising-gdp-per-capita" class="nav-link" data-scroll-target="#visualising-gdp-per-capita"><span class="header-section-number">2.4</span> Visualising GDP per Capita</a></li>
+  <li><a href="#determine-the-cut-off-distance" id="toc-determine-the-cut-off-distance" class="nav-link" data-scroll-target="#determine-the-cut-off-distance"><span class="header-section-number">6.1</span> Determine the cut-off distance</a></li>
+  <li><a href="#computing-fixed-and-adaptive-distance-weight-matrices" id="toc-computing-fixed-and-adaptive-distance-weight-matrices" class="nav-link" data-scroll-target="#computing-fixed-and-adaptive-distance-weight-matrices"><span class="header-section-number">6.2</span> Computing fixed and adaptive distance weight matrices</a></li>
+  <li><a href="#plotting-distance-based-neighbours" id="toc-plotting-distance-based-neighbours" class="nav-link" data-scroll-target="#plotting-distance-based-neighbours"><span class="header-section-number">6.3</span> Plotting distance based neighbours</a></li>
   </ul></li>
-  <li><a href="#part-2-contiguity-weights" id="toc-part-2-contiguity-weights" class="nav-link" data-scroll-target="#part-2-contiguity-weights"><span class="header-section-number">3</span> Part 2, Contiguity Weights</a>
+  <li><a href="#weights-based-on-idw" id="toc-weights-based-on-idw" class="nav-link" data-scroll-target="#weights-based-on-idw"><span class="header-section-number">7</span> Weights Based on IDW</a></li>
+  <li><a href="#row-standardised-weights-matrix" id="toc-row-standardised-weights-matrix" class="nav-link" data-scroll-target="#row-standardised-weights-matrix"><span class="header-section-number">8</span> Row-standardised Weights Matrix</a></li>
+  <li><a href="#application-of-spatial-weight-matrix" id="toc-application-of-spatial-weight-matrix" class="nav-link" data-scroll-target="#application-of-spatial-weight-matrix"><span class="header-section-number">9</span> Application of Spatial Weight Matrix</a>
   <ul class="collapse">
-  <li><a href="#queen" id="toc-queen" class="nav-link" data-scroll-target="#queen"><span class="header-section-number">3.1</span> Queen</a></li>
-  <li><a href="#rook" id="toc-rook" class="nav-link" data-scroll-target="#rook"><span class="header-section-number">3.2</span> Rook</a></li>
-  <li><a href="#plotting-the-links" id="toc-plotting-the-links" class="nav-link" data-scroll-target="#plotting-the-links"><span class="header-section-number">3.3</span> Plotting the Links</a></li>
+  <li><a href="#spatial-lag-with-row-standardised-weights" id="toc-spatial-lag-with-row-standardised-weights" class="nav-link" data-scroll-target="#spatial-lag-with-row-standardised-weights"><span class="header-section-number">9.1</span> Spatial lag with row-standardised weights</a></li>
+  <li><a href="#spatial-lag-as-a-sum-of-neighbouring-values" id="toc-spatial-lag-as-a-sum-of-neighbouring-values" class="nav-link" data-scroll-target="#spatial-lag-as-a-sum-of-neighbouring-values"><span class="header-section-number">9.2</span> Spatial lag as a sum of neighbouring values</a></li>
+  <li><a href="#spatial-window-average" id="toc-spatial-window-average" class="nav-link" data-scroll-target="#spatial-window-average"><span class="header-section-number">9.3</span> Spatial window average</a></li>
+  <li><a href="#spatial-window-sum" id="toc-spatial-window-sum" class="nav-link" data-scroll-target="#spatial-window-sum"><span class="header-section-number">9.4</span> Spatial window sum</a></li>
+  <li><a href="#visualising-the-spatial-lags" id="toc-visualising-the-spatial-lags" class="nav-link" data-scroll-target="#visualising-the-spatial-lags"><span class="header-section-number">9.5</span> Visualising the spatial lags</a></li>
   </ul></li>
-  <li><a href="#part-3-distance-based-weights" id="toc-part-3-distance-based-weights" class="nav-link" data-scroll-target="#part-3-distance-based-weights"><span class="header-section-number">4</span> Part 3, Distance Based Weights</a>
+  <li><a href="#beyond-the-exercise" id="toc-beyond-the-exercise" class="nav-link" data-scroll-target="#beyond-the-exercise"><span class="header-section-number">10</span> Beyond the Exercise</a>
   <ul class="collapse">
-  <li><a href="#finding-the-cut-off" id="toc-finding-the-cut-off" class="nav-link" data-scroll-target="#finding-the-cut-off"><span class="header-section-number">4.1</span> Finding the Cut-off</a></li>
-  <li><a href="#fixed-distance-62-km" id="toc-fixed-distance-62-km" class="nav-link" data-scroll-target="#fixed-distance-62-km"><span class="header-section-number">4.2</span> Fixed Distance, 62 km</a></li>
-  <li><a href="#adaptive-distance-six-nearest" id="toc-adaptive-distance-six-nearest" class="nav-link" data-scroll-target="#adaptive-distance-six-nearest"><span class="header-section-number">4.3</span> Adaptive Distance, Six Nearest</a></li>
+  <li><a href="#four-rules-one-table" id="toc-four-rules-one-table" class="nav-link" data-scroll-target="#four-rules-one-table"><span class="header-section-number">10.1</span> Four rules, one table</a></li>
+  <li><a href="#does-the-projection-matter" id="toc-does-the-projection-matter" class="nav-link" data-scroll-target="#does-the-projection-matter"><span class="header-section-number">10.2</span> Does the projection matter</a></li>
+  <li><a href="#a-preview-of-morans-i" id="toc-a-preview-of-morans-i" class="nav-link" data-scroll-target="#a-preview-of-morans-i"><span class="header-section-number">10.3</span> A preview of Moran’s I</a></li>
   </ul></li>
-  <li><a href="#part-4-from-neighbours-to-weights" id="toc-part-4-from-neighbours-to-weights" class="nav-link" data-scroll-target="#part-4-from-neighbours-to-weights"><span class="header-section-number">5</span> Part 4, From Neighbours to Weights</a>
-  <ul class="collapse">
-  <li><a href="#inverse-distance" id="toc-inverse-distance" class="nav-link" data-scroll-target="#inverse-distance"><span class="header-section-number">5.1</span> Inverse Distance</a></li>
-  <li><a href="#row-standardised" id="toc-row-standardised" class="nav-link" data-scroll-target="#row-standardised"><span class="header-section-number">5.2</span> Row Standardised</a></li>
-  </ul></li>
-  <li><a href="#part-5-spatial-lag" id="toc-part-5-spatial-lag" class="nav-link" data-scroll-target="#part-5-spatial-lag"><span class="header-section-number">6</span> Part 5, Spatial Lag</a>
-  <ul class="collapse">
-  <li><a href="#row-standardised-lag-the-average-of-neighbours" id="toc-row-standardised-lag-the-average-of-neighbours" class="nav-link" data-scroll-target="#row-standardised-lag-the-average-of-neighbours"><span class="header-section-number">6.1</span> Row Standardised Lag, the Average of Neighbours</a></li>
-  <li><a href="#lag-sum-the-total-of-neighbours" id="toc-lag-sum-the-total-of-neighbours" class="nav-link" data-scroll-target="#lag-sum-the-total-of-neighbours"><span class="header-section-number">6.2</span> Lag Sum, the Total of Neighbours</a></li>
-  <li><a href="#window-average-me-and-my-neighbours" id="toc-window-average-me-and-my-neighbours" class="nav-link" data-scroll-target="#window-average-me-and-my-neighbours"><span class="header-section-number">6.3</span> Window Average, Me and My Neighbours</a></li>
-  <li><a href="#window-sum" id="toc-window-sum" class="nav-link" data-scroll-target="#window-sum"><span class="header-section-number">6.4</span> Window Sum</a></li>
-  <li><a href="#comparing-them" id="toc-comparing-them" class="nav-link" data-scroll-target="#comparing-them"><span class="header-section-number">6.5</span> Comparing Them</a></li>
-  </ul></li>
-  <li><a href="#part-6-beyond-the-exercise" id="toc-part-6-beyond-the-exercise" class="nav-link" data-scroll-target="#part-6-beyond-the-exercise"><span class="header-section-number">7</span> Part 6, Beyond the Exercise</a>
-  <ul class="collapse">
-  <li><a href="#four-rules-one-table" id="toc-four-rules-one-table" class="nav-link" data-scroll-target="#four-rules-one-table"><span class="header-section-number">7.1</span> Four Rules, One Table</a></li>
-  <li><a href="#does-the-projection-matter" id="toc-does-the-projection-matter" class="nav-link" data-scroll-target="#does-the-projection-matter"><span class="header-section-number">7.2</span> Does the Projection Matter</a></li>
-  <li><a href="#a-preview-of-morans-i" id="toc-a-preview-of-morans-i" class="nav-link" data-scroll-target="#a-preview-of-morans-i"><span class="header-section-number">7.3</span> A Preview of Moran’s I</a></li>
-  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">7.4</span> Limitations</a></li>
-  </ul></li>
-  <li><a href="#reflections" id="toc-reflections" class="nav-link" data-scroll-target="#reflections"><span class="header-section-number">8</span> Reflections</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">11</span> Limitations</a></li>
+  <li><a href="#reflections" id="toc-reflections" class="nav-link" data-scroll-target="#reflections"><span class="header-section-number">12</span> Reflections</a></li>
   </ul>
 </nav>
     </div>
@@ -287,7 +280,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 17, 2026</p>
+      <p class="date-modified">September 23, 2026</p>
     </div>
   </div>
     
@@ -299,24 +292,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <div class="pagefacts">
-<p><span class="fact">88 counties of Hunan, one year of indicators</span> <span class="fact data">Hunan shapefile, Hunan_2012.csv</span> <span class="fact pkg"><code>sf</code> <code>spdep</code> <code>tmap</code> <code>tidyverse</code> <code>knitr</code></span></p>
+<p><span class="fact">88 counties of Hunan, one year of indicators</span> <span class="fact data">Hunan shapefile, Hunan_2012.csv</span> <span class="fact pkg"><code>sf</code> <code>spdep</code> <code>tmap</code> <code>tidyverse</code> <code>knitr</code> <code>ggrepel</code></span></p>
 </div>
-<section id="getting-started" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Getting Started</h1>
-<p>The first three exercises were about points. This one is about areas, and about the one idea everything after it depends on. Before you can ask whether rich counties sit next to rich counties, you have to decide what “next to” means. That decision is the spatial weights matrix.</p>
+<section id="overview" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
+<p>Exercise 1 was about choropleth maps and the last two were about points. This one is about areas, and about the one idea everything after it depends on. Before you can ask whether rich counties sit next to rich counties, you have to decide what “next to” means. That decision is the spatial weights matrix.</p>
 <p>The chapter builds several of them for the 88 counties of Hunan and then uses them to compute a spatially lagged GDP per capita. Nothing here is a test yet. Those come in the next chapter.</p>
-<section id="installing-and-loading-r-packages" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="installing-and-loading-r-packages"><span class="header-section-number">1.1</span> Installing and Loading R Packages</h2>
-<p>Only one package is new. <strong>spdep</strong> builds neighbour lists and weights and does the lagging.</p>
+</section>
+<section id="loading-the-packages" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Loading the Packages</h1>
+<p>Only one package is new for the chapter. <strong>spdep</strong> builds neighbour lists and weights and does the lagging. <strong>sf</strong> reads the county boundaries and handles geometry, <strong>tmap</strong> draws the maps, <strong>tidyverse</strong> reads the csv, joins the tables and draws the scatter plot with <strong>ggplot2</strong>, and <strong>knitr</strong> prints tables with <code>kable()</code>. I added <strong>ggrepel</strong> myself so the point labels on the scatter plot do not sit on top of the points or the fitted line.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse, knitr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse, knitr, ggrepel)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-</section>
-<section id="part-1-data" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Part 1, Data</h1>
-<section id="importing-the-study-area" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="importing-the-study-area"><span class="header-section-number">2.1</span> Importing the Study Area</h2>
+<section id="preparing-the-data" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Preparing the Data</h1>
+<p>Three steps, the boundaries, the indicators, and the join that brings them together.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Importing the Hunan shapefile</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Importing the Hunan_2012 table</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Performing the relational join</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p><code>st_read()</code> of <strong>sf</strong> reads the Hunan county boundaries from the shapefile.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"Hunan"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -330,10 +327,10 @@ Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
 Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
-<p>Eighty eight polygons in WGS 84. The <code>County</code> column is the join key for the next step.</p>
-</section>
-<section id="importing-the-indicators" class="level2" data-number="2.2">
-<h2 data-number="2.2" class="anchored" data-anchor-id="importing-the-indicators"><span class="header-section-number">2.2</span> Importing the Indicators</h2>
+<p>Eighty-eight polygons in WGS 84. The <code>County</code> column is the join key for the next step.</p>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<p><code>read_csv()</code> of <strong>readr</strong> reads the 2012 indicators, and <code>glimpse()</code> of <strong>dplyr</strong> shows every column with its type.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>hunan2012 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Hunan_2012.csv"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(hunan2012)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -371,6 +368,21 @@ $ RORP        &lt;dbl&gt; 0.7359464, 0.6256753, 0.6549309, 0.6544614, 0.5214385,
 $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651, 0.7…</code></pre>
 </div>
 </div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<p><code>left_join()</code> of <strong>dplyr</strong> attaches the indicators to the polygons, and <code>select()</code> keeps the name columns and GDPPC.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, hunan2012) <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(hunan)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 88</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -382,18 +394,6 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 </div>
 <div class="callout-body-container callout-body">
 <p>The zip came with a <code>Dictionary.xlsx</code> the chapter never mentions. It says GDPPC is GDP per capita in RMB for 2005 to 2012, so the 2012 in the file name is the year, not a version. It also flags that three counties, Shuangqing, Beita and Daxiang, share the same disposable income value. That is not a column this exercise uses, but it is the kind of thing worth knowing before the take-home.</p>
-</div>
-</div>
-</section>
-<section id="joining-them" class="level2" data-number="2.3">
-<h2 data-number="2.3" class="anchored" data-anchor-id="joining-them"><span class="header-section-number">2.3</span> Joining Them</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, hunan2012) <span class="sc">%&gt;%</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(hunan)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 88</code></pre>
 </div>
 </div>
 <div class="callout callout-style-default callout-caution callout-titled">
@@ -411,12 +411,13 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 </div>
 </div>
 </section>
-<section id="visualising-gdp-per-capita" class="level2" data-number="2.4">
-<h2 data-number="2.4" class="anchored" data-anchor-id="visualising-gdp-per-capita"><span class="header-section-number">2.4</span> Visualising GDP per Capita</h2>
+<section id="visualising-regional-development-indicator" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Visualising Regional Development Indicator</h1>
+<p><code>tm_shape()</code> and <code>tm_polygons()</code> of <strong>tmap</strong> draw a reference map with the county names next to a quantile map of GDP per capita, and <code>tmap_arrange()</code> puts the two side by side. <code>remove_overlap = TRUE</code> drops any name that would collide with another, so a few of the small counties packed into the middle of the province lose their label.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -427,34 +428,40 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 </div>
 </div>
 </div>
-<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>basemap <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"#F7F4EC"</span>, <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"NAME_3"</span>, <span class="at">size =</span> <span class="fl">0.35</span>) <span class="sc">+</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"Hunan, 88 counties"</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>gdppc <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"GDPPC"</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">values =</span> <span class="st">"brewer.oranges"</span>),</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"GDPPC (RMB)"</span>),</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"GDP per capita, 2012"</span>)</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(basemap, gdppc, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"NAME_3"</span>, <span class="at">size =</span> <span class="fl">0.6</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">options =</span> <span class="fu">opt_tm_text</span>(<span class="at">remove_overlap =</span> <span class="cn">TRUE</span>)) <span class="sc">+</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"Hunan, 88 counties"</span>, <span class="at">size =</span> <span class="fl">1.3</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>gdppc <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"GDPPC"</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">values =</span> <span class="st">"brewer.oranges"</span>),</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"GDP per capita (RMB)"</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">position =</span> <span class="fu">tm_pos_out</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)),</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"GDP per capita, 2012"</span>, <span class="at">size =</span> <span class="fl">1.3</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(basemap, gdppc, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </div>
 <p>The high values sit in the middle and the north east, around Changsha. The west and south are poorer. Whether that is a real pattern or the eye finding one is exactly what the next chapter tests, and what this chapter builds the tools for.</p>
 </section>
-</section>
-<section id="part-2-contiguity-weights" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Part 2, Contiguity Weights</h1>
+<section id="computing-contiguity-spatial-weights" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Computing Contiguity Spatial Weights</h1>
 <p>Two polygons are contiguous if they touch. Queen contiguity counts a shared corner as touching. Rook contiguity needs a shared edge.</p>
-<section id="queen" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="queen"><span class="header-section-number">3.1</span> Queen</h2>
+<section id="computing-queen-and-rook-contiguity-based-neighbours" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="computing-queen-and-rook-contiguity-based-neighbours"><span class="header-section-number">5.1</span> Computing Queen and Rook contiguity based neighbours</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">Queen contiguity</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Rook contiguity</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<p><code>poly2nb()</code> of <strong>spdep</strong> builds the neighbour list from shared boundaries, and <code>queen = TRUE</code> lets a single shared corner count. <code>summary()</code> prints the link counts.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span> <span class="fu">poly2nb</span>(hunan, <span class="at">queen =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_q)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -475,6 +482,7 @@ Link number distribution:
 </div>
 </div>
 <p>Every county has at least one neighbour, so there are no islands to worry about. The busiest county has eleven.</p>
+<p>The summary names region 85 as the busiest, so I look up its name, the row numbers of its neighbours, and their names.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hunan<span class="sc">$</span>County[<span class="dv">85</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -503,7 +511,7 @@ Link number distribution:
 <p><code>wm_q</code> is a list of 88 integer vectors. Element 85 holds the row numbers of Taoyuan’s neighbours, and looking them up in <code>hunan$County</code> turns numbers into names. That lookup is the whole trick to reading any neighbour object. The numbers are positions, not IDs, so if the rows of <code>hunan</code> were ever reordered every weight matrix would have to be rebuilt.</p>
 </div>
 </div>
-<p>The full matrix is 88 by 88, so I only show a corner of it.</p>
+<p><code>nb2mat()</code> of <strong>spdep</strong> turns the list into a full matrix, with <code>style = "B"</code> giving a 1 for each neighbour and 0 otherwise. It is 88 by 88, so I only show a corner of it.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>wm_q_mat <span class="ot">&lt;-</span> <span class="fu">nb2mat</span>(wm_q, <span class="at">style =</span> <span class="st">"B"</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>wm_q_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -519,9 +527,9 @@ Link number distribution:
 8 0 0 0 0 0 0 0 0</code></pre>
 </div>
 </div>
-</section>
-<section id="rook" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="rook"><span class="header-section-number">3.2</span> Rook</h2>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<p>The same <code>poly2nb()</code> call with <code>queen = FALSE</code> only counts counties that share an edge.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>wm_r <span class="ot">&lt;-</span> <span class="fu">poly2nb</span>(hunan, <span class="at">queen =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_r)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -542,10 +550,13 @@ Link number distribution:
 </div>
 </div>
 <p>Same 88 regions, 440 links instead of 448. Every link is counted from both ends, so that is four county pairs that touch only at a corner.</p>
+</div>
+</div>
+</div>
 </section>
-<section id="plotting-the-links" class="level2" data-number="3.3">
-<h2 data-number="3.3" class="anchored" data-anchor-id="plotting-the-links"><span class="header-section-number">3.3</span> Plotting the Links</h2>
-<p>The links are drawn between polygon centroids, so I need those first.</p>
+<section id="visualising-contiguity-weights" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="visualising-contiguity-weights"><span class="header-section-number">5.2</span> Visualising contiguity weights</h2>
+<p>The links are drawn between polygon centroids, so I need those first. <code>map_dbl()</code> of <strong>purrr</strong> runs <code>st_centroid()</code> of <strong>sf</strong> on each polygon and keeps the longitude, then the latitude, and <code>cbind()</code> puts them into a two column matrix.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>longitude <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(hunan<span class="sc">$</span>geometry, <span class="sc">~</span><span class="fu">st_centroid</span>(.x)[[<span class="dv">1</span>]])</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>latitude <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(hunan<span class="sc">$</span>geometry, <span class="sc">~</span><span class="fu">st_centroid</span>(.x)[[<span class="dv">2</span>]])</span>
@@ -561,10 +572,11 @@ Link number distribution:
 [6,]  111.0341 29.79863</code></pre>
 </div>
 </div>
+<p><code>plot()</code> draws the county outlines first, then the <code>nb</code> method of <strong>spdep</strong> draws a line between every pair of neighbouring centroids on top with <code>add = TRUE</code>.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -575,14 +587,14 @@ Link number distribution:
 </div>
 </div>
 </div>
-<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="dv">2</span>, <span class="fl">0.5</span>))</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>op <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">0</span>), <span class="at">cex.main =</span> <span class="fl">1.3</span>)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"grey70"</span>, <span class="at">main =</span> <span class="st">"Queen contiguity"</span>)</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(wm_q, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.5</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"#D55E00"</span>)</span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"grey70"</span>, <span class="at">main =</span> <span class="st">"Rook contiguity"</span>)</span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(wm_r, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.5</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"#0072B2"</span>)</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(op)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -590,12 +602,12 @@ Link number distribution:
 <p>The two look identical at this scale. The four missing pairs are corner touches, and a corner touch is a single point, so there is nothing to see.</p>
 </section>
 </section>
-<section id="part-3-distance-based-weights" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Part 3, Distance Based Weights</h1>
+<section id="computing-distance-based-neighbours" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Computing Distance Based Neighbours</h1>
 <p>Contiguity does not care how big a county is. A distance rule does. The book uses two, a fixed radius and a fixed number of nearest neighbours.</p>
-<section id="finding-the-cut-off" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="finding-the-cut-off"><span class="header-section-number">4.1</span> Finding the Cut-off</h2>
-<p>The radius has to be big enough that nobody is left without a neighbour. The book finds it by asking how far each county’s single nearest neighbour is, and taking the largest of those.</p>
+<section id="determine-the-cut-off-distance" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="determine-the-cut-off-distance"><span class="header-section-number">6.1</span> Determine the cut-off distance</h2>
+<p>The radius has to be big enough that nobody is left without a neighbour. The book finds it by asking how far each county’s single nearest neighbour is, and taking the largest of those. <code>knearneigh()</code> of <strong>spdep</strong> finds each county’s nearest centroid, <code>knn2nb()</code> turns that into a neighbour list, and <code>nbdists()</code> returns the great circle distances in km because of <code>longlat = TRUE</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>k1 <span class="ot">&lt;-</span> <span class="fu">knn2nb</span>(<span class="fu">knearneigh</span>(coords))</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>k1dists <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">nbdists</span>(k1, coords, <span class="at">longlat =</span> <span class="cn">TRUE</span>))</span>
@@ -605,7 +617,7 @@ Link number distribution:
   24.79   32.57   38.01   39.07   44.52   61.79 </code></pre>
 </div>
 </div>
-<p>The largest nearest-neighbour distance is just under 62 km, so 62 km guarantees every county at least one neighbour.</p>
+<p>The largest nearest-neighbour distance is just under 62 km, so 62 km guarantees every county at least one neighbour. <code>which.max()</code> tells me which county that longest distance belongs to.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which.max</span>(k1dists)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -626,12 +638,17 @@ Link number distribution:
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>One county sets the cut-off for all 88. I wanted to know which. It is Taoyuan, the same county that had the most neighbours under Queen. That is not a contradiction. It is the largest county on the map, so it touches many others while its centroid sits far from all of theirs. Contiguity says it is the best connected county in Hunan. Distance says it is the most isolated. Everything about the fixed distance matrix below is shaped by that one row.</p>
+<p>One county sets the cut-off for all 88. I wanted to know which. It is Taoyuan, the same county that had the most neighbours under Queen. That is not a contradiction. It is one of the largest counties on the map, fourth by area after Yuanling, Liuyang and Anhua, and it has a long irregular shape, so it touches many others while its centroid sits far from all of theirs. Contiguity says it is the best connected county in Hunan. Distance says it is the most isolated. Everything about the fixed distance matrix below is shaped by that one row.</p>
 </div>
 </div>
 </section>
-<section id="fixed-distance-62-km" class="level2" data-number="4.2">
-<h2 data-number="4.2" class="anchored" data-anchor-id="fixed-distance-62-km"><span class="header-section-number">4.2</span> Fixed Distance, 62 km</h2>
+<section id="computing-fixed-and-adaptive-distance-weight-matrices" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="computing-fixed-and-adaptive-distance-weight-matrices"><span class="header-section-number">6.2</span> Computing fixed and adaptive distance weight matrices</h2>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">Fixed distance weight matrix</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">Adaptive distance weight matrix</a></li></ul>
+<div class="tab-content">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<p><code>dnearneigh()</code> of <strong>spdep</strong> links every pair of centroids between 0 and 62 km apart, measured along the great circle.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>wm_d62 <span class="ot">&lt;-</span> <span class="fu">dnearneigh</span>(coords, <span class="dv">0</span>, <span class="dv">62</span>, <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>wm_d62</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -643,6 +660,7 @@ Percentage nonzero weights: 4.183884
 Average number of links: 3.681818 </code></pre>
 </div>
 </div>
+<p><code>n.comp.nb()</code> of <strong>spdep</strong> counts the connected components of the graph, which tells me whether any group of counties is cut off from the rest.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>n_comp <span class="ot">&lt;-</span> <span class="fu">n.comp.nb</span>(wm_d62)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>n_comp<span class="sc">$</span>nc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -651,9 +669,9 @@ Average number of links: 3.681818 </code></pre>
 </div>
 </div>
 <p>One connected component, so the graph does not fall apart into islands at this radius.</p>
-</section>
-<section id="adaptive-distance-six-nearest" class="level2" data-number="4.3">
-<h2 data-number="4.3" class="anchored" data-anchor-id="adaptive-distance-six-nearest"><span class="header-section-number">4.3</span> Adaptive Distance, Six Nearest</h2>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<p><code>knearneigh()</code> with <code>k = 6</code> fixes the number of neighbours instead of the distance, and <code>knn2nb()</code> turns the result into a neighbour list.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>knn6 <span class="ot">&lt;-</span> <span class="fu">knn2nb</span>(<span class="fu">knearneigh</span>(coords, <span class="at">k =</span> <span class="dv">6</span>))</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>knn6</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -667,10 +685,17 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <p>Every county gets exactly six, whether it is a small county packed around Changsha or a large one in the mountains.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="plotting-distance-based-neighbours" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="plotting-distance-based-neighbours"><span class="header-section-number">6.3</span> Plotting distance based neighbours</h2>
+<p>The same outline plus <code>nb</code> plot as before, now for the 62 km list and the six nearest list.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -681,14 +706,14 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </div>
-<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="dv">2</span>, <span class="fl">0.5</span>))</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>op <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">0</span>), <span class="at">cex.main =</span> <span class="fl">1.3</span>)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"grey70"</span>, <span class="at">main =</span> <span class="st">"Fixed distance, 62 km"</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(wm_d62, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.5</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"#D55E00"</span>)</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"grey70"</span>, <span class="at">main =</span> <span class="st">"Adaptive, k = 6"</span>)</span>
 <span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(knn6, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.5</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"#0072B2"</span>)</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(op)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -709,11 +734,10 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </section>
 </section>
-<section id="part-4-from-neighbours-to-weights" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Part 4, From Neighbours to Weights</h1>
-<p>A neighbour list says who counts. A weight says how much. Two schemes here.</p>
-<section id="inverse-distance" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="inverse-distance"><span class="header-section-number">5.1</span> Inverse Distance</h2>
+<section id="weights-based-on-idw" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Weights Based on IDW</h1>
+<p>A neighbour list says who counts. A weight says how much. Two schemes here, inverse distance and row standardised.</p>
+<p><code>nbdists()</code> returns the great circle distance from each county to each of its Queen neighbours, and <code>lapply()</code> turns every distance into its inverse.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>dist <span class="ot">&lt;-</span> <span class="fu">nbdists</span>(wm_q, coords, <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>ids <span class="ot">&lt;-</span> <span class="fu">lapply</span>(dist, <span class="cf">function</span>(x) <span class="dv">1</span> <span class="sc">/</span> x)</span>
@@ -724,8 +748,9 @@ Non-symmetric neighbours list</code></pre>
 </div>
 <p>Closer neighbours weigh more. The unit is one over km, which is why the numbers are small.</p>
 </section>
-<section id="row-standardised" class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="row-standardised"><span class="header-section-number">5.2</span> Row Standardised</h2>
+<section id="row-standardised-weights-matrix" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Row-standardised Weights Matrix</h1>
+<p><code>nb2listw()</code> of <strong>spdep</strong> turns a neighbour list into a weights list. With <code>style = "W"</code> each county’s weights are divided by its number of neighbours so they sum to one.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>rswm_q <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">style =</span> <span class="st">"W"</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>rswm_q<span class="sc">$</span>weights[<span class="dv">85</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -735,7 +760,8 @@ Non-symmetric neighbours list</code></pre>
  [7] 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909</code></pre>
 </div>
 </div>
-<p>Taoyuan has 11 neighbours, so each gets one share of that. The row sums to one.</p>
+<p>Taoyuan has 11 neighbours, so each gets a weight of 1/11. The row sums to one.</p>
+<p>The book then passes the inverse distances to <code>nb2listw()</code> through <code>glist</code>, with <code>style = "B"</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>rswm_ids <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">glist =</span> ids, <span class="at">style =</span> <span class="st">"B"</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>rswm_ids<span class="sc">$</span>weights[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -754,17 +780,17 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>style = "W"</code> divides each neighbour’s weight by the number of neighbours, so a lag becomes an average. <code>style = "B"</code> leaves the weights as given, so a lag becomes a sum. The book calls the inverse distance version “row standardised” but passes <code>style = "B"</code>, so it is not. Its lags will be sums of inverse distances, not averages. That is fine, it just is not what the heading says.</p>
+<p><code>style = "W"</code> divides each neighbour’s weight by the number of neighbours, so a lag becomes an average. <code>style = "B"</code> leaves the weights as given, so a lag becomes a sum. The book calls the inverse distance version “row standardised” but passes <code>style = "B"</code>, so it is not. Its lags will be sums of inverse distances, not averages. That is fine, it just is not what the book’s heading says.</p>
 <p><code>zero.policy = TRUE</code> tells spdep to carry on if a region has no neighbours. Nobody in Hunan is in that position, so it does nothing here, but leaving it on costs nothing and stops a hard error on a dataset that does have islands.</p>
 </div>
 </div>
 </section>
-</section>
-<section id="part-5-spatial-lag" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Part 5, Spatial Lag</h1>
+<section id="application-of-spatial-weight-matrix" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Application of Spatial Weight Matrix</h1>
 <p>A spatial lag replaces each county’s value with something computed from its neighbours’ values. Four versions, and the difference between them is only which weights go in.</p>
-<section id="row-standardised-lag-the-average-of-neighbours" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="row-standardised-lag-the-average-of-neighbours"><span class="header-section-number">6.1</span> Row Standardised Lag, the Average of Neighbours</h2>
+<section id="spatial-lag-with-row-standardised-weights" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="spatial-lag-with-row-standardised-weights"><span class="header-section-number">9.1</span> Spatial lag with row-standardised weights</h2>
+<p><code>lag.listw()</code> of <strong>spdep</strong> multiplies the weights by GDPPC. With the style W weights that gives the average GDPPC of each county’s neighbours.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>GDPPC.lag <span class="ot">&lt;-</span> <span class="fu">lag.listw</span>(rswm_q, hunan<span class="sc">$</span>GDPPC)</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(GDPPC.lag)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -772,6 +798,7 @@ Non-symmetric neighbours list</code></pre>
 <pre><code>[1] 24847.20 22724.80 24143.25 27737.50 27270.25 21248.80</code></pre>
 </div>
 </div>
+<p>To map it, I pair the lag with the county names in a data frame and <code>left_join()</code> it back onto <code>hunan</code> by <code>NAME_3</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>lag.list <span class="ot">&lt;-</span> <span class="fu">list</span>(hunan<span class="sc">$</span>NAME_3, GDPPC.lag)</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>lag.res <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(lag.list)</span>
@@ -779,8 +806,9 @@ Non-symmetric neighbours list</code></pre>
 <span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, lag.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="lag-sum-the-total-of-neighbours" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="lag-sum-the-total-of-neighbours"><span class="header-section-number">6.2</span> Lag Sum, the Total of Neighbours</h2>
+<section id="spatial-lag-as-a-sum-of-neighbouring-values" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="spatial-lag-as-a-sum-of-neighbouring-values"><span class="header-section-number">9.2</span> Spatial lag as a sum of neighbouring values</h2>
+<p>Giving every neighbour a weight of one and using <code>style = "B"</code> turns the same <code>lag.listw()</code> call into a sum of the neighbours’ GDPPC, which is joined back the same way.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>b_weights <span class="ot">&lt;-</span> <span class="fu">lapply</span>(wm_q, <span class="cf">function</span>(x) <span class="dv">0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="dv">1</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>b_weights2 <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">glist =</span> b_weights, <span class="at">style =</span> <span class="st">"B"</span>)</span>
@@ -803,8 +831,9 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </section>
-<section id="window-average-me-and-my-neighbours" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="window-average-me-and-my-neighbours"><span class="header-section-number">6.3</span> Window Average, Me and My Neighbours</h2>
+<section id="spatial-window-average" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="spatial-window-average"><span class="header-section-number">9.3</span> Spatial window average</h2>
+<p><code>include.self()</code> of <strong>spdep</strong> adds each county to its own neighbour list, so the row-standardised lag becomes the average of the county and its neighbours. <code>nb2listw()</code> uses style W by default.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">include.self</span>(wm_q)</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_qs)</span>
@@ -814,8 +843,9 @@ Non-symmetric neighbours list</code></pre>
 <span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, lag_wm_qs.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="window-sum" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="window-sum"><span class="header-section-number">6.4</span> Window Sum</h2>
+<section id="spatial-window-sum" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="spatial-window-sum"><span class="header-section-number">9.4</span> Spatial window sum</h2>
+<p>The window sum is the lag sum with each county included in its own list, so it is the county’s GDPPC plus all of its neighbours’.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">include.self</span>(wm_q)</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>b_weights <span class="ot">&lt;-</span> <span class="fu">lapply</span>(wm_qs, <span class="cf">function</span>(x) <span class="dv">0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="dv">1</span>)</span>
@@ -825,6 +855,7 @@ Non-symmetric neighbours list</code></pre>
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(w_sum_gdppc.res) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"NAME_3"</span>, <span class="st">"w_sum GDPPC"</span>)</span>
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, w_sum_gdppc.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p><code>kable()</code> of <strong>knitr</strong> lines up the original value and the four lags for the first eight counties.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="sc">%&gt;%</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
@@ -922,12 +953,13 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </section>
-<section id="comparing-them" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="comparing-them"><span class="header-section-number">6.5</span> Comparing Them</h2>
+<section id="visualising-the-spatial-lags" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="visualising-the-spatial-lags"><span class="header-section-number">9.5</span> Visualising the spatial lags</h2>
+<p>A small helper function builds one quantile map per variable, and <code>tmap_arrange()</code> puts GDPPC and three of the lags in a 2x2 grid. Each panel has its own quantile breaks, so the colours compare ranks within a map, not RMB across maps.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -938,23 +970,28 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </div>
-<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>lag_map <span class="ot">&lt;-</span> <span class="cf">function</span>(var, title) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>lag_map <span class="ot">&lt;-</span> <span class="cf">function</span>(var, title, legend_title) {</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_polygons</span>(<span class="at">fill =</span> var,</span>
 <span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
 <span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">values =</span> <span class="st">"brewer.oranges"</span>),</span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"RMB"</span>),</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_title</span>(title)</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(<span class="fu">lag_map</span>(<span class="st">"GDPPC"</span>, <span class="st">"GDPPC"</span>),</span>
-<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>             <span class="fu">lag_map</span>(<span class="st">"lag GDPPC"</span>, <span class="st">"Lag, neighbour average"</span>),</span>
-<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>             <span class="fu">lag_map</span>(<span class="st">"lag_window_avg GDPPC"</span>, <span class="st">"Window average"</span>),</span>
-<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>             <span class="fu">lag_map</span>(<span class="st">"lag_sum GDPPC"</span>, <span class="st">"Lag sum"</span>),</span>
-<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> legend_title,</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">position =</span> <span class="fu">tm_pos_out</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)),</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_title</span>(title, <span class="at">size =</span> <span class="fl">1.3</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>)</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(<span class="fu">lag_map</span>(<span class="st">"GDPPC"</span>, <span class="st">"GDPPC"</span>,</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"GDP per capita (RMB)"</span>),</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>             <span class="fu">lag_map</span>(<span class="st">"lag GDPPC"</span>, <span class="st">"Lag, neighbour average"</span>,</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"Neighbour average (RMB)"</span>),</span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>             <span class="fu">lag_map</span>(<span class="st">"lag_window_avg GDPPC"</span>, <span class="st">"Window average"</span>,</span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"Window average (RMB)"</span>),</span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>             <span class="fu">lag_map</span>(<span class="st">"lag_sum GDPPC"</span>, <span class="st">"Lag sum"</span>,</span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"Sum of neighbours (RMB)"</span>),</span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -969,18 +1006,18 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The two averages smooth the map. The north east block around Changsha and the south east block around Chenzhou both firm up, and the two lone highs in the west, Lengshuijiang and the county next to Jishou, vanish because their neighbours are poor.</p>
-<p>The sum does something different. Look at the big county in the north west. It is pale on the GDPPC map and pale on both averages, but dark on the sum, and that is Taoyuan with its eleven neighbours. The sum rewards having many neighbours regardless of how rich they are, so a lag sum map is partly a map of neighbour counts. It carries the shape of the weights matrix as much as the values.</p>
+<p>The two averages smooth the map. The north east block around Changsha firms up on both, spreading over most of the counties around the capital. The south east block around Chenzhou holds on the window average, but on the neighbour average the darkest class moves out to the ring of counties around it, because each county’s own value is left out and Zixing’s neighbours are poorer than Zixing. The two lone highs in the west, Jishou and Zhongfang, and the small high spot of Lengshuijiang in the middle all fade, because their neighbours are poor.</p>
+<p>The sum does something different. Look at the big county in the north. It sits in the middle class on the GDPPC map and on the neighbour average, but it is in the darkest class on the sum, and that is Taoyuan with its eleven neighbours. The sum rewards having many neighbours regardless of how rich they are, so a lag sum map is partly a map of neighbour counts. It carries the shape of the weights matrix as much as the values.</p>
 </div>
 </div>
 </section>
 </section>
-<section id="part-6-beyond-the-exercise" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Part 6, Beyond the Exercise</h1>
+<section id="beyond-the-exercise" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Beyond the Exercise</h1>
 <p>Three things I wanted to check that the chapter does not.</p>
-<section id="four-rules-one-table" class="level2" data-number="7.1">
-<h2 data-number="7.1" class="anchored" data-anchor-id="four-rules-one-table"><span class="header-section-number">7.1</span> Four Rules, One Table</h2>
-<p>The chapter builds four neighbour definitions and never lines them up.</p>
+<section id="four-rules-one-table" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="four-rules-one-table"><span class="header-section-number">10.1</span> Four rules, one table</h2>
+<p>The chapter builds four neighbour definitions and never lines them up. <code>card()</code> of <strong>spdep</strong> returns the number of neighbours of each county, and <code>tibble()</code> collects the totals, minimum, median and maximum for each rule.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>nb_summary <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">rule =</span> <span class="fu">c</span>(<span class="st">"Queen"</span>, <span class="st">"Rook"</span>, <span class="st">"Fixed 62 km"</span>, <span class="st">"k = 6"</span>),</span>
@@ -1038,10 +1075,11 @@ Non-symmetric neighbours list</code></pre>
 </table>
 </div>
 </div>
+<p>To see where each rule is generous, I add the Queen and 62 km neighbour counts to a copy of <code>hunan</code> and map them side by side with the same five classes, so the two panels share one scale.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -1052,7 +1090,7 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </div>
-<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>hunan_nb <span class="ot">&lt;-</span> hunan <span class="sc">%&gt;%</span></span>
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">queen_nb =</span> <span class="fu">card</span>(wm_q),</span>
@@ -1064,15 +1102,17 @@ Non-symmetric neighbours list</code></pre>
 <span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">9</span>, <span class="dv">12</span>),</span>
 <span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"1 to 2"</span>, <span class="st">"3 to 4"</span>, <span class="st">"5 to 6"</span>,</span>
 <span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>                                                           <span class="st">"7 to 8"</span>, <span class="st">"9 to 11"</span>),</span>
-<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">values =</span> <span class="st">"brewer.purples"</span>),</span>
-<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Neighbours"</span>),</span>
-<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
-<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_title</span>(title)</span>
-<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(<span class="fu">nb_map</span>(<span class="st">"queen_nb"</span>, <span class="st">"Neighbours under Queen"</span>),</span>
-<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a>             <span class="fu">nb_map</span>(<span class="st">"d62_nb"</span>, <span class="st">"Neighbours within 62 km"</span>),</span>
-<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#BCBDDC"</span>, <span class="st">"#9E9AC8"</span>, <span class="st">"#807DBA"</span>,</span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>                                                           <span class="st">"#6A51A3"</span>, <span class="st">"#4A1486"</span>)),</span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Number of neighbours"</span>,</span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">position =</span> <span class="fu">tm_pos_out</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)),</span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_title</span>(title, <span class="at">size =</span> <span class="fl">1.3</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>)</span>
+<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(<span class="fu">nb_map</span>(<span class="st">"queen_nb"</span>, <span class="st">"Neighbours under Queen"</span>),</span>
+<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a>             <span class="fu">nb_map</span>(<span class="st">"d62_nb"</span>, <span class="st">"Neighbours within 62 km"</span>),</span>
+<span id="cb52-21"><a href="#cb52-21" aria-hidden="true" tabindex="-1"></a>             <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1093,9 +1133,9 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 </section>
-<section id="does-the-projection-matter" class="level2" data-number="7.2">
-<h2 data-number="7.2" class="anchored" data-anchor-id="does-the-projection-matter"><span class="header-section-number">7.2</span> Does the Projection Matter</h2>
-<p>The book keeps the data in WGS 84 and asks <code>nbdists()</code> for great circle distances with <code>longlat = TRUE</code>. That is correct for distances. But <code>st_centroid()</code> on a lon/lat polygon is not quite right, and sf says so in a warning that <code>warning: false</code> hides. I wanted to know how far off it is.</p>
+<section id="does-the-projection-matter" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="does-the-projection-matter"><span class="header-section-number">10.2</span> Does the projection matter</h2>
+<p>The book keeps the data in WGS 84 and asks <code>nbdists()</code> for great circle distances with <code>longlat = TRUE</code>. That is correct for distances. But <code>st_centroid()</code> on a lon/lat polygon is not quite right, and sf says so in a warning that <code>warning: false</code> hides. I wanted to know how far off it is. <code>st_transform()</code> of <strong>sf</strong> projects the counties to UTM zone 49N, <code>st_centroid()</code> then works in metres, and the same nearest neighbour steps run on the projected centroids.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>hunan_utm <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(hunan, <span class="at">crs =</span> <span class="dv">32649</span>)</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>coords_utm <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(<span class="fu">st_centroid</span>(hunan_utm))</span>
@@ -1108,6 +1148,7 @@ Non-symmetric neighbours list</code></pre>
   24.79   32.56   38.00   38.87   44.51   58.34 </code></pre>
 </div>
 </div>
+<p>A small table puts the two cut-offs and the county that sets each one next to each other.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"WGS 84 centroids, great circle"</span>, <span class="st">"UTM 49N centroids, planar"</span>),</span>
@@ -1150,29 +1191,29 @@ Non-symmetric neighbours list</code></pre>
 </div>
 <div class="callout-body-container callout-body">
 <p>Hunan sits at about 112 east and 28 north, inside UTM zone 49 north, which is EPSG 32649. I expected the two methods to agree within a few hundred metres. They do not. Projecting first moves the cut-off from 61.8 km to 58.3 km, and a different county sets it, Yuanling instead of Taoyuan.</p>
-<p>The distance formula is not the cause. Great circle and planar UTM agree to a few metres over 60 km. The cause is the centroids. <code>st_centroid()</code> on lon/lat treats degrees as if they were flat, and for a big irregular county that puts the centroid a few kilometres from where it belongs. Taoyuan is big and irregular, so its centroid moved the most, and its nearest neighbour got closer.</p>
+<p>The distance formula is not the cause. Great circle and planar UTM agree to well under a kilometre over 60 km. The cause is the centroids. <code>st_centroid()</code> on lon/lat treats degrees as if they were flat, and for a big irregular county that puts the centroid a few kilometres from where it belongs. Taoyuan is big and irregular, so its centroid moved the most, and its nearest neighbour got closer.</p>
 <p>The book’s 62 km radius still works, because 62 is above both numbers. But the warning it hides is not about tiny errors. It is about which county is the loneliest, and that changed. I am projecting first from now on.</p>
 </div>
 </div>
 </section>
-<section id="a-preview-of-morans-i" class="level2" data-number="7.3">
-<h2 data-number="7.3" class="anchored" data-anchor-id="a-preview-of-morans-i"><span class="header-section-number">7.3</span> A Preview of Moran’s I</h2>
-<p>The next chapter asks whether GDPPC is spatially autocorrelated. The lag I just computed is half of that answer already. If a county’s value predicts its neighbours’ average, the points on this plot line up.</p>
+<section id="a-preview-of-morans-i" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="a-preview-of-morans-i"><span class="header-section-number">10.3</span> A preview of Moran’s I</h2>
+<p>The next chapter asks whether GDPPC is spatially autocorrelated. The lag I just computed is half of that answer already. If a county’s value predicts its neighbours’ average, the points on this plot line up. <code>lm()</code> fits the line so its slope can go in the subtitle, and <code>geom_text_repel()</code> of <strong>ggrepel</strong> labels the richest counties and the ones with the richest neighbours without covering the points or the line.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid figure-img" width="768"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
-<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>lag_df <span class="ot">&lt;-</span> hunan <span class="sc">%&gt;%</span></span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
@@ -1181,18 +1222,23 @@ Non-symmetric neighbours list</code></pre>
 <span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(lag <span class="sc">~</span> GDPPC, <span class="at">data =</span> lag_df)</span>
 <span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lag_df, <span class="fu">aes</span>(GDPPC, lag)) <span class="sc">+</span></span>
-<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.12</span>))) <span class="sc">+</span></span>
-<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">mean</span>(lag_df<span class="sc">$</span>lag), <span class="at">colour =</span> <span class="st">"grey70"</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(lag_df<span class="sc">$</span>GDPPC), <span class="at">colour =</span> <span class="st">"grey70"</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">colour =</span> <span class="st">"#D55E00"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
-<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">colour =</span> <span class="st">"#0072B2"</span>, <span class="at">linewidth =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
-<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> lag_df <span class="sc">%&gt;%</span> <span class="fu">filter</span>(GDPPC <span class="sc">&gt;</span> <span class="dv">60000</span> <span class="sc">|</span> lag <span class="sc">&gt;</span> <span class="dv">45000</span>),</span>
-<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">label =</span> NAME_3), <span class="at">size =</span> <span class="dv">3</span>, <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.8</span>) <span class="sc">+</span></span>
-<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDPPC (RMB)"</span>, <span class="at">y =</span> <span class="st">"Neighbour average GDPPC (RMB)"</span>,</span>
-<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Each county against the average of its Queen neighbours"</span>,</span>
-<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Slope of the fitted line, "</span>,</span>
-<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">round</span>(<span class="fu">coef</span>(fit)[<span class="dv">2</span>], <span class="dv">3</span>))) <span class="sc">+</span></span>
-<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span>comma,</span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>                     <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.12</span>))) <span class="sc">+</span></span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span>comma) <span class="sc">+</span></span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">mean</span>(lag_df<span class="sc">$</span>lag), <span class="at">colour =</span> <span class="st">"grey70"</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(lag_df<span class="sc">$</span>GDPPC), <span class="at">colour =</span> <span class="st">"grey70"</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">colour =</span> <span class="st">"#D55E00"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">colour =</span> <span class="st">"#0072B2"</span>, <span class="at">linewidth =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="at">data =</span> lag_df <span class="sc">%&gt;%</span> <span class="fu">filter</span>(GDPPC <span class="sc">&gt;</span> <span class="dv">60000</span> <span class="sc">|</span> lag <span class="sc">&gt;</span> <span class="dv">45000</span>),</span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">aes</span>(<span class="at">label =</span> NAME_3), <span class="at">size =</span> <span class="fl">3.5</span>, <span class="at">seed =</span> <span class="dv">42</span>,</span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a>                  <span class="at">box.padding =</span> <span class="fl">0.5</span>, <span class="at">min.segment.length =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GDPPC (RMB)"</span>, <span class="at">y =</span> <span class="st">"Neighbour average GDPPC (RMB)"</span>,</span>
+<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Each county against the average of its Queen neighbours"</span>,</span>
+<span id="cb56-20"><a href="#cb56-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Slope of the fitted line, "</span>,</span>
+<span id="cb56-21"><a href="#cb56-21" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">round</span>(<span class="fu">coef</span>(fit)[<span class="dv">2</span>], <span class="dv">3</span>))) <span class="sc">+</span></span>
+<span id="cb56-22"><a href="#cb56-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb56-23"><a href="#cb56-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>, <span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb56-24"><a href="#cb56-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">13</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -1207,29 +1253,29 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The slope of that line, with both variables standardised, is Moran’s I. With raw RMB it is not quite the same number but it is the same idea and the same sign. The slope here is 0.30 and positive, so rich counties do tend to have rich neighbours.</p>
+<p>The slope of that line is Moran’s I itself, 0.30 here. I first thought both variables had to be standardised for that to hold, but they do not. With row-standardised weights each row sums to one, so the neighbour average of a centred variable is just the neighbour average minus the overall mean, and the least squares slope of the lag on GDPPC works out to exactly the Moran’s I formula. Rescaling both axes would not change it. It is positive, so rich counties do tend to have rich neighbours, and <code>moran.test()</code> in the next chapter should return the same 0.30 with a p-value attached.</p>
 <p>The labelled points are the ones off the line. Changsha, Wangcheng, Liuyang and Ningxiang sit top right, rich with rich neighbours, which is the capital and its ring. Zixing and Lengshuijiang sit bottom right, rich counties surrounded by poor ones. Both are mining and industrial towns, so the wealth is local to the pit and does not spill over. Pingjiang is the reverse, a poor county whose neighbours average over 55,000 because it borders the Changsha ring.</p>
-<p>Those off-line counties are what the local statistics in the next chapter pick out one by one. I am leaving the number itself for that chapter so I can compute it properly with a test.</p>
+<p>Those off-line counties are what the local statistics in the next chapter pick out one by one. Whether 0.30 is more than chance is also a question for that chapter, because only the test can say.</p>
 </div>
 </div>
 </section>
-<section id="limitations" class="level2" data-number="7.4">
-<h2 data-number="7.4" class="anchored" data-anchor-id="limitations"><span class="header-section-number">7.4</span> Limitations</h2>
+</section>
+<section id="limitations" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Limitations</h1>
 <ul>
-<li>The centroids in Parts 2 and 3 were computed on lon/lat, which moves them by a few kilometres for the big counties. Part 6 shows that is enough to change which county sets the distance cut-off.</li>
+<li>The centroids used for the link plots and the distance rules were computed on lon/lat, which moves them by a few kilometres for the big counties. The projection check in Beyond the Exercise shows that is enough to change which county sets the distance cut-off.</li>
 <li>The 62 km cut-off is set by a single county. A different boundary file with a different centroid for that county would change the radius for everyone.</li>
 <li>Row standardising treats every neighbour as equal within a county. Inverse distance does not, but the book then uses it with binary style, so neither version here is a distance weighted average.</li>
 <li>All of this is 2012 GDPPC. One year, one variable, no sense yet of whether the pattern is stable.</li>
 </ul>
 </section>
-</section>
-<section id="reflections" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> Reflections</h1>
+<section id="reflections" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Reflections</h1>
 <p>Four things I am taking from this one.</p>
 <p><strong>The weights matrix is a decision, not a fact.</strong> Four reasonable rules gave four different graphs of the same 88 counties. Nothing downstream is more objective than the choice made here, and that choice needs a sentence of justification every time.</p>
 <p><strong>Read the count, not just the map.</strong> Queen and Rook looked identical when plotted. The summary said eight links were missing. The picture would never have told me.</p>
 <p><strong>Style W and style B are the difference between an average and a sum.</strong> Same neighbours, same values, and the maps come out telling different stories. One is about levels, the other is partly about how many neighbours you have.</p>
-<p><strong>The projection shortcut is not as safe as it looks.</strong> The book’s degrees plus <code>longlat = TRUE</code> gets the distances right but the centroids wrong, and that was enough to move the cut-off by 3 km and hand it to a different county. The radius survived. The reasoning under it did not. Better to project once at the top and stop thinking about it.</p>
+<p><strong>The projection shortcut is not as safe as it looks.</strong> The book’s degrees plus <code>longlat = TRUE</code> gets the distances right but the centroids wrong, and that was enough to move the cut-off by about 3.5 km and hand it to a different county. The radius survived. The reasoning under it did not. Better to project once at the top and stop thinking about it.</p>
 
 
 </section>
