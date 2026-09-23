@@ -296,19 +296,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="overview" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
-<p>Exercise 1 was about choropleth maps and the last two were about points. This one is about areas, and about the one idea everything after it depends on. Before you can ask whether rich counties sit next to rich counties, you have to decide what “next to” means. That decision is the spatial weights matrix.</p>
-<p>The chapter builds several of them for the 88 counties of Hunan and then uses them to compute a spatially lagged GDP per capita. Nothing here is a test yet. Those come in the next chapter.</p>
+<p>Exercise 1 was about choropleth maps and the last two were about points. This one is about areas and spatial weights, which the later chapters depend on. Before asking whether rich counties sit next to rich counties, I have to decide what “next to” means. The spatial weights matrix records that choice.</p>
+<p>The chapter builds several of them for the 88 counties of Hunan and uses them to compute a spatially lagged GDP per capita. The tests come in the next chapter.</p>
 </section>
 <section id="loading-the-packages" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Loading the Packages</h1>
-<p>Only one package is new for the chapter. <strong>spdep</strong> builds neighbour lists and weights and does the lagging. <strong>sf</strong> reads the county boundaries and handles geometry, <strong>tmap</strong> draws the maps, <strong>tidyverse</strong> reads the csv, joins the tables and draws the scatter plot with <strong>ggplot2</strong>, and <strong>knitr</strong> prints tables with <code>kable()</code>. I added <strong>ggrepel</strong> myself so the point labels on the scatter plot do not sit on top of the points or the fitted line.</p>
+<p>Only one package is new. <strong>spdep</strong> builds neighbour lists and weights and computes the lags. <strong>sf</strong> reads the county boundaries and handles geometry, and <strong>tmap</strong> draws the maps. <strong>tidyverse</strong> reads the csv, joins the tables and draws the scatter plot with <strong>ggplot2</strong>. <strong>knitr</strong> prints tables with <code>kable()</code>. I added <strong>ggrepel</strong> so the scatter plot labels do not cover the points or the fitted line.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse, knitr, ggrepel)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="preparing-the-data" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Preparing the Data</h1>
-<p>Three steps, the boundaries, the indicators, and the join that brings them together.</p>
+<p>There are three steps. I read the boundaries, read the indicators, and join them.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Importing the Hunan shapefile</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Importing the Hunan_2012 table</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Performing the relational join</a></li></ul>
 <div class="tab-content">
@@ -327,7 +327,7 @@ Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
 Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
-<p>Eighty-eight polygons in WGS 84. The <code>County</code> column is the join key for the next step.</p>
+<p>There are 88 polygons in WGS 84. The <code>County</code> column is the join key for the next step.</p>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <p><code>read_csv()</code> of <strong>readr</strong> reads the 2012 indicators, and <code>glimpse()</code> of <strong>dplyr</strong> shows every column with its type.</p>
@@ -393,7 +393,7 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The zip came with a <code>Dictionary.xlsx</code> the chapter never mentions. It says GDPPC is GDP per capita in RMB for 2005 to 2012, so the 2012 in the file name is the year, not a version. It also flags that three counties, Shuangqing, Beita and Daxiang, share the same disposable income value. That is not a column this exercise uses, but it is the kind of thing worth knowing before the take-home.</p>
+<p>The zip came with a <code>Dictionary.xlsx</code> that the chapter never mentions. It says GDPPC is GDP per capita in RMB for 2005 to 2012, so the 2012 in the file name is the year, not a version. It also notes that three counties, Shuangqing, Beita and Daxiang, have the same disposable income value. This exercise does not use that column, but it is useful to know for the take-home.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-caution callout-titled">
@@ -406,14 +406,14 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The book does <code>select(1:4, 7, 15)</code>. That works, but only because column 15 happens to be GDPPC after the join. Add one column to the csv and it silently picks the wrong variable. I select by name instead, which is the same result and cannot drift.</p>
-<p><code>left_join()</code> found the key on its own because both tables have a <code>County</code> column. I checked that all 88 names match on both sides before trusting that. They do.</p>
+<p>The book uses <code>select(1:4, 7, 15)</code>. This works only because column 15 is GDPPC after the join. One extra csv column would make it pick the wrong variable with no error. I select by name instead, which gives the same result and cannot shift.</p>
+<p><code>left_join()</code> found the key by itself because both tables have a <code>County</code> column. I checked that all 88 names match on both sides, and they do.</p>
 </div>
 </div>
 </section>
 <section id="visualising-regional-development-indicator" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Visualising Regional Development Indicator</h1>
-<p><code>tm_shape()</code> and <code>tm_polygons()</code> of <strong>tmap</strong> draw a reference map with the county names next to a quantile map of GDP per capita, and <code>tmap_arrange()</code> puts the two side by side. <code>remove_overlap = TRUE</code> drops any name that would collide with another, so a few of the small counties packed into the middle of the province lose their label.</p>
+<p><code>tm_shape()</code> and <code>tm_polygons()</code> of <strong>tmap</strong> draw a reference map with the county names next to a quantile map of GDP per capita, and <code>tmap_arrange()</code> puts the two side by side. <code>remove_overlap = TRUE</code> drops any name that would overlap another. So a few small counties in the middle of the province lose their label.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -450,7 +450,7 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 </div>
 </div>
 </div>
-<p>The high values sit in the middle and the north east, around Changsha. The west and south are poorer. Whether that is a real pattern or the eye finding one is exactly what the next chapter tests, and what this chapter builds the tools for.</p>
+<p>The high values are in the middle and the north east, around Changsha. The west and south are poorer. The next chapter tests whether this is a real pattern, and this chapter builds the tools for that test.</p>
 </section>
 <section id="computing-contiguity-spatial-weights" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Computing Contiguity Spatial Weights</h1>
@@ -461,7 +461,7 @@ $ ROREmp      &lt;dbl&gt; 0.8929619, 0.8782065, 0.8041262, 0.7460163, 0.9052651,
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">Queen contiguity</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Rook contiguity</a></li></ul>
 <div class="tab-content">
 <div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
-<p><code>poly2nb()</code> of <strong>spdep</strong> builds the neighbour list from shared boundaries, and <code>queen = TRUE</code> lets a single shared corner count. <code>summary()</code> prints the link counts.</p>
+<p><code>poly2nb()</code> of <strong>spdep</strong> builds the neighbour list from shared boundaries. <code>queen = TRUE</code> lets a single shared corner count. <code>summary()</code> prints the link counts.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span> <span class="fu">poly2nb</span>(hunan, <span class="at">queen =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_q)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -481,8 +481,8 @@ Link number distribution:
 85 with 11 links</code></pre>
 </div>
 </div>
-<p>Every county has at least one neighbour, so there are no islands to worry about. The busiest county has eleven.</p>
-<p>The summary names region 85 as the busiest, so I look up its name, the row numbers of its neighbours, and their names.</p>
+<p>Every county has at least one neighbour, so there are no islands. The county with the most neighbours has eleven.</p>
+<p>The summary names region 85 as that county. I look up its name, the row numbers of its neighbours, and their names.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hunan<span class="sc">$</span>County[<span class="dv">85</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -508,10 +508,10 @@ Link number distribution:
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>wm_q</code> is a list of 88 integer vectors. Element 85 holds the row numbers of Taoyuan’s neighbours, and looking them up in <code>hunan$County</code> turns numbers into names. That lookup is the whole trick to reading any neighbour object. The numbers are positions, not IDs, so if the rows of <code>hunan</code> were ever reordered every weight matrix would have to be rebuilt.</p>
+<p><code>wm_q</code> is a list of 88 integer vectors. Element 85 holds the row numbers of Taoyuan’s neighbours, and looking them up in <code>hunan$County</code> turns numbers into names. This lookup is how I read any neighbour object. The numbers are row positions, not IDs. If the rows of <code>hunan</code> were reordered, every weight matrix would have to be rebuilt.</p>
 </div>
 </div>
-<p><code>nb2mat()</code> of <strong>spdep</strong> turns the list into a full matrix, with <code>style = "B"</code> giving a 1 for each neighbour and 0 otherwise. It is 88 by 88, so I only show a corner of it.</p>
+<p><code>nb2mat()</code> of <strong>spdep</strong> turns the list into a full matrix. <code>style = "B"</code> gives a 1 for each neighbour and 0 otherwise. It is 88 by 88, so I only show one corner.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>wm_q_mat <span class="ot">&lt;-</span> <span class="fu">nb2mat</span>(wm_q, <span class="at">style =</span> <span class="st">"B"</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>wm_q_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -549,14 +549,14 @@ Link number distribution:
 85 with 10 links</code></pre>
 </div>
 </div>
-<p>Same 88 regions, 440 links instead of 448. Every link is counted from both ends, so that is four county pairs that touch only at a corner.</p>
+<p>There are the same 88 regions, but 440 links instead of 448. Every link is counted from both ends, so four county pairs touch only at a corner.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="visualising-contiguity-weights" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="visualising-contiguity-weights"><span class="header-section-number">5.2</span> Visualising contiguity weights</h2>
-<p>The links are drawn between polygon centroids, so I need those first. <code>map_dbl()</code> of <strong>purrr</strong> runs <code>st_centroid()</code> of <strong>sf</strong> on each polygon and keeps the longitude, then the latitude, and <code>cbind()</code> puts them into a two column matrix.</p>
+<p>The links are drawn between polygon centroids, so I compute those first. <code>map_dbl()</code> of <strong>purrr</strong> runs <code>st_centroid()</code> of <strong>sf</strong> on each polygon and keeps the longitude, then the latitude. <code>cbind()</code> puts them into a two column matrix.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>longitude <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(hunan<span class="sc">$</span>geometry, <span class="sc">~</span><span class="fu">st_centroid</span>(.x)[[<span class="dv">1</span>]])</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>latitude <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(hunan<span class="sc">$</span>geometry, <span class="sc">~</span><span class="fu">st_centroid</span>(.x)[[<span class="dv">2</span>]])</span>
@@ -572,7 +572,7 @@ Link number distribution:
 [6,]  111.0341 29.79863</code></pre>
 </div>
 </div>
-<p><code>plot()</code> draws the county outlines first, then the <code>nb</code> method of <strong>spdep</strong> draws a line between every pair of neighbouring centroids on top with <code>add = TRUE</code>.</p>
+<p><code>plot()</code> draws the county outlines first. Then the <code>nb</code> method of <strong>spdep</strong> draws a line between each pair of neighbouring centroids on top, with <code>add = TRUE</code>.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -599,15 +599,15 @@ Link number distribution:
 </div>
 </div>
 </div>
-<p>The two look identical at this scale. The four missing pairs are corner touches, and a corner touch is a single point, so there is nothing to see.</p>
+<p>The two look the same at this scale. The four missing pairs touch at a single corner point, so there is nothing to see.</p>
 </section>
 </section>
 <section id="computing-distance-based-neighbours" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> Computing Distance Based Neighbours</h1>
-<p>Contiguity does not care how big a county is. A distance rule does. The book uses two, a fixed radius and a fixed number of nearest neighbours.</p>
+<p>Contiguity ignores how big a county is, but a distance rule does not. The book uses two rules, a fixed radius and a fixed number of nearest neighbours.</p>
 <section id="determine-the-cut-off-distance" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="determine-the-cut-off-distance"><span class="header-section-number">6.1</span> Determine the cut-off distance</h2>
-<p>The radius has to be big enough that nobody is left without a neighbour. The book finds it by asking how far each county’s single nearest neighbour is, and taking the largest of those. <code>knearneigh()</code> of <strong>spdep</strong> finds each county’s nearest centroid, <code>knn2nb()</code> turns that into a neighbour list, and <code>nbdists()</code> returns the great circle distances in km because of <code>longlat = TRUE</code>.</p>
+<p>The radius has to be big enough that every county has a neighbour. The book finds the distance from each county to its nearest neighbour and takes the largest. <code>knearneigh()</code> of <strong>spdep</strong> finds each county’s nearest centroid, <code>knn2nb()</code> turns that into a neighbour list, and <code>nbdists()</code> returns the great circle distances in km because of <code>longlat = TRUE</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>k1 <span class="ot">&lt;-</span> <span class="fu">knn2nb</span>(<span class="fu">knearneigh</span>(coords))</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>k1dists <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">nbdists</span>(k1, coords, <span class="at">longlat =</span> <span class="cn">TRUE</span>))</span>
@@ -617,7 +617,7 @@ Link number distribution:
   24.79   32.57   38.01   39.07   44.52   61.79 </code></pre>
 </div>
 </div>
-<p>The largest nearest-neighbour distance is just under 62 km, so 62 km guarantees every county at least one neighbour. <code>which.max()</code> tells me which county that longest distance belongs to.</p>
+<p>The largest nearest-neighbour distance is just under 62 km, so a 62 km radius gives every county at least one neighbour. <code>which.max()</code> shows which county has that longest distance.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which.max</span>(k1dists)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -638,7 +638,7 @@ Link number distribution:
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>One county sets the cut-off for all 88. I wanted to know which. It is Taoyuan, the same county that had the most neighbours under Queen. That is not a contradiction. It is one of the largest counties on the map, fourth by area after Yuanling, Liuyang and Anhua, and it has a long irregular shape, so it touches many others while its centroid sits far from all of theirs. Contiguity says it is the best connected county in Hunan. Distance says it is the most isolated. Everything about the fixed distance matrix below is shaped by that one row.</p>
+<p>One county sets the cut-off for all 88, so I checked which one. It is Taoyuan, the same county that had the most neighbours under Queen. It is one of the largest counties on the map, fourth by area after Yuanling, Liuyang and Anhua. It also has a long irregular shape. So it touches many others, but its centroid is far from all of theirs. Under contiguity it is the best connected county in Hunan. Under distance it is the most isolated. This one row shapes the whole fixed distance matrix below.</p>
 </div>
 </div>
 </section>
@@ -660,7 +660,7 @@ Percentage nonzero weights: 4.183884
 Average number of links: 3.681818 </code></pre>
 </div>
 </div>
-<p><code>n.comp.nb()</code> of <strong>spdep</strong> counts the connected components of the graph, which tells me whether any group of counties is cut off from the rest.</p>
+<p><code>n.comp.nb()</code> of <strong>spdep</strong> counts the connected components of the graph. This shows whether any group of counties is cut off from the rest.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>n_comp <span class="ot">&lt;-</span> <span class="fu">n.comp.nb</span>(wm_d62)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>n_comp<span class="sc">$</span>nc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -668,7 +668,7 @@ Average number of links: 3.681818 </code></pre>
 <pre><code>[1] 1</code></pre>
 </div>
 </div>
-<p>One connected component, so the graph does not fall apart into islands at this radius.</p>
+<p>There is one connected component, so the graph does not split into islands at this radius.</p>
 </div>
 <div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
 <p><code>knearneigh()</code> with <code>k = 6</code> fixes the number of neighbours instead of the distance, and <code>knn2nb()</code> turns the result into a neighbour list.</p>
@@ -684,14 +684,14 @@ Average number of links: 6
 Non-symmetric neighbours list</code></pre>
 </div>
 </div>
-<p>Every county gets exactly six, whether it is a small county packed around Changsha or a large one in the mountains.</p>
+<p>Every county gets exactly six, whether it is a small county near Changsha or a large one in the mountains.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="plotting-distance-based-neighbours" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="plotting-distance-based-neighbours"><span class="header-section-number">6.3</span> Plotting distance based neighbours</h2>
-<p>The same outline plus <code>nb</code> plot as before, now for the 62 km list and the six nearest list.</p>
+<p>This is the same outline and <code>nb</code> plot as before, now for the 62 km list and the six nearest list.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -728,16 +728,16 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The fixed radius is dense where counties are small and sparse where they are large, because 62 km reaches many small centroids and few large ones. The adaptive rule is the opposite. Everyone has six, so the links are long in the mountains and short around the capital.</p>
-<p>Which is right depends on what the weights are for. If the question is about physical spillover, distance matters and the fixed radius is honest about it. If the question is about comparing each county to its peers, the adaptive rule keeps the comparison fair.</p>
+<p>The fixed radius is dense where counties are small and sparse where they are large, because 62 km reaches many small centroids and few large ones. The adaptive rule is the opposite. Every county has six, so the links are long in the mountains and short around the capital.</p>
+<p>The right choice depends on what the weights are for. For physical spillover, distance matters and the fixed radius reflects it. For comparing each county with its peers, the adaptive rule keeps the comparison fair.</p>
 </div>
 </div>
 </section>
 </section>
 <section id="weights-based-on-idw" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Weights Based on IDW</h1>
-<p>A neighbour list says who counts. A weight says how much. Two schemes here, inverse distance and row standardised.</p>
-<p><code>nbdists()</code> returns the great circle distance from each county to each of its Queen neighbours, and <code>lapply()</code> turns every distance into its inverse.</p>
+<p>A neighbour list says which counties count, and a weight says how much. This section uses two schemes, inverse distance and row standardised.</p>
+<p><code>nbdists()</code> returns the great circle distance from each county to each of its Queen neighbours. <code>lapply()</code> turns every distance into its inverse.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>dist <span class="ot">&lt;-</span> <span class="fu">nbdists</span>(wm_q, coords, <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>ids <span class="ot">&lt;-</span> <span class="fu">lapply</span>(dist, <span class="cf">function</span>(x) <span class="dv">1</span> <span class="sc">/</span> x)</span>
@@ -746,7 +746,7 @@ Non-symmetric neighbours list</code></pre>
 <pre><code>[1] 0.01535405 0.03916350 0.01820896 0.02807922 0.01145113</code></pre>
 </div>
 </div>
-<p>Closer neighbours weigh more. The unit is one over km, which is why the numbers are small.</p>
+<p>Closer neighbours get more weight. The unit is one over km, so the numbers are small.</p>
 </section>
 <section id="row-standardised-weights-matrix" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Row-standardised Weights Matrix</h1>
@@ -780,17 +780,17 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>style = "W"</code> divides each neighbour’s weight by the number of neighbours, so a lag becomes an average. <code>style = "B"</code> leaves the weights as given, so a lag becomes a sum. The book calls the inverse distance version “row standardised” but passes <code>style = "B"</code>, so it is not. Its lags will be sums of inverse distances, not averages. That is fine, it just is not what the book’s heading says.</p>
-<p><code>zero.policy = TRUE</code> tells spdep to carry on if a region has no neighbours. Nobody in Hunan is in that position, so it does nothing here, but leaving it on costs nothing and stops a hard error on a dataset that does have islands.</p>
+<p><code>style = "W"</code> divides each neighbour’s weight by the number of neighbours, so a lag becomes an average. <code>style = "B"</code> keeps the weights as given, so a lag becomes a sum. The book calls the inverse distance version “row standardised” but passes <code>style = "B"</code>, so it is not. Its lags are sums of inverse distances, not averages. That is fine, but it does not match the book’s heading.</p>
+<p><code>zero.policy = TRUE</code> tells spdep to carry on if a region has no neighbours. No county in Hunan has zero neighbours, so it does nothing here. But leaving it on costs nothing and avoids an error on a dataset that has islands.</p>
 </div>
 </div>
 </section>
 <section id="application-of-spatial-weight-matrix" class="level1" data-number="9">
 <h1 data-number="9"><span class="header-section-number">9</span> Application of Spatial Weight Matrix</h1>
-<p>A spatial lag replaces each county’s value with something computed from its neighbours’ values. Four versions, and the difference between them is only which weights go in.</p>
+<p>A spatial lag replaces each county’s value with a value computed from its neighbours. There are four versions, and they differ only in the weights used.</p>
 <section id="spatial-lag-with-row-standardised-weights" class="level2" data-number="9.1">
 <h2 data-number="9.1" class="anchored" data-anchor-id="spatial-lag-with-row-standardised-weights"><span class="header-section-number">9.1</span> Spatial lag with row-standardised weights</h2>
-<p><code>lag.listw()</code> of <strong>spdep</strong> multiplies the weights by GDPPC. With the style W weights that gives the average GDPPC of each county’s neighbours.</p>
+<p><code>lag.listw()</code> of <strong>spdep</strong> multiplies the weights by GDPPC. With style W weights this gives the average GDPPC of each county’s neighbours.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>GDPPC.lag <span class="ot">&lt;-</span> <span class="fu">lag.listw</span>(rswm_q, hunan<span class="sc">$</span>GDPPC)</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(GDPPC.lag)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -808,7 +808,7 @@ Non-symmetric neighbours list</code></pre>
 </section>
 <section id="spatial-lag-as-a-sum-of-neighbouring-values" class="level2" data-number="9.2">
 <h2 data-number="9.2" class="anchored" data-anchor-id="spatial-lag-as-a-sum-of-neighbouring-values"><span class="header-section-number">9.2</span> Spatial lag as a sum of neighbouring values</h2>
-<p>Giving every neighbour a weight of one and using <code>style = "B"</code> turns the same <code>lag.listw()</code> call into a sum of the neighbours’ GDPPC, which is joined back the same way.</p>
+<p>If every neighbour gets a weight of one with <code>style = "B"</code>, the same <code>lag.listw()</code> call gives the sum of the neighbours’ GDPPC. I join it back the same way.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>b_weights <span class="ot">&lt;-</span> <span class="fu">lapply</span>(wm_q, <span class="cf">function</span>(x) <span class="dv">0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="dv">1</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>b_weights2 <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">glist =</span> b_weights, <span class="at">style =</span> <span class="st">"B"</span>)</span>
@@ -827,13 +827,13 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>0 * x + 1</code> is a small trick. Multiplying the neighbour list by zero and adding one gives a vector of ones the same length as each county’s neighbour list. With <code>style = "B"</code> those ones are used as is, so the lag is a plain sum.</p>
+<p><code>0 * x + 1</code> is a small trick. Multiplying the neighbour list by zero and adding one gives a vector of ones, the same length as each county’s neighbour list. With <code>style = "B"</code> the ones are used as they are, so the lag is a plain sum.</p>
 </div>
 </div>
 </section>
 <section id="spatial-window-average" class="level2" data-number="9.3">
 <h2 data-number="9.3" class="anchored" data-anchor-id="spatial-window-average"><span class="header-section-number">9.3</span> Spatial window average</h2>
-<p><code>include.self()</code> of <strong>spdep</strong> adds each county to its own neighbour list, so the row-standardised lag becomes the average of the county and its neighbours. <code>nb2listw()</code> uses style W by default.</p>
+<p><code>include.self()</code> of <strong>spdep</strong> adds each county to its own neighbour list. So the row-standardised lag becomes the average of the county and its neighbours. <code>nb2listw()</code> uses style W by default.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">include.self</span>(wm_q)</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_qs)</span>
@@ -845,7 +845,7 @@ Non-symmetric neighbours list</code></pre>
 </section>
 <section id="spatial-window-sum" class="level2" data-number="9.4">
 <h2 data-number="9.4" class="anchored" data-anchor-id="spatial-window-sum"><span class="header-section-number">9.4</span> Spatial window sum</h2>
-<p>The window sum is the lag sum with each county included in its own list, so it is the county’s GDPPC plus all of its neighbours’.</p>
+<p>The window sum is the lag sum with each county in its own list. So it is the county’s GDPPC plus that of all its neighbours.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">include.self</span>(wm_q)</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>b_weights <span class="ot">&lt;-</span> <span class="fu">lapply</span>(wm_qs, <span class="cf">function</span>(x) <span class="dv">0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="dv">1</span>)</span>
@@ -855,7 +855,7 @@ Non-symmetric neighbours list</code></pre>
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(w_sum_gdppc.res) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"NAME_3"</span>, <span class="st">"w_sum GDPPC"</span>)</span>
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, w_sum_gdppc.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>kable()</code> of <strong>knitr</strong> lines up the original value and the four lags for the first eight counties.</p>
+<p><code>kable()</code> of <strong>knitr</strong> shows the original value and the four lags for the first eight counties.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="sc">%&gt;%</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
@@ -955,7 +955,7 @@ Non-symmetric neighbours list</code></pre>
 </section>
 <section id="visualising-the-spatial-lags" class="level2" data-number="9.5">
 <h2 data-number="9.5" class="anchored" data-anchor-id="visualising-the-spatial-lags"><span class="header-section-number">9.5</span> Visualising the spatial lags</h2>
-<p>A small helper function builds one quantile map per variable, and <code>tmap_arrange()</code> puts GDPPC and three of the lags in a 2x2 grid. Each panel has its own quantile breaks, so the colours compare ranks within a map, not RMB across maps.</p>
+<p>A small helper function builds one quantile map per variable. <code>tmap_arrange()</code> puts GDPPC and three of the lags in a 2x2 grid. Each panel has its own quantile breaks, so the colours show ranks within a map, not RMB across maps.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1006,18 +1006,18 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The two averages smooth the map. The north east block around Changsha firms up on both, spreading over most of the counties around the capital. The south east block around Chenzhou holds on the window average, but on the neighbour average the darkest class moves out to the ring of counties around it, because each county’s own value is left out and Zixing’s neighbours are poorer than Zixing. The two lone highs in the west, Jishou and Zhongfang, and the small high spot of Lengshuijiang in the middle all fade, because their neighbours are poor.</p>
-<p>The sum does something different. Look at the big county in the north. It sits in the middle class on the GDPPC map and on the neighbour average, but it is in the darkest class on the sum, and that is Taoyuan with its eleven neighbours. The sum rewards having many neighbours regardless of how rich they are, so a lag sum map is partly a map of neighbour counts. It carries the shape of the weights matrix as much as the values.</p>
+<p>The two averages smooth the map. The north east block around Changsha gets stronger on both and spreads over most of the counties around the capital. The south east block around Chenzhou stays on the window average. On the neighbour average, though, the darkest class moves out to the ring of counties around it. This is because each county’s own value is left out, and Zixing’s neighbours are poorer than Zixing. Jishou and Zhongfang in the west and Lengshuijiang in the middle are single high spots, and they fade because their neighbours are poor.</p>
+<p>The sum behaves differently. Taoyuan, the big county in the north with eleven neighbours, is in the middle class on the GDPPC map and the neighbour average. But it is in the darkest class on the sum. The sum rewards having many neighbours, however rich they are, so a lag sum map is partly a map of neighbour counts. It reflects the shape of the weights matrix as much as the values.</p>
 </div>
 </div>
 </section>
 </section>
 <section id="beyond-the-exercise" class="level1" data-number="10">
 <h1 data-number="10"><span class="header-section-number">10</span> Beyond the Exercise</h1>
-<p>Three things I wanted to check that the chapter does not.</p>
+<p>I checked three things that the chapter does not.</p>
 <section id="four-rules-one-table" class="level2" data-number="10.1">
 <h2 data-number="10.1" class="anchored" data-anchor-id="four-rules-one-table"><span class="header-section-number">10.1</span> Four rules, one table</h2>
-<p>The chapter builds four neighbour definitions and never lines them up. <code>card()</code> of <strong>spdep</strong> returns the number of neighbours of each county, and <code>tibble()</code> collects the totals, minimum, median and maximum for each rule.</p>
+<p>The chapter builds four neighbour definitions but never compares them. <code>card()</code> of <strong>spdep</strong> returns the number of neighbours of each county. <code>tibble()</code> collects the total, minimum, median and maximum for each rule.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>nb_summary <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">rule =</span> <span class="fu">c</span>(<span class="st">"Queen"</span>, <span class="st">"Rook"</span>, <span class="st">"Fixed 62 km"</span>, <span class="st">"k = 6"</span>),</span>
@@ -1075,7 +1075,7 @@ Non-symmetric neighbours list</code></pre>
 </table>
 </div>
 </div>
-<p>To see where each rule is generous, I add the Queen and 62 km neighbour counts to a copy of <code>hunan</code> and map them side by side with the same five classes, so the two panels share one scale.</p>
+<p>To see where each rule gives many neighbours, I add the Queen and 62 km neighbour counts to a copy of <code>hunan</code>. I map them side by side with the same five classes, so the two panels share one scale.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1127,15 +1127,15 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The table surprised me. I expected the 62 km rule to be the densest, because a radius reaches past the counties you touch. It is the sparsest, 324 links against Queen’s 448, and nobody gets more than six. The reason is scale. Hunan’s counties are mostly 40 to 60 km across, so a 62 km circle around a centroid rarely reaches past the immediate ring, and for the big counties in the west it does not even reach that.</p>
-<p>The map shows where each rule is generous. Queen hands the most neighbours to the largest counties, because a big polygon touches many small ones. The 62 km rule hands the most to the middle band of small counties, where centroids are packed tightly, and leaves the north west and the far south with one or two. Same province, opposite answers about who is well connected.</p>
-<p>That matters for the next chapter. Whichever rule I pick decides which counties carry weight in every statistic after it. Queen leans on the big western counties. Fixed distance leans on the small central ones.</p>
+<p>The table surprised me. I expected the 62 km rule to be the densest, because a radius can reach past the counties a county touches. It is the sparsest, with 324 links against Queen’s 448, and no county gets more than six. The reason is scale. Hunan’s counties are mostly 40 to 60 km across. So a 62 km circle around a centroid rarely reaches past the first ring, and for the big counties in the west it does not even reach that.</p>
+<p>The map shows where each rule gives many neighbours. Queen gives the most to the largest counties, because a big polygon touches many small ones. The 62 km rule gives the most to the middle band of small counties, where centroids are close together. It leaves the north west and the far south with one or two. The two rules give opposite answers about which counties are well connected.</p>
+<p>This matters for the next chapter. The rule I pick decides which counties carry weight in every later statistic. Queen leans on the big western counties, and fixed distance leans on the small central ones.</p>
 </div>
 </div>
 </section>
 <section id="does-the-projection-matter" class="level2" data-number="10.2">
 <h2 data-number="10.2" class="anchored" data-anchor-id="does-the-projection-matter"><span class="header-section-number">10.2</span> Does the projection matter</h2>
-<p>The book keeps the data in WGS 84 and asks <code>nbdists()</code> for great circle distances with <code>longlat = TRUE</code>. That is correct for distances. But <code>st_centroid()</code> on a lon/lat polygon is not quite right, and sf says so in a warning that <code>warning: false</code> hides. I wanted to know how far off it is. <code>st_transform()</code> of <strong>sf</strong> projects the counties to UTM zone 49N, <code>st_centroid()</code> then works in metres, and the same nearest neighbour steps run on the projected centroids.</p>
+<p>The book keeps the data in WGS 84 and gets great circle distances from <code>nbdists()</code> with <code>longlat = TRUE</code>. This is correct for distances. But <code>st_centroid()</code> on a lon/lat polygon is not quite right, and sf gives a warning that <code>warning: false</code> hides. I wanted to know how far off it is. <code>st_transform()</code> of <strong>sf</strong> projects the counties to UTM zone 49N, so <code>st_centroid()</code> works in metres. Then the same nearest neighbour steps run on the projected centroids.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>hunan_utm <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(hunan, <span class="at">crs =</span> <span class="dv">32649</span>)</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>coords_utm <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(<span class="fu">st_centroid</span>(hunan_utm))</span>
@@ -1148,7 +1148,7 @@ Non-symmetric neighbours list</code></pre>
   24.79   32.56   38.00   38.87   44.51   58.34 </code></pre>
 </div>
 </div>
-<p>A small table puts the two cut-offs and the county that sets each one next to each other.</p>
+<p>A small table shows the two cut-offs and the county that sets each one.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="fu">c</span>(<span class="st">"WGS 84 centroids, great circle"</span>, <span class="st">"UTM 49N centroids, planar"</span>),</span>
@@ -1190,15 +1190,15 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Hunan sits at about 112 east and 28 north, inside UTM zone 49 north, which is EPSG 32649. I expected the two methods to agree within a few hundred metres. They do not. Projecting first moves the cut-off from 61.8 km to 58.3 km, and a different county sets it, Yuanling instead of Taoyuan.</p>
-<p>The distance formula is not the cause. Great circle and planar UTM agree to well under a kilometre over 60 km. The cause is the centroids. <code>st_centroid()</code> on lon/lat treats degrees as if they were flat, and for a big irregular county that puts the centroid a few kilometres from where it belongs. Taoyuan is big and irregular, so its centroid moved the most, and its nearest neighbour got closer.</p>
-<p>The book’s 62 km radius still works, because 62 is above both numbers. But the warning it hides is not about tiny errors. It is about which county is the loneliest, and that changed. I am projecting first from now on.</p>
+<p>Hunan is at about 112 east and 28 north, inside UTM zone 49 north, which is EPSG 32649. I expected the two methods to agree within a few hundred metres, but they do not. Projecting first moves the cut-off from 61.8 km to 58.3 km. A different county also sets it, Yuanling instead of Taoyuan.</p>
+<p>The distance formula is not the cause. Great circle and planar UTM distances agree to well under a kilometre over 60 km. The cause is the centroids. <code>st_centroid()</code> on lon/lat treats degrees as if they were flat. For a big irregular county this puts the centroid a few kilometres from where it should be. Taoyuan is big and irregular, so its centroid moved the most, and its nearest neighbour got closer.</p>
+<p>The book’s 62 km radius still works, because 62 is above both numbers. But the hidden warning affects more than small errors. It changed which county is the most isolated. I will project first from now on.</p>
 </div>
 </div>
 </section>
 <section id="a-preview-of-morans-i" class="level2" data-number="10.3">
 <h2 data-number="10.3" class="anchored" data-anchor-id="a-preview-of-morans-i"><span class="header-section-number">10.3</span> A preview of Moran’s I</h2>
-<p>The next chapter asks whether GDPPC is spatially autocorrelated. The lag I just computed is half of that answer already. If a county’s value predicts its neighbours’ average, the points on this plot line up. <code>lm()</code> fits the line so its slope can go in the subtitle, and <code>geom_text_repel()</code> of <strong>ggrepel</strong> labels the richest counties and the ones with the richest neighbours without covering the points or the line.</p>
+<p>The next chapter asks whether GDPPC is spatially autocorrelated. The lag I just computed already gives half of the answer. If a county’s value predicts its neighbours’ average, the points on this plot line up. <code>lm()</code> fits the line so its slope can go in the subtitle. <code>geom_text_repel()</code> of <strong>ggrepel</strong> labels the richest counties and the ones with the richest neighbours, without covering the points or the line.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1253,9 +1253,9 @@ Non-symmetric neighbours list</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The slope of that line is Moran’s I itself, 0.30 here. I first thought both variables had to be standardised for that to hold, but they do not. With row-standardised weights each row sums to one, so the neighbour average of a centred variable is just the neighbour average minus the overall mean, and the least squares slope of the lag on GDPPC works out to exactly the Moran’s I formula. Rescaling both axes would not change it. It is positive, so rich counties do tend to have rich neighbours, and <code>moran.test()</code> in the next chapter should return the same 0.30 with a p-value attached.</p>
-<p>The labelled points are the ones off the line. Changsha, Wangcheng, Liuyang and Ningxiang sit top right, rich with rich neighbours, which is the capital and its ring. Zixing and Lengshuijiang sit bottom right, rich counties surrounded by poor ones. Both are mining and industrial towns, so the wealth is local to the pit and does not spill over. Pingjiang is the reverse, a poor county whose neighbours average over 55,000 because it borders the Changsha ring.</p>
-<p>Those off-line counties are what the local statistics in the next chapter pick out one by one. Whether 0.30 is more than chance is also a question for that chapter, because only the test can say.</p>
+<p>The slope of that line is Moran’s I, 0.30 here. I first thought both variables had to be standardised for this to hold, but they do not. With row-standardised weights each row sums to one. So the neighbour average of a centred variable is the neighbour average minus the overall mean. The least squares slope of the lag on GDPPC then equals the Moran’s I formula exactly, and rescaling both axes would not change it. It is positive, so rich counties tend to have rich neighbours. <code>moran.test()</code> in the next chapter should return the same 0.30 with a p-value.</p>
+<p>The labelled points are the ones off the line. Changsha, Wangcheng, Liuyang and Ningxiang are top right, rich with rich neighbours. This is the capital and its ring. Zixing and Lengshuijiang are bottom right, rich counties with poor neighbours. Both are mining and industrial towns, so the wealth stays local and does not spill over. Pingjiang is the reverse. It is a poor county whose neighbours average over 55,000 because it borders the Changsha ring.</p>
+<p>The local statistics in the next chapter pick out these off-line counties one by one. That chapter will also test whether 0.30 is more than chance.</p>
 </div>
 </div>
 </section>
@@ -1263,19 +1263,19 @@ Non-symmetric neighbours list</code></pre>
 <section id="limitations" class="level1" data-number="11">
 <h1 data-number="11"><span class="header-section-number">11</span> Limitations</h1>
 <ul>
-<li>The centroids used for the link plots and the distance rules were computed on lon/lat, which moves them by a few kilometres for the big counties. The projection check in Beyond the Exercise shows that is enough to change which county sets the distance cut-off.</li>
-<li>The 62 km cut-off is set by a single county. A different boundary file with a different centroid for that county would change the radius for everyone.</li>
-<li>Row standardising treats every neighbour as equal within a county. Inverse distance does not, but the book then uses it with binary style, so neither version here is a distance weighted average.</li>
-<li>All of this is 2012 GDPPC. One year, one variable, no sense yet of whether the pattern is stable.</li>
+<li>The centroids for the link plots and the distance rules were computed on lon/lat, which moves them by a few kilometres for the big counties. The projection check in Beyond the Exercise shows this is enough to change which county sets the distance cut-off.</li>
+<li>The 62 km cut-off is set by a single county. A different boundary file with a different centroid for that county would change the radius for every county.</li>
+<li>Row standardising treats every neighbour within a county as equal. Inverse distance does not, but the book then uses it with binary style. So neither version here is a distance weighted average.</li>
+<li>All of this is 2012 GDPPC. It is one year and one variable, so I cannot yet tell whether the pattern is stable.</li>
 </ul>
 </section>
 <section id="reflections" class="level1" data-number="12">
 <h1 data-number="12"><span class="header-section-number">12</span> Reflections</h1>
-<p>Four things I am taking from this one.</p>
-<p><strong>The weights matrix is a decision, not a fact.</strong> Four reasonable rules gave four different graphs of the same 88 counties. Nothing downstream is more objective than the choice made here, and that choice needs a sentence of justification every time.</p>
-<p><strong>Read the count, not just the map.</strong> Queen and Rook looked identical when plotted. The summary said eight links were missing. The picture would never have told me.</p>
-<p><strong>Style W and style B are the difference between an average and a sum.</strong> Same neighbours, same values, and the maps come out telling different stories. One is about levels, the other is partly about how many neighbours you have.</p>
-<p><strong>The projection shortcut is not as safe as it looks.</strong> The book’s degrees plus <code>longlat = TRUE</code> gets the distances right but the centroids wrong, and that was enough to move the cut-off by about 3.5 km and hand it to a different county. The radius survived. The reasoning under it did not. Better to project once at the top and stop thinking about it.</p>
+<p>These are four things I learned from this exercise.</p>
+<p><strong>Different weight rules gave different neighbour graphs.</strong> Four reasonable rules gave four different graphs of the same 88 counties. Nothing later is more objective than the choice made here, so I need to justify that choice every time.</p>
+<p><strong>Queen and Rook differ by eight links that the map does not show.</strong> The two plots looked the same. Only the summary showed that eight links were missing.</p>
+<p><strong>Style W gives an average and style B gives a sum.</strong> With the same neighbours and the same values, the maps come out different. One shows levels, and the other partly shows how many neighbours each county has.</p>
+<p><strong>Using lon/lat centroids moved the distance cut-off.</strong> The book’s degrees plus <code>longlat = TRUE</code> get the distances right but the centroids wrong. This moved the cut-off by about 3.5 km and gave it to a different county. The radius still works, but the reasoning behind it changed, so I will project once at the top.</p>
 
 
 </section>

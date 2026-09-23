@@ -29,17 +29,23 @@ execute:
 
 This exercise covers the first two chapters of the course book. The first half uses **sf** to import, inspect, reproject and process geospatial data (subzone boundaries, cycling paths, pre-schools and Airbnb listings). The second half uses **tmap** to turn the 2024 resident population into choropleth maps of the dependency ratio.
 
-The question running through it is a simple one. Where in Singapore do the young and the aged make up a large share of residents relative to the working-age population, and how much does the answer depend on how the map is drawn?
+The main question is where in Singapore the young and the aged make up a large share of residents compared with the working-age population. I also want to see how much the answer depends on how the map is drawn.
 
 # Loading the Packages
 
-Three packages are used in this exercise. **sf** handles the geospatial data, **tmap** draws the thematic maps, and **tidyverse** covers importing and wrangling. `p_load()` of **pacman** installs any that are missing and loads them all.
+I use three packages. **sf** handles the geospatial data, **tmap** draws the thematic maps, and **tidyverse** covers importing and wrangling. `p_load()` of **pacman** installs any that are missing and loads them all.
 
 ```{r}
 pacman::p_load(sf, tmap, tidyverse)
 ```
 
-A quick version check with `packageVersion()`, since the tmap syntax used later only exists in version 4.
+`tmap_options()` makes the legend title and text a little bigger on every tmap map on this page, so the legends stay readable at page width.
+
+```{r}
+tmap_options(legend.title.size = 1.1, legend.text.size = 0.8)
+```
+
+`packageVersion()` checks the tmap version, because the syntax used later only exists in version 4.
 
 ```{r}
 packageVersion("tmap")
@@ -47,35 +53,35 @@ packageVersion("tmap")
 
 # Preparing the Data
 
-The first half of the exercise needs three geospatial layers. I import them one at a time and then look at what came in before doing anything else.
+The first half needs three geospatial layers. I import them one at a time and check each one before doing anything else.
 
 ## Importing Geospatial Data
 
 ::: panel-tabset
 ## Importing the polygon feature data
 
-data.gov.sg has retired the shapefile and KML versions of this layer, so the geojson is what is available. For geojson `st_read()` of **sf** takes a single path rather than the `dsn` and `layer` pair the shapefile version needs.
+data.gov.sg has retired the shapefile and KML versions of this layer, so only the geojson is available. For geojson, `st_read()` of **sf** takes a single path instead of the `dsn` and `layer` pair that a shapefile needs.
 
 ```{r}
 mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson")
 ```
 
-323 features, 13 fields, multipolygon. Two things are different from the book. The layer comes in as **WGS84**, not SVY21. And the area and length fields are called `SHAPE_1.AREA` and `SHAPE_1.LEN`, not `SHAPE_Area` and `SHAPE_Leng`. Both of these bite me later.
+It has 323 multipolygon features and 13 fields. Two things differ from the book. The layer is in **WGS84**, not SVY21. The area and length fields are called `SHAPE_1.AREA` and `SHAPE_1.LEN`, not `SHAPE_Area` and `SHAPE_Leng`. Both caused problems later.
 
 ## Importing the polyline feature data
 
-LTA gives this one as a shapefile, not geojson. So `st_read()` needs the `dsn` and `layer` pair instead of one path.
+LTA gives this one as a shapefile, so `st_read()` needs the `dsn` and `layer` pair instead of one path.
 
 ```{r}
 cyclingpath <- st_read(dsn = "data/geospatial",
                        layer = "CyclingPathGazette")
 ```
 
-Look at the CRS it reports too. This one is already in SVY21, while the data.gov.sg layers are not.
+The CRS it reports is already SVY21, while the data.gov.sg layers are not.
 
 ::: {.callout-warning}
 ## Issue I hit
-The zip unpacked into a folder called `CyclingPath_Mar2026`, so my files sat one level deeper than the code expected and `st_read()` could not find the layer. I moved the nine `CyclingPathGazette.*` files up into `data/geospatial` and it worked. Nothing clever, I just had not looked at where the unzip actually put them.
+The zip unpacked into a folder called `CyclingPath_Mar2026`, so my files sat one level deeper than the code expected. `st_read()` could not find the layer. I moved the nine `CyclingPathGazette.*` files up into `data/geospatial` and it worked. I simply had not checked where the unzip put them.
 :::
 
 ## Importing the point feature data
@@ -86,23 +92,23 @@ The pre-school locations come from data.gov.sg as geojson, so it is the single p
 preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson")
 ```
 
-2290 point features, in WGS84. `names()` lists the columns that came with them.
+It has 2290 point features in WGS84. `names()` lists its columns.
 
 ```{r}
 names(preschool)
 ```
 
-Worth pausing on this. The preschool layer has no real attribute columns. Everything the file knows about each centre is packed into a single `Description` string as an HTML table, a quirk of how data.gov.sg exports these layers. Oddly the two Master Plan boundary layers do not have this problem. They come through with proper columns, so it is not consistent across data.gov.sg exports. Here it does not matter either way, because every use of `preschool` below relies only on the geometry.
+The preschool layer has no real attribute columns. Each centre's details are packed into one `Description` string as an HTML table, because of how data.gov.sg exports these layers. Oddly, the two Master Plan boundary layers come with proper columns, so data.gov.sg exports are not consistent. This does not matter here, because I only use the geometry of `preschool`.
 :::
 
 ## Checking the Content of a Simple Feature Data Frame
 
-Before wrangling anything it is worth looking at what we actually have.
+Before wrangling anything, I check what the data looks like.
 
 ::: panel-tabset
 ## Working with st_geometry()
 
-`st_geometry()` prints only the geometry column, so we see the feature type, extent and coordinate system without the attribute table getting in the way.
+`st_geometry()` prints only the geometry column, so I can see the feature type, extent and coordinate system without the attribute table.
 
 ```{r}
 st_geometry(mpsz)
@@ -116,11 +122,11 @@ st_geometry(mpsz)
 glimpse(mpsz)
 ```
 
-Two things differ from the book here. The shape fields are `SHAPE_1.AREA` and `SHAPE_1.LEN` here, not `SHAPE_Area` and `SHAPE_Leng`. And the `X_ADDR` and `Y_ADDR` centroid fields are gone.
+Two things differ from the book. The shape fields are `SHAPE_1.AREA` and `SHAPE_1.LEN`, not `SHAPE_Area` and `SHAPE_Leng`. The `X_ADDR` and `Y_ADDR` centroid fields are also gone.
 
 ## Working with head()
 
-`head()` shows the first few complete records. The `n` argument controls how many, which keeps the output readable.
+`head()` shows the first few complete records. The `n` argument sets how many, which keeps the output short.
 
 ```{r}
 head(mpsz, n = 5)
@@ -129,7 +135,7 @@ head(mpsz, n = 5)
 
 # Plotting the Geospatial Data
 
-The default `plot()` of an sf object draws every attribute as its own small map, up to the first nine. This is the book's default demo. The only change I made is the palette, because the default `sf.colors` ramp runs through green, so I pass `hcl.colors()` with "Plasma" instead.
+By default `plot()` draws each attribute of an sf object as a small map, up to the first nine. This is the book's demo. I only changed the palette, because the default `sf.colors` ramp runs through green. I pass `hcl.colors()` with "Plasma" instead.
 
 ::: panel-tabset
 ## The Plot
@@ -138,24 +144,24 @@ The default `plot()` of an sf object draws every attribute as its own small map,
 #| echo: false
 #| fig-width: 8
 #| fig-height: 6
-par(oma = c(0, 0, 2, 0))
+par(oma = c(0, 0, 3, 0))
 plot(mpsz, pal = function(n) hcl.colors(n, "Plasma"))
 mtext("The first nine attributes of the 2014 subzone layer",
-      outer = TRUE, cex = 1.3, font = 2)
+      outer = TRUE, line = 1, cex = 1.3, font = 2)
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-par(oma = c(0, 0, 2, 0))
+par(oma = c(0, 0, 3, 0))
 plot(mpsz, pal = function(n) hcl.colors(n, "Plasma"))
 mtext("The first nine attributes of the 2014 subzone layer",
-      outer = TRUE, cex = 1.3, font = 2)
+      outer = TRUE, line = 1, cex = 1.3, font = 2)
 ```
 :::
 
-Passing only the geometry through `st_geometry()` gives the outline on its own.
+Plotting only `st_geometry()` draws just the outline.
 
 ::: panel-tabset
 ## The Plot
@@ -181,7 +187,7 @@ plot(st_geometry(mpsz),
 ```
 :::
 
-Or a single named attribute. With 55 planning areas no palette can keep every one distinct, so this map is only good for a quick look at how the subzones group.
+I can also plot one named attribute. With 55 planning areas, no palette can keep every one distinct. So this map is only good for a quick look at how the subzones group.
 
 ::: panel-tabset
 ## The Plot
@@ -209,11 +215,11 @@ plot(mpsz["PLN_AREA_N"],
 ```
 :::
 
-`plot()` is fine for a quick look. Anything meant for presentation should go through tmap instead, which is the whole of the second half of this exercise.
+`plot()` is fine for a quick look. For maps meant for presentation I use tmap, which is the second half of this exercise.
 
 # Working with Projection
 
-Two layers can only be used together if they share a coordinate system, so this step is not optional.
+Two layers can only be used together if they share a coordinate system, so this step is needed.
 
 ## Transforming mpsz to SVY21
 
@@ -223,24 +229,22 @@ Two layers can only be used together if they share a coordinate system, so this 
 st_crs(mpsz)
 ```
 
-Here my file and the book part ways, so I had to stop and think about it.
-
 ::: {.callout-caution}
 ## Where I differ from the book
-The book reads a shapefile that really is in SVY21 but has the wrong EPSG code attached. The coordinates are fine, only the label is wrong, so it fixes the label with `st_set_crs(3414)`.
+The book reads a shapefile that really is in SVY21 but has the wrong EPSG code attached. The coordinates are fine and only the label is wrong, so the book fixes the label with `st_set_crs(3414)`.
 
-Mine is a different problem. It says WGS84 and it means it. The bounding box runs 103.6 to 104.1 across and 1.16 to 1.47 up, and those are degrees. SVY21 would give me metres in the tens of thousands.
+My file has a different problem. It really is WGS84. The bounding box runs 103.6 to 104.1 across and 1.16 to 1.47 up, and those are degrees. In SVY21 the values would be metres in the tens of thousands.
 
-So if I copied `st_set_crs(3414)` I would be sticking an SVY21 label on degree values without changing the numbers underneath. `st_transform()` is the one that actually converts them, so that is what I use.
+If I copied `st_set_crs(3414)`, I would put an SVY21 label on degree values without changing the numbers. `st_transform()` actually converts them, so I use that.
 :::
 
 ::: {.callout-note}
 ## Learning diary
-This is the one that would have got me. Nothing errors either way. The map still draws, the code still runs, and every area and buffer after it is quietly wrong.
+This mistake is easy to make, because nothing errors either way. The map still draws, but every area and buffer after it is wrong.
 
-What saved me was reading the bounding box instead of skipping past it. Degrees look like 103.8. Metres look like 28,000. Once I noticed that, the rest was obvious.
+What helped was reading the bounding box instead of skipping past it. Degrees look like 103.8 and metres look like 28,000.
 
-The rule I am taking from this. `st_set_crs` fixes a wrong label. `st_transform` changes the actual coordinates. Ask which one is broken before picking.
+What I learned is that `st_set_crs` fixes a wrong label, while `st_transform` changes the actual coordinates. I should check which one is broken before picking.
 :::
 
 ::: panel-tabset
@@ -254,7 +258,7 @@ mpsz3414 <- st_transform(mpsz, crs = 3414)
 
 ## Checking the EPSG code
 
-`st_crs()` again, this time pulling out just the EPSG code.
+`st_crs()` again, this time returning only the EPSG code.
 
 ```{r}
 st_crs(mpsz3414)$epsg
@@ -269,11 +273,11 @@ st_bbox(mpsz3414)
 ```
 :::
 
-The bounding box is now in metres, in the tens of thousands. That is my quick check that the transform actually did something rather than just changing the label.
+The bounding box is now in metres, in the tens of thousands. This shows the transform changed the coordinates and not just the label.
 
 ## Transforming Preschool from WGS84 to SVY21
 
-Same situation, same tool.
+The pre-school layer is also in WGS84, so the same fix applies.
 
 ::: panel-tabset
 ## Transforming the layer
@@ -293,11 +297,11 @@ st_geometry(preschool3414)
 ```
 :::
 
-The bounding box now runs from about 11,810 to 45,404 across and 25,596 to 49,301 up. Those are metres. Longitude only goes from minus 180 to 180 and latitude from minus 90 to 90, so values like these cannot be degrees, and the transform worked.
+The bounding box now runs from about 11,810 to 45,404 across and 25,596 to 49,301 up. Longitude only goes from minus 180 to 180 and latitude from minus 90 to 90, so these values must be metres. The transform worked.
 
 ## Overlaying the Two Layers
 
-Before the transform, the preschool points would not have landed on the subzone map at all. Now they do. `plot()` with `add = TRUE` draws the points over the boundaries.
+Before the transform, the preschool points would not have landed on the subzone map. Now they line up. `plot()` with `add = TRUE` draws the points over the boundaries.
 
 ::: panel-tabset
 ## The Plot
@@ -329,7 +333,7 @@ plot(st_geometry(preschool3414), add = TRUE,
 
 # Importing and Converting Aspatial Data
 
-The Airbnb listings file is not geospatial data, but it carries latitude and longitude columns, which is enough to turn it into one.
+The Airbnb listings file is not geospatial data, but its latitude and longitude columns are enough to turn it into one.
 
 ## Importing the Aspatial Data
 
@@ -350,7 +354,7 @@ listings <- read_csv("data/aspatial/listings.csv")
 glimpse(listings)
 ```
 
-The two fields we need are `latitude` and `longitude`, both in decimal degrees. The safe assumption is WGS84.
+The two fields I need are `latitude` and `longitude`, both in decimal degrees. It is safe to assume WGS84.
 :::
 
 ## Creating a Simple Feature Data Frame from an Aspatial Data Frame
@@ -367,11 +371,11 @@ listings_sf <- st_as_sf(listings,
   st_transform(crs = 3414)
 ```
 
-Three things about the arguments. `coords` wants x first then y, so longitude comes before latitude. `crs = 4326` is WGS84, the system the raw coordinates are in. The piped `st_transform()` then moves it to 3414 to match everything else.
+`coords` wants x first and y second, so longitude comes before latitude. `crs = 4326` is WGS84, the system of the raw coordinates. The piped `st_transform()` then moves it to 3414 to match the other layers.
 
 ## Checking the result
 
-`glimpse()` once more on the new sf object.
+`glimpse()` checks the new sf object.
 
 ```{r}
 glimpse(listings_sf)
@@ -382,7 +386,7 @@ A `geometry` column has appeared and the separate longitude and latitude columns
 
 ## Plotting the Listings over the Subzones
 
-The same `plot()` overlay as before, with the listings as small orange dots.
+I use the same `plot()` overlay as before, with the listings as small orange dots.
 
 ::: panel-tabset
 ## The Plot
@@ -412,17 +416,17 @@ plot(st_geometry(listings_sf), add = TRUE,
 ```
 :::
 
-Most listings sit in the central and southern subzones. They thin out quickly towards the west and the north coast, with a few clusters in the east near the airport. Big parts of the island have almost none.
+Most listings are in the central and southern subzones. They thin out quickly towards the west and the north coast, with a few clusters in the east near the airport. Large parts of the island have almost none.
 
 # Geoprocessing with sf
 
 ## Land Acquisition Analysis
 
-The scenario is that the authority wants to widen the existing cycling paths and needs 5 metres of reserved land on either side. The task is to work out how much land that comes to.
+In this scenario the authority wants to widen the existing cycling paths and needs 5 metres of reserved land on either side. The task is to work out how much land that is.
 
-`dist = 5` in `st_buffer()` is read in the units of the layer's coordinate system. On a projected layer like SVY21 that is metres, which is what we want. On a layer in degrees it is less obvious. With the s2 engine switched on, which is the sf default, a buffer on geographic coordinates is computed on the sphere and `dist` is taken as metres, so it would not blow up. But with s2 switched off, the same call reads 5 as five degrees, a buffer reaching some 550 km out on every side, and it would still run without error. Working in SVY21 means the answer does not depend on that setting.
+`dist = 5` in `st_buffer()` uses the units of the layer's coordinate system. In a projected system like SVY21 that is metres. In degrees it is less clear. With the s2 engine on, which is the sf default, a buffer on geographic coordinates is computed on the sphere and `dist` is taken as metres. With s2 off, the same call reads 5 as five degrees. That is a buffer of some 550 km on every side, and it still runs without error. Working in SVY21 means the answer does not depend on that setting.
 
-The cycling path is the one layer here that already arrived in SVY21, so this transform changes nothing. I have kept it anyway rather than relying on LTA continuing to ship it that way. It costs nothing and it makes the assumption explicit.
+The cycling path already came in SVY21, so this transform changes nothing. I kept it so the code does not rely on LTA always shipping it that way. It costs nothing and makes the assumption clear.
 
 ::: panel-tabset
 ## Confirming the projection
@@ -436,7 +440,7 @@ st_crs(cyclingpath3414)$epsg
 
 ## Buffering the paths
 
-`st_buffer()` builds buffers that really are 5 metres. `nQuadSegs = 30` keeps the rounded ends smooth.
+`st_buffer()` builds the 5 metre buffers. `nQuadSegs = 30` keeps the rounded ends smooth.
 
 ```{r}
 buffer_cycling <- st_buffer(cyclingpath3414, dist = 5, nQuadSegs = 30)
@@ -460,7 +464,7 @@ sum(buffer_cycling$AREA)
 ```
 :::
 
-To see what this looks like on the ground, we can clip the buffers to a single subzone, Tampines West here. `filter()` picks the subzone and `st_intersection()` cuts the buffers to its boundary.
+To see what this looks like on the ground, I clip the buffers to one subzone, Tampines West. `filter()` picks the subzone and `st_intersection()` cuts the buffers to its boundary.
 
 ```{r}
 mpsz_selected <- mpsz3414 %>%
@@ -501,22 +505,22 @@ plot(st_geometry(buffer_cycling_selected), add = TRUE,
 
 ## Counting Pre-schools by Planning Subzone
 
-The scenario is that the authority needs a pre-school count for every planning subzone to feed into forward planning.
+In this scenario the authority needs a pre-school count for every planning subzone for forward planning.
 
 ::: panel-tabset
 ## Counting the points
 
-`st_intersects()` returns, for each subzone, the list of preschools falling inside it. Wrapping that in `lengths()` turns the lists into counts in one step.
+`st_intersects()` returns, for each subzone, the list of preschools inside it. Wrapping that in `lengths()` turns the lists into counts in one step.
 
 ```{r}
 mpsz3414$`PreSch Count` <- lengths(st_intersects(mpsz3414, preschool3414))
 ```
 
-This is `st_intersects()`, not `st_intersection()`.
+Note that this uses `st_intersects()`, not `st_intersection()`.
 
 ::: {.callout-note}
 ## Learning diary
-These two are one letter apart and do different jobs, so this is worth saying out loud before typing either. `st_intersects()` answers which things overlap and gives you a list. `st_intersection()` cuts the shapes and gives you the overlapping pieces back. Only the first one is any use for counting.
+These two names are one letter apart but do different jobs. `st_intersects()` tells me which things overlap and returns a list. `st_intersection()` cuts the shapes and returns the overlapping pieces. Only the first one works for counting.
 :::
 
 ## Summarising the counts
@@ -539,7 +543,7 @@ top_n(mpsz3414, 1, `PreSch Count`)
 
 ## Converting to density
 
-Counts on their own are misleading because subzones differ a lot in size, so we convert to a density per square kilometre. `st_area()` gives each subzone's area in square metres and `mutate()` divides.
+Raw counts are misleading because subzones differ a lot in size. So I convert them to a density per square kilometre. `st_area()` gives each subzone's area in square metres and `mutate()` divides.
 
 ```{r}
 mpsz3414$Area <- mpsz3414 %>%
@@ -592,7 +596,7 @@ legend("topright", bty = "n", col = "#D55E00", lwd = 2, lty = 2,
 ```
 :::
 
-**ggplot2** gives a far more presentable version with `geom_histogram()`, with room for a proper title and axis labels.
+`geom_histogram()` of **ggplot2** gives a more presentable version, with a proper title and axis labels.
 
 ::: panel-tabset
 ## The Plot
@@ -610,6 +614,7 @@ ggplot(data = mpsz3414,
        subtitle = "Most subzones have very few pre-schools, while a small number have a great many",
        x = "Pre-school density (per km sq)",
        y = "Frequency") +
+  theme_minimal(base_size = 13) +
   theme(plot.title = element_text(size = 15, face = "bold"),
         plot.subtitle = element_text(size = 13),
         axis.title = element_text(size = 13),
@@ -629,6 +634,7 @@ ggplot(data = mpsz3414,
        subtitle = "Most subzones have very few pre-schools, while a small number have a great many",
        x = "Pre-school density (per km sq)",
        y = "Frequency") +
+  theme_minimal(base_size = 13) +
   theme(plot.title = element_text(size = 15, face = "bold"),
         plot.subtitle = element_text(size = 13),
         axis.title = element_text(size = 13),
@@ -636,7 +642,7 @@ ggplot(data = mpsz3414,
 ```
 :::
 
-Same story as the summary. Over a hundred subzones are in the lowest bin and the count drops off fast after that, with two stragglers past 30 per square kilometre.
+This matches the summary. Over a hundred subzones are in the lowest bin and the count drops quickly after that. Two subzones sit past 30 per square kilometre.
 
 A scatterplot of count against density with `geom_point()` shows how the two relate.
 
@@ -654,6 +660,7 @@ ggplot(data = mpsz3414,
   labs(title = "Pre-school count against density by subzone",
        x = "Pre-school density (per km sq)",
        y = "Pre-school count") +
+  theme_minimal(base_size = 13) +
   theme(plot.title = element_text(size = 15, face = "bold"),
         plot.subtitle = element_text(size = 13),
         axis.title = element_text(size = 13),
@@ -671,6 +678,7 @@ ggplot(data = mpsz3414,
   labs(title = "Pre-school count against density by subzone",
        x = "Pre-school density (per km sq)",
        y = "Pre-school count") +
+  theme_minimal(base_size = 13) +
   theme(plot.title = element_text(size = 15, face = "bold"),
         plot.subtitle = element_text(size = 13),
         axis.title = element_text(size = 13),
@@ -678,23 +686,23 @@ ggplot(data = mpsz3414,
 ```
 :::
 
-Count and density do rise together, but the spread is wide. Two subzones with the same density can be twenty pre-schools apart. The points on the far right, around 35 per square kilometre, only have a few pre-schools each because those subzones are small.
+Count and density do rise together, but the spread is wide. Two subzones with the same density can be twenty pre-schools apart. The points on the far right, around 35 per square kilometre, have only a few pre-schools each because those subzones are small.
 
 ::: {.callout-caution}
 ## Where I differ from the book
-The book adds `xlim(0, 40)` and `ylim(0, 40)` to this plot. Those drop every point past 40 from the plot, with no more than a warning that the render hides. Tampines East, with 72 pre-schools, would simply vanish and the chart would look tidier than the data actually is. I left the limits off so every subzone is shown.
+The book adds `xlim(0, 40)` and `ylim(0, 40)` to this plot. These drop every point past 40, and the render hides the warning. Tampines East, with 72 pre-schools, would disappear and the chart would look tidier than the data is. I left the limits off so every subzone is shown.
 :::
 
 # Preparing the Data for Thematic Mapping
 
-The tmap half uses two different datasets, the Master Plan 2019 subzone boundaries and the 2024 resident population figures by planning area, subzone, age group and sex.
+The tmap half uses the Master Plan 2019 subzone boundaries and the 2024 resident population figures by planning area, subzone, age group and sex.
 
 ## Importing Data into R
 
 ::: panel-tabset
 ## Importing the 2019 subzone boundary
 
-`st_read()` reads the geojson and the piped `st_transform()` moves it straight to SVY21, since this layer is also in WGS84.
+`st_read()` reads the geojson and the piped `st_transform()` moves it straight to SVY21, because this layer is also in WGS84.
 
 ```{r}
 mpsz19 <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson") %>%
@@ -703,7 +711,7 @@ mpsz19 <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geo
 
 ::: {.callout-note}
 ## Learning diary
-Small thing, but worth writing down. The 2019 file downloads as `MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson`, with GEOJSON in the middle of the name rather than just the extension. Nobody would guess that. Now I copy filenames out of `ls` instead of typing what I think they are called.
+The 2019 file downloads as `MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson`, with GEOJSON in the middle of the name as well as in the extension. I did not expect that. Now I copy filenames from `ls` instead of typing what I think they are called.
 :::
 
 ## Checking the attributes
@@ -716,7 +724,7 @@ names(mpsz19)
 
 ::: {.callout-caution}
 ## Where I differ from the book
-The reference book at this point runs a chunk of `rvest` code to parse attributes out of an HTML table buried in a `Description` field. That was necessary for the KML version of this layer, which data.gov.sg has since unpublished. The geojson that replaced it carries `SUBZONE_N`, `PLN_AREA_N` and `REGION_N` as proper columns, so there is nothing to parse and the join below can use them directly.
+At this point the book uses `rvest` code to parse attributes out of an HTML table in a `Description` field. That was needed for the KML version of this layer, which data.gov.sg has since removed. The geojson that replaced it has `SUBZONE_N`, `PLN_AREA_N` and `REGION_N` as proper columns, so the join below can use them directly.
 :::
 
 Printing the object shows the first ten features and confirms the new CRS.
@@ -725,7 +733,7 @@ Printing the object shows the first ten features and confirms the new CRS.
 mpsz19
 ```
 
-332 features and 13 fields, with the three name columns the join needs.
+It has 332 features and 13 fields, including the three name columns the join needs.
 
 ## Importing the population table
 
@@ -738,7 +746,7 @@ popdata <- read_csv("data/aspatial/respopagesextod2024.csv")
 
 ## Data Wrangling
 
-The target is one row per subzone with six fields. `YOUNG` is ages 0 to 24, `ECONOMY ACTIVE` is 25 to 64, and `AGED` is 65 and over. `DEPENDENCY` divides the young plus the aged by the economically active.
+The goal is one row per subzone with six fields. `YOUNG` is ages 0 to 24, `ECONOMY ACTIVE` is 25 to 64, and `AGED` is 65 and over. `DEPENDENCY` divides the young plus the aged by the economically active.
 
 ::: panel-tabset
 ## Aggregating and pivoting
@@ -752,31 +760,31 @@ popdata2024 <- popdata %>%
   pivot_wider(names_from = AG, values_from = POP)
 ```
 
-Now a step the reference book does not take, and which turns out to matter a great deal. `names()` shows the order the age columns came out in.
+The book skips the next step, but it turned out to matter a lot. `names()` shows the order of the age columns.
 
 ```{r}
 names(popdata2024)
 ```
 
-The book builds the three age bands by column number. Look at the list above. The age groups are not in age order.
+The book builds the three age bands by column number. But in the list above, the age groups are not in age order.
 
-The reason is the summarise step. `summarise()` returns its rows sorted by the grouping columns, and `AG` is text, so the age groups are sorted as text. `pivot_wider()` then creates the columns in the order it meets the values, which is that sorted order. As text, `5_to_9` comes after `55_to_59`, so it sits at position 14 instead of 12.
+This comes from the summarise step. `summarise()` sorts its rows by the grouping columns. `AG` is text, so the age groups are sorted as text. `pivot_wider()` then creates the columns in that sorted order. As text, `5_to_9` comes after `55_to_59`, so it sits at position 14 instead of 12.
 
 ::: {.callout-caution}
 ## Where I differ from the book
-The book uses `rowSums(.[3:6]) + rowSums(.[12])` for `YOUNG` and similar column ranges for the other bands. Run those numbers against my columns and `YOUNG` grabs the 50 to 54 band instead of 5 to 9. `ECONOMY ACTIVE` ends up counting primary school children. I select the bands by name instead.
+The book uses `rowSums(.[3:6]) + rowSums(.[12])` for `YOUNG` and similar column ranges for the other bands. With my columns, those numbers make `YOUNG` pick up the 50 to 54 band instead of 5 to 9. `ECONOMY ACTIVE` ends up counting primary school children. I select the bands by name instead.
 :::
 
 ::: {.callout-warning}
 ## Issue I hit
-Like the projection one, this does not error. It just gives you a wrong dependency ratio, and every map after it looks completely normal.
+Like the projection problem, this does not throw an error. It just gives a wrong dependency ratio, and every map after it looks normal.
 
-I nearly skipped `names(popdata2024)`. It was one line and it caught the whole thing.
+I nearly skipped `names(popdata2024)`. That one line caught the problem.
 :::
 
 ## Selecting the age bands by name
 
-Selecting by name instead removes the dependency on ordering entirely. Three character vectors hold the band names.
+Selecting by name removes the dependency on column order. Three character vectors hold the band names.
 
 ```{r}
 young_ag <- c("0_to_4", "5_to_9", "10_to_14", "15_to_19", "20_to_24")
@@ -788,7 +796,7 @@ aged_ag <- c("65_to_69", "70_to_74", "75_to_79",
              "80_to_84", "85_to_89", "90_and_over")
 ```
 
-A guard against the same class of problem returning. `stopifnot()` stops the render if a future release renames or drops a band, rather than letting a wrong number through.
+I also add a guard against this problem. `stopifnot()` stops the render if a future release renames or drops a band, instead of letting a wrong number through.
 
 ```{r}
 stopifnot(all(c(young_ag, active_ag, aged_ag) %in% names(popdata2024)))
@@ -812,7 +820,7 @@ popdata2024 <- popdata2024 %>%
 
 ## Checking the totals
 
-Now a check. The three bands should add up to the total, and the ratio for Singapore overall should be somewhere near 0.7. `summarise()` computes both.
+Next I check the result. The three bands should add up to the total, and the ratio for Singapore overall should be near 0.7. `summarise()` computes both.
 
 ```{r}
 popdata2024 %>%
@@ -828,9 +836,9 @@ popdata2024 %>%
 
 ::: {.callout-important}
 ## Check that caught something
-The bands add to 4,189,460, which is the right size for Singapore's resident population of a little over 4 million, and they match the total exactly. The overall ratio is 0.732, which is in the right range.
+The bands add to 4,189,460, which fits Singapore's resident population of a little over 4 million, and they match the total exactly. The overall ratio is 0.732, which is in the expected range.
 
-Both had to be right before I trusted any map on this page. If I had used the book's column numbers, this check is where it would have shown up.
+Both had to be right before I trusted any map on this page. If I had used the book's column numbers, the problem would have shown up in this check.
 :::
 :::
 
@@ -839,7 +847,7 @@ Both had to be right before I trusted any map on this page. If I had used the bo
 ::: panel-tabset
 ## Matching the case of the keys
 
-The `PA` and `SZ` values are mixed case while `PLN_AREA_N` and `SUBZONE_N` are uppercase, so they will not match until we fix that. `mutate_at()` applies `toupper()` to both, and `filter()` drops rows with nobody of working age.
+The `PA` and `SZ` values are mixed case while `PLN_AREA_N` and `SUBZONE_N` are uppercase, so they will not match until I fix that. `mutate_at()` applies `toupper()` to both, and `filter()` drops rows with nobody of working age.
 
 ```{r}
 popdata2024 <- popdata2024 %>%
@@ -856,7 +864,7 @@ mpsz_pop2024 <- left_join(mpsz19, popdata2024,
                           by = c("SUBZONE_N" = "SZ"))
 ```
 
-The sf object goes on the left of the join deliberately. That is what keeps the result an sf data frame rather than a plain tibble.
+The sf object goes on the left so the result stays an sf data frame, not a plain tibble.
 
 ## Saving the result
 
@@ -871,7 +879,7 @@ write_rds(mpsz_pop2024, "data/rds/mpsz_pop2024.rds")
 
 ## Plotting a Choropleth Map Quickly with qtm()
 
-`tmap_mode("plot")` sets static output, and `qtm()` of **tmap** draws a choropleth in one line. The only things I added are a legend title and position and a figure title. The bins are exactly what `qtm()` picks.
+`tmap_mode("plot")` sets static output, and `qtm()` of **tmap** draws a choropleth in one line. I only added a legend title, a legend position and a figure title. The bins are the ones `qtm()` picks.
 
 ::: panel-tabset
 ## The Plot
@@ -899,15 +907,13 @@ qtm(shp = mpsz_pop2024, fill = "DEPENDENCY",
 ```
 :::
 
-`qtm()` is quick to write, but look at what the default bins did. The legend runs 0 to 10 in steps of two. Almost every subzone is under 1, so the whole island lands in the palest class and one dark polygon sits near Changi.
-
-The map is not wrong. It just does not show anything.
+`qtm()` is quick, but the default bins are a problem. The legend runs 0 to 10 in steps of two. Almost every subzone is under 1, so the island lands in the palest class with one dark polygon near Changi. The map is not wrong, but it shows very little.
 
 ::: {.callout-note}
 ## Learning diary
-One subzone with a ratio of 10 is enough to wreck the default bins for the other 237 subzones that have a ratio at all. That is why the custom breaks section below matters.
+One subzone with a ratio of 10 is enough to spoil the default bins for the other 237 subzones that have a ratio. The custom breaks section below deals with this.
 
-It is also why I stop using `qtm()` after this point. It is fine for a first look, but changing the bins, the palette or the legend means passing `tm_polygons()` arguments through it anyway, as I did with the legend above, so from here on I write `tm_shape()` and `tm_polygons()` in full.
+It is also why I stop using `qtm()` here. To change the bins, the palette or the legend I have to pass `tm_polygons()` arguments through it anyway, as I did with the legend above. So from here on I write `tm_shape()` and `tm_polygons()` in full.
 :::
 
 ## Drawing a Base Map
@@ -970,7 +976,7 @@ The default binning is "pretty" and the default palette is blues3. Missing value
 
 ## Drawing a Choropleth Map Using tm_fill() and tm_borders()
 
-`tm_polygons()` is really a wrapper around these two. `tm_fill()` on its own colours the subzones with no outlines.
+`tm_polygons()` is really a wrapper around these two. `tm_fill()` alone colours the subzones with no outlines.
 
 ::: panel-tabset
 ## The Plot
@@ -998,7 +1004,7 @@ tm_shape(mpsz_pop2024) +
 ```
 :::
 
-Adding `tm_borders()` back in gives a map that looks the same as the `tm_polygons()` one above, which is the point. The two routes draw the same thing.
+Adding `tm_borders()` back gives the same map as the `tm_polygons()` one above. The two routes draw the same thing.
 
 ::: panel-tabset
 ## The Plot
@@ -1028,7 +1034,7 @@ tm_shape(mpsz_pop2024) +
 ```
 :::
 
-`tm_borders()` takes `col`, `lwd` and `lty` for colour, line width and line type. The only difference from the map above is the borders, now grey and dashed. I set `lwd = 0.8` because at 0.1 the dashes were too thin to see at all.
+`tm_borders()` takes `col`, `lwd` and `lty` for colour, line width and line type. Only the borders change from the map above, now grey and dashed. I set `lwd = 0.8` because at 0.1 the dashes were too thin to see.
 
 ::: panel-tabset
 ## The Plot
@@ -1060,7 +1066,7 @@ tm_shape(mpsz_pop2024) +
 
 # Data Classification Methods of tmap
 
-tmap offers ten classification styles. The choice matters more than it looks, because the same data can tell quite different stories depending on where the breaks fall.
+tmap offers ten classification styles. The choice matters, because the same data can look very different depending on where the breaks fall.
 
 ## Quantile Classification
 
@@ -1130,23 +1136,23 @@ tm_shape(mpsz_pop2024) +
 ```
 :::
 
-Same column, same data, two maps that look nothing alike.
+The two maps use the same column but look very different.
 
-Quantile puts the same number of subzones in each class, so the breaks come out at 0.64, 0.70, 0.74 and 0.82. Those all sit inside the range where the data actually is, and the map separates the central and eastern subzones clearly.
+Quantile puts the same number of subzones in each class, so the breaks come out at 0.64, 0.70, 0.74 and 0.82. These all fall where most of the data is, and the map clearly separates the central and eastern subzones.
 
-Equal interval cuts 0 to 10 into five equal parts. Nearly everything falls in the first one, so the island goes pale with a single dark polygon. If you only saw that map you would think dependency hardly varies in Singapore, which is not true.
+Equal interval cuts 0 to 10 into five equal parts. Nearly everything falls in the first one, so the island goes pale with a single dark polygon. From that map alone I would think dependency hardly varies in Singapore, which is not true.
 
-Neither map is lying. They are the same numbers. But one subzone at 10 is enough to make the equal interval version useless, and I would not have known that without putting them side by side.
+Both maps show the same numbers correctly. But one subzone at 10 makes the equal interval version almost useless. I only saw this by putting the two side by side.
 
 ## Plotting a Choropleth Map with Custom Breaks
 
-Always look at the numbers before choosing break points. `summary()` gives the quartiles and the extremes.
+I look at the numbers before choosing break points. `summary()` gives the quartiles and the extremes.
 
 ```{r}
 summary(mpsz_pop2024$DEPENDENCY)
 ```
 
-The middle half of the subzones sits between 0.675 and 0.814, so breaks at 0.60, 0.70, 0.80 and 0.90 separate the bulk of the data. But the maximum is 10, so the breaks also need a top class above 1.00 or those subzones have nowhere to go. `breaks` in `tm_scale_intervals()` takes n+1 values including a minimum and maximum, so six classes need seven values.
+The middle half of the subzones sits between 0.675 and 0.814, so breaks at 0.60, 0.70, 0.80 and 0.90 separate most of the data. But the maximum is 10, so I also need a top class above 1.00 for those subzones. `breaks` in `tm_scale_intervals()` takes n+1 values, including a minimum and maximum, so six classes need seven values.
 
 ::: panel-tabset
 ## The Plot
@@ -1182,14 +1188,14 @@ tm_shape(mpsz_pop2024) +
 
 ::: {.callout-caution}
 ## Where I differ from the book
-The book's breaks are `c(0, 0.60, 0.70, 0.80, 0.90, 1.00)` and stop at 1.00, but the summary shows a maximum of 10. Every subzone above 1.00 falls outside the classes. In my first render tmap still painted them in the darkest class, so the legend said the top class ended at 1.00 while it held a subzone at 10. I added a seventh break at 10 so the top class, 1.00 to 10, says honestly what it holds.
+The book's breaks are `c(0, 0.60, 0.70, 0.80, 0.90, 1.00)` and stop at 1.00, but the summary shows a maximum of 10. Subzones above 1.00 fall outside the classes, but in my first render tmap still painted them in the darkest class. So the legend said the top class ended at 1.00 while it held a subzone at 10. I added a seventh break at 10 so the top class, 1.00 to 10, shows what it holds.
 :::
 
 # Colour Scheme
 
 ## Using ColorBrewer Palettes
 
-`values` in `tm_scale_intervals()` picks the palette. This map reuses the quantile classes from the quantile map above and only swaps the default blues for the ColorBrewer oranges.
+`values` in `tm_scale_intervals()` picks the palette. This map reuses the quantile classes from above and only swaps the default blues for the ColorBrewer oranges.
 
 ::: panel-tabset
 ## The Plot
@@ -1223,7 +1229,7 @@ tm_shape(mpsz_pop2024) +
 ```
 :::
 
-A minus prefix reverses the ramp. Dark now means a low ratio, which reads backwards, so it is only worth doing when the low end is the story.
+A minus prefix reverses the ramp. Dark now means a low ratio, which feels backwards. It is only useful when the low values are the focus.
 
 ::: panel-tabset
 ## The Plot
@@ -1259,12 +1265,12 @@ tm_shape(mpsz_pop2024) +
 
 ::: {.callout-caution}
 ## Where I differ from the book
-The book demonstrates palettes with `"brewer.greens"` and `"-brewer.greens"`, and uses the reversed greens again in the map style section. I avoid green as a data colour because red and green are the pair most colour-blind readers struggle with, so I use the blues default and `"brewer.oranges"` to show the same two ideas, and `"brewer.or_rd"` for the style map.
+The book shows palettes with `"brewer.greens"` and `"-brewer.greens"`, and uses the reversed greens again for the map style. I avoid green as a data colour because red and green are the pair most colour-blind readers struggle with. I use the blues default and `"brewer.oranges"` for the same two ideas, and `"brewer.or_rd"` for the style map.
 :::
 
 ## Cartographic Furniture
 
-`tm_compass()`, `tm_scalebar()`, `tm_grid()` and `tm_credits()` turn a plot into something that reads as a map. I moved the credits to the top left, where there is only sea, because at the bottom left they ran over the southern islands.
+`tm_compass()`, `tm_scalebar()`, `tm_grid()` and `tm_credits()` turn a plot into a proper map. I moved the credits to the top left, where there is only sea, because at the bottom left they covered the southern islands.
 
 ::: panel-tabset
 ## The Plot
@@ -1310,7 +1316,7 @@ tm_shape(mpsz_pop2024) +
 
 ## Map Legend
 
-`tm_legend()` inside `fill.legend` controls the legend's title, where it sits and how large its text is. The book places it inside the frame with `tm_pos_auto_in()`. I keep it outside on the right with `tm_pos_out()`, as on every map on this page, so it can never sit on a subzone, and set the title and text sizes.
+`tm_legend()` inside `fill.legend` sets the legend's title, position and text size. The book puts it inside the frame with `tm_pos_auto_in()`. I keep it outside on the right with `tm_pos_out()`, as on every map here, so it never covers a subzone.
 
 ::: panel-tabset
 ## The Plot
@@ -1358,7 +1364,7 @@ tm_shape(mpsz_pop2024) +
 
 ## Map Style
 
-`tm_style()` added to the chain applies a preset style to this one map. "natural" gives the sea a blue background.
+Adding `tm_style()` to the chain applies a preset style to this one map. "natural" gives the sea a blue background.
 
 ::: panel-tabset
 ## The Plot
@@ -1394,27 +1400,28 @@ tm_shape(mpsz_pop2024) +
 ```
 :::
 
-Because `tm_style()` only styles the map it is added to, nothing carries over. The book calls `tmap_style()` instead, which changes the style for every later map, and then resets it. I keep the reset with `tmap_style("white")` as a safeguard.
+`tm_style()` only styles the map it is added to, so nothing carries over. The book calls `tmap_style()` instead, which changes the style for every later map, and then resets it. I keep the reset with `tmap_style("white")` as a safeguard, and set the legend sizes again in case the style change reset them.
 
 ```{r}
 tmap_style("white")
+tmap_options(legend.title.size = 1.1, legend.text.size = 0.8)
 ```
 
 # Drawing Small Multiple Choropleth Maps
 
-Facet maps put several maps side by side, which makes it easy to see how a spatial pattern shifts with another variable.
+Facet maps put several maps in one figure. This makes it easy to see how a spatial pattern changes with another variable.
 
 ## By Assigning Multiple Values to an Aesthetic
 
-Giving `fill` two column names makes tmap draw one map per variable. `fill.free = FALSE` puts both on one shared equal interval scale, so the same shade means the same number of residents in both panels.
+Giving `fill` two column names makes tmap draw one map per variable. `fill.free = FALSE` puts both on one shared equal interval scale, so the same shade means the same number of residents in both panels. `tm_facets_vstack()` stacks the two maps one above the other, so each one gets the full width of the page.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-#| fig-width: 10
-#| fig-height: 4.5
+#| fig-width: 8
+#| fig-height: 8.5
 tm_shape(mpsz_pop2024) +
   tm_polygons(fill = c("YOUNG", "AGED"),
               fill.free = FALSE,
@@ -1422,6 +1429,7 @@ tm_shape(mpsz_pop2024) +
                                       position = tm_pos_out("right", "center")),
               fill.scale = tm_scale_intervals(style = "equal", n = 5,
                                               values = "brewer.blues")) +
+  tm_facets_vstack() +
   tm_borders(col_alpha = 0.5) +
   tm_title("Young and aged residents on one shared scale", size = 1.3, fontface = "bold")
 ```
@@ -1437,6 +1445,7 @@ tm_shape(mpsz_pop2024) +
                                       position = tm_pos_out("right", "center")),
               fill.scale = tm_scale_intervals(style = "equal", n = 5,
                                               values = "brewer.blues")) +
+  tm_facets_vstack() +
   tm_borders(col_alpha = 0.5) +
   tm_title("Young and aged residents on one shared scale", size = 1.3, fontface = "bold")
 ```
@@ -1444,15 +1453,15 @@ tm_shape(mpsz_pop2024) +
 
 ## By Arranging Multiple Maps in a Grid
 
-`tmap_arrange()` places separately built maps next to each other. Each map here has its own quantile classes, so compare the patterns, not the shades.
+`tmap_arrange()` puts separately built maps in one figure. With `ncol = 1` they stack, so each map gets the full width. Each map here has its own quantile classes, so I compare the patterns and not the shades.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-#| fig-width: 10
-#| fig-height: 4.5
+#| fig-width: 8
+#| fig-height: 9
 youngmap <- tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "YOUNG",
               fill.legend = tm_legend(title = "Residents 0 to 24",
@@ -1471,7 +1480,7 @@ agedmap <- tm_shape(mpsz_pop2024) +
   tm_borders(col_alpha = 0.5) +
   tm_title("Where the aged live, as a raw count", size = 1.3, fontface = "bold")
 
-tmap_arrange(youngmap, agedmap, ncol = 2)
+tmap_arrange(youngmap, agedmap, ncol = 1)
 ```
 
 ## The Code
@@ -1496,20 +1505,20 @@ agedmap <- tm_shape(mpsz_pop2024) +
   tm_borders(col_alpha = 0.5) +
   tm_title("Where the aged live, as a raw count", size = 1.3, fontface = "bold")
 
-tmap_arrange(youngmap, agedmap, ncol = 2)
+tmap_arrange(youngmap, agedmap, ncol = 1)
 ```
 :::
 
-The two maps look almost the same. I expected the aged map to light up the older estates and the young map to light up the newer towns, but the same subzones are dark on both.
+The two maps look almost the same. I expected the aged map to show the older estates and the young map to show the newer towns, but the same subzones are dark on both.
 
-That is because both are raw counts. A subzone with more people in it has more of everyone. So these maps are mostly showing where people live, not where the population is young or old.
+This is because both are raw counts. A subzone with more people has more of every age group. So these maps mostly show where people live, not where the population is young or old.
 
 ::: {.callout-tip}
 ## Alternative explored
-The book stops at the count maps. Since they were not answering my question, I redrew both as shares of each subzone's own population instead.
+The book stops at the count maps. They did not answer my question, so I redrew both as shares of each subzone's own population.
 :::
 
-Dividing each band by the subzone total with `mutate()` takes population size out of it.
+Dividing each band by the subzone total with `mutate()` removes the effect of population size.
 
 ```{r}
 mpsz_pop2024 <- mpsz_pop2024 %>%
@@ -1517,15 +1526,15 @@ mpsz_pop2024 <- mpsz_pop2024 %>%
          `AGED PCT` = AGED / TOTAL * 100)
 ```
 
-The same `tmap_arrange()` layout for the two shares, again with each map on its own quantile classes.
+I use the same `tmap_arrange()` layout for the two shares, again with each map on its own quantile classes.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-#| fig-width: 10
-#| fig-height: 4.5
+#| fig-width: 8
+#| fig-height: 9
 youngpct <- tm_shape(mpsz_pop2024) +
   tm_polygons(fill = "YOUNG PCT",
               fill.legend = tm_legend(title = "Share 0 to 24 (%)",
@@ -1544,7 +1553,7 @@ agedpct <- tm_shape(mpsz_pop2024) +
   tm_borders(col_alpha = 0.5) +
   tm_title("Aged as a share of the subzone", size = 1.3, fontface = "bold")
 
-tmap_arrange(youngpct, agedpct, ncol = 2)
+tmap_arrange(youngpct, agedpct, ncol = 1)
 ```
 
 ## The Code
@@ -1569,11 +1578,11 @@ agedpct <- tm_shape(mpsz_pop2024) +
   tm_borders(col_alpha = 0.5) +
   tm_title("Aged as a share of the subzone", size = 1.3, fontface = "bold")
 
-tmap_arrange(youngpct, agedpct, ncol = 2)
+tmap_arrange(youngpct, agedpct, ncol = 1)
 ```
 :::
 
-Now the two maps look different, which is what I expected the first pair to show. Read them against the count maps above to see how much of that first pattern was just population size.
+Now the two maps look different, which is what I expected the first pair to show. Comparing them with the count maps above shows how much of the first pattern was just population size.
 
 ## By Defining a Group-by Variable in tm_facets()
 
@@ -1617,7 +1626,7 @@ tm_shape(mpsz_pop2024) +
 
 # Mapping Spatial Object Meeting a Selection Criterion
 
-Rather than facetting, we can just `filter()` down to the region of interest before `tm_shape()`.
+Instead of facetting, I can `filter()` down to the region of interest before `tm_shape()`.
 
 ::: panel-tabset
 ## The Plot
@@ -1657,7 +1666,7 @@ mpsz_pop2024 %>%
 
 # Complementing Thematic Map with Statistical Chart
 
-A map shows where, a chart shows how much. `fill.chart = tm_chart_box()` adds a boxplot of the mapped values next to the legend, so both are in one figure.
+`fill.chart = tm_chart_box()` adds a boxplot of the mapped values next to the legend, so the map and the chart are in one figure.
 
 ::: panel-tabset
 ## The Plot
@@ -1665,7 +1674,7 @@ A map shows where, a chart shows how much. `fill.chart = tm_chart_box()` adds a 
 ```{r}
 #| echo: false
 #| fig-width: 8
-#| fig-height: 6
+#| fig-height: 7.5
 mpsz_pop2024 %>%
   filter(REGION_N == "CENTRAL REGION") %>%
   tm_shape() +
@@ -1699,9 +1708,9 @@ mpsz_pop2024 %>%
 ```
 :::
 
-The boxplot shows something the map does not. All the outliers are below the box, between 0 and about 0.3, not above it. Those are subzones with working age residents and hardly any children or elderly.
+The boxplot shows something the map does not. All the outliers are below the box, between 0 and about 0.3, not above it. These are subzones with working age residents and hardly any children or elderly.
 
-`boxplot.stats()` returns the same outliers the boxplot draws, so I can pick those subzones out, outline them in red and label them with `tm_text()`. Once labelled, they turn out to be bunched in the downtown core. `remove_overlap = TRUE` drops any label that would collide with another, so a few outlined subzones may be left without a name.
+`boxplot.stats()` returns the same outliers the boxplot draws. So I can outline those subzones in red and label them with `tm_text()`. The labels show they are bunched in the downtown core. `remove_overlap = TRUE` drops labels that would collide, so a few outlined subzones may have no name.
 
 ::: panel-tabset
 ## The Plot
@@ -1709,7 +1718,7 @@ The boxplot shows something the map does not. All the outliers are below the box
 ```{r}
 #| echo: false
 #| fig-width: 8
-#| fig-height: 6
+#| fig-height: 7.5
 mpsz_selected_central <- mpsz_pop2024 %>%
   filter(REGION_N == "CENTRAL REGION")
 
@@ -1763,7 +1772,7 @@ tm_shape(mpsz_selected_central) +
 
 # Creating Interactive Map
 
-Switching `tmap_mode()` to view turns the same code into a zoomable, clickable map. `tm_view()` sets its zoom limits.
+Switching `tmap_mode()` to view turns the same code into a map I can zoom and click. `tm_view()` sets its zoom limits.
 
 ::: panel-tabset
 ## The Plot
@@ -1784,7 +1793,8 @@ tmap_mode("view")
 tm_shape(region_selected, bbox = region_bbox) +
   tm_fill("DEPENDENCY",
           id = "SUBZONE_N",
-          fill.legend = tm_legend(title = "Dependency ratio"),
+          fill.legend = tm_legend(title = "Dependency ratio",
+                                  position = tm_pos_in("left", "bottom")),
           popup.vars = c("Name" = "SUBZONE_N",
                          "Dependency" = "DEPENDENCY")) +
   tm_borders() +
@@ -1809,7 +1819,8 @@ tmap_mode("view")
 tm_shape(region_selected, bbox = region_bbox) +
   tm_fill("DEPENDENCY",
           id = "SUBZONE_N",
-          fill.legend = tm_legend(title = "Dependency ratio"),
+          fill.legend = tm_legend(title = "Dependency ratio",
+                                  position = tm_pos_in("left", "bottom")),
           popup.vars = c("Name" = "SUBZONE_N",
                          "Dependency" = "DEPENDENCY")) +
   tm_borders() +
@@ -1819,7 +1830,7 @@ tm_shape(region_selected, bbox = region_bbox) +
 ```
 :::
 
-`set_zoom_limits` is doing real work here. Total freedom to zoom sounds generous but in practice users end up lost somewhere over the ocean, so bounding the range keeps them inside the study area.
+`set_zoom_limits` stops users from zooming out until they are lost over the ocean. It keeps them inside the study area.
 
 `tmap_mode("plot")` switches back to static maps for the rest of the page.
 
@@ -1829,15 +1840,15 @@ tmap_mode("plot")
 
 # Beyond the Exercise
 
-The two chapters finish at the choropleth. Three things bothered me once I got there, so I went looking.
+The two chapters end at the choropleth. After that, three things bothered me, so I looked into them.
 
-First, whether any of this is actually spatial. Second, whether the pattern I mapped survives a change in the size of the units. Third, whether the map itself is misleading me about who lives where.
+I wanted to know whether any of this is actually spatial and whether the pattern holds when the units get bigger. I also wanted to know whether the map itself misleads me about who lives where.
 
 ## Shuffling the Values to Test Whether the Map Is Spatial
 
-Anselin's lecture gives a test for this. If you move things around and nothing changes, it was not spatial analysis. If it does change, it was.
+Anselin's lecture gives a test for this. If moving the values around changes nothing, the analysis was not spatial. If it does change something, it was.
 
-Easy enough to run on my own data. `sample()` only reshuffles which subzone holds which number, so every value is preserved. `set.seed()` makes the shuffle repeatable.
+This is easy to run on my own data. `sample()` only reshuffles which subzone holds which number, so every value is kept. `set.seed()` makes the shuffle repeatable.
 
 ```{r}
 set.seed(1234)
@@ -1862,7 +1873,7 @@ tibble(
   mutate(across(where(is.numeric), ~round(.x, 4)))
 ```
 
-Same for the histogram, drawn with `geom_histogram()` and `facet_wrap()`.
+I do the same for the histogram, drawn with `geom_histogram()` and `facet_wrap()`.
 
 ::: panel-tabset
 ## The Plot
@@ -1910,15 +1921,15 @@ bind_rows(
 ```
 :::
 
-Now the maps. A small function builds the same quantile map for either version, and `tmap_arrange()` puts them side by side. Only the second map shows the legend, because the values and therefore the classes are identical.
+A small function builds the same quantile map for either version, and `tmap_arrange()` stacks them. The two legends are identical, because the values and so the classes are the same.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-#| fig-width: 10
-#| fig-height: 4.5
+#| fig-width: 8
+#| fig-height: 9
 shuffle_map <- function(dat, ttl, show_legend = FALSE) {
   tm_shape(dat) +
     tm_polygons(fill = "DEPENDENCY",
@@ -1931,10 +1942,11 @@ shuffle_map <- function(dat, ttl, show_legend = FALSE) {
     tm_title(ttl, size = 1.3, fontface = "bold")
 }
 
-tmap_arrange(shuffle_map(mpsz_pop2024,  "Real Singapore"),
+tmap_arrange(shuffle_map(mpsz_pop2024,  "Real Singapore",
+                         show_legend = TRUE),
              shuffle_map(mpsz_shuffled, "Same numbers, shuffled",
                          show_legend = TRUE),
-             ncol = 2)
+             ncol = 1)
 ```
 
 ## The Code
@@ -1953,25 +1965,26 @@ shuffle_map <- function(dat, ttl, show_legend = FALSE) {
     tm_title(ttl, size = 1.3, fontface = "bold")
 }
 
-tmap_arrange(shuffle_map(mpsz_pop2024,  "Real Singapore"),
+tmap_arrange(shuffle_map(mpsz_pop2024,  "Real Singapore",
+                         show_legend = TRUE),
              shuffle_map(mpsz_shuffled, "Same numbers, shuffled",
                          show_legend = TRUE),
-             ncol = 2)
+             ncol = 1)
 ```
 :::
 
 ::: {.callout-tip}
 ## Alternative explored
-Shuffling the values across subzones is my own addition. Every number is the same. The mean, the spread, the median, the histogram. And the two maps look nothing alike.
+Shuffling the values across subzones is my own addition. The mean, the spread, the median and the histogram are all the same. But the two maps look very different.
 
-So whatever the difference is between those two pictures, none of the statistics I know how to compute can see it. That gap is what the rest of this course is for. Lesson 4 defines what neighbouring means and Lesson 5 turns this difference into a single number I can test.
+So none of the statistics I know can see the difference between the two maps. The rest of this course covers that gap. Lesson 4 defines what neighbouring means and Lesson 5 turns this difference into a single number I can test.
 
-It also answers something I had wondered at the start, which was why not just do this in pandas. A non-spatial toolkit would tell me these two datasets are identical, because on everything it can measure, they are.
+It also answers my early question of why not just use pandas. A non-spatial toolkit would say these two datasets are identical, because they are the same on everything it can measure.
 :::
 
 ## Testing the Pattern at a Coarser Unit
 
-This is the Modifiable Areal Unit Problem. Results shift when you change the size or the shape of the units you are measuring on.
+This is the Modifiable Areal Unit Problem. Results change when the size or shape of the units changes.
 
 Singapore's subzones sit inside planning areas, so I can test the size half of it directly. `group_by()` and `summarise()` add the bands up to planning area level, and the ratio is recomputed from the sums.
 
@@ -2056,18 +2069,18 @@ bind_rows(
 
 ::: {.callout-tip}
 ## Alternative explored
-Re-aggregating to planning areas is not in the book. The planning area curve is taller and narrower. Same people, same formula, and the extremes have gone.
+Re-aggregating to planning areas is not in the book. The planning area curve is taller and narrower. The people and the formula are the same, but the extremes are gone.
 
-A map drawn at planning area level would make Singapore look far more even than it is. Neither unit is the right one. All I can do is say which one I used and admit the answer depends on it.
+A map at planning area level would make Singapore look far more even than it is. Neither unit is the right one. I can only state which one I used and note that the answer depends on it.
 
-I could only test the size half of MAUP. The other half is that results also change when you redraw the boundaries at the same size, and I have no alternative zoning to try that with.
+I could only test the size half of MAUP. Results also change when boundaries are redrawn at the same size, but I have no other zoning to test that.
 :::
 
 ## Measuring How Much the Map Weights Land over People
 
-A choropleth colours areas, and the eye reads area as amount. So a big empty subzone shouts while a small crowded one whispers.
+A choropleth colours areas, and people read a larger area as a larger amount. So a big empty subzone stands out more than a small crowded one.
 
-That is measurable. `st_area()` gives each subzone's land area, and `summarise()` compares the share of map area with the share of residents in the least populated half of subzones.
+This can be measured. `st_area()` gives each subzone's land area, and `summarise()` compares the share of map area with the share of residents in the least populated half of subzones.
 
 ```{r}
 mpsz_pop2024 %>%
@@ -2085,38 +2098,38 @@ mpsz_pop2024 %>%
 
 ::: {.callout-tip}
 ## Alternative explored
-Weighing the map's area against its population is my own check. Put those two numbers next to each other and the map stops looking neutral. Anyone reading it is weighting land, not people.
+Comparing the map's area with its population is my own check. The two numbers show that a reader of this map is weighting land, not people.
 
-This is the same problem as the young and aged count maps further up, arriving from a different direction. There I was mapping counts when I wanted rates. Here I am mapping rates but the canvas itself is weighted by area.
+This is like the young and aged count maps above, from a different angle. There I mapped counts when I wanted rates. Here I map rates, but the map itself is weighted by area.
 :::
 
 # Limitations
 
-Worth stating what this does not cover.
+These are the limits of this exercise.
 
-- The sf half uses the 2014 Master Plan boundaries and the tmap half uses 2019, because that is what the chapters specify. Subzone definitions changed between them, so the pre-school counts and the dependency ratios are not measured on quite the same geography.
-- 94 subzones have no dependency ratio, either because nobody lives there or because the table has no working-age residents for them after the `ECONOMY ACTIVE > 0` filter. They are grey on every map. They are dropped rather than shown as zero.
-- The dependency ratio treats 25 to 64 as working age. That is a convention, not a fact, and it is drifting.
-- Point in polygon counting ignores catchments. A pre-school just over a subzone boundary serves those children anyway.
+- The sf half uses the 2014 Master Plan boundaries and the tmap half uses 2019, as the chapters specify. Subzone definitions changed between them, so the pre-school counts and dependency ratios are not on quite the same geography.
+- 94 subzones have no dependency ratio. Either nobody lives there, or the table has no working-age residents for them after the `ECONOMY ACTIVE > 0` filter. They are grey on every map. They are dropped, not shown as zero.
+- The dependency ratio treats 25 to 64 as working age. This is only a convention, and it is changing over time.
+- Point in polygon counting ignores catchments. A pre-school just over a subzone boundary still serves children in the next subzone.
 - Only the scale half of MAUP is tested, as noted above.
 
 ::: {.callout-warning}
 ## Issue I hit
 `na.rm = TRUE` does not remove `Inf`. I assumed it did.
 
-If a subzone has residents but nobody of working age, the dependency ratio divides by zero and gives `Inf`, and then `mean(x, na.rm = TRUE)` returns `Inf` for the whole column. `is.finite()` is the filter that actually catches it.
+If a subzone has residents but nobody of working age, the dependency ratio divides by zero and gives `Inf`. Then `mean(x, na.rm = TRUE)` returns `Inf` for the whole column. `is.finite()` is the filter that catches it.
 
-My data avoids this because I filtered on `ECONOMY ACTIVE > 0` before the join, but that was luck rather than intent.
+My data avoids this because I filtered on `ECONOMY ACTIVE > 0` before the join. But that was luck, not a plan.
 :::
 
 # Reflections
 
-Four things I am taking away from this one.
+These are four things I learned from this exercise.
 
-**Most of what went wrong was small.** The cycling path zip unpacked into a subfolder and my path was one level off. The 2019 file had GEOJSON stuck in the middle of its name. And `st_intersects` and `st_intersection` are one letter apart with completely different jobs, which is a trap waiting to happen. None of these were hard, they just cost time, and all of them came from not looking at what was actually on disk before writing the code.
+**Most of my mistakes were small file and naming issues.** The cycling path zip unpacked into a subfolder, and the 2019 file had GEOJSON in the middle of its name. `st_intersects` and `st_intersection` are one letter apart but do different jobs. These cost time, and all came from not checking what was on disk before writing code.
 
-**Two things went wrong quietly, and those were the dangerous ones.** The projection and the age band ordering. Neither threw an error. The code ran, the maps drew, and the numbers would have been wrong. What caught both was checking output I could have skipped, the bounding box in one case and `names()` in the other.
+**The projection and age band problems gave no error.** The code ran and the maps drew, but the numbers would have been wrong. I caught both by checking output I could have skipped, the bounding box in one case and `names()` in the other.
 
-**I got one of my own readings wrong.** I looked at the young and aged maps and expected them to show different parts of the island. They look almost identical. Both are counts, and counts mostly follow how many people live somewhere. I had to redraw them as rates to answer the question I thought I was already asking.
+**I misread the young and aged count maps.** I expected them to show different parts of the island, but they look almost the same. Both are counts, which mostly follow how many people live in a place. I had to redraw them as rates to answer the question I thought I was already asking.
 
-**The classification method decides a lot.** Quantile and equal interval on the same column gave me two maps that say opposite things about whether dependency varies across Singapore. One subzone at 10 flattens the equal interval version completely. Picking a classification is part of the analysis, not a formatting choice at the end.
+**Quantile and equal interval gave very different maps.** On the same column, they say opposite things about whether dependency varies across Singapore. One subzone at 10 flattens the equal interval version completely. So choosing a classification is part of the analysis.

@@ -305,12 +305,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="overview" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
-<p>Exercises 1 and 2 treated every point as if it happened at the same instant. This one adds time. A fire on 3 August and a fire on 4 August a kilometre apart are a different pattern from the same two fires six months apart, and the methods here can tell them apart.</p>
-<p>The two questions the chapter asks are simple. Are the fires in Kepulauan Bangka Belitung independent in space and time, and if not, where and when do they cluster.</p>
+<p>Exercises 1 and 2 treated every point as if it happened at the same time. This one adds time. Two fires a kilometre apart on 3 August and 4 August are a different pattern from the same two fires six months apart. The methods here can tell them apart.</p>
+<p>The chapter asks two questions. Are the fires in Kepulauan Bangka Belitung independent in space and time? If not, where and when do they cluster?</p>
 </section>
 <section id="loading-the-packages" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Loading the Packages</h1>
-<p>Six packages, two of them new. <strong>sf</strong> reads and transforms the boundary and the fire points. <strong>spatstat</strong> supplies the <code>ppp</code> and <code>owin</code> objects and the L function envelope. <strong>sparr</strong> computes the spatio-temporal kernel density and picks its bandwidths. <strong>stpp</strong> computes the spatio-temporal K function. <strong>tmap</strong> draws the point maps. <strong>tidyverse</strong> does the reading, filtering and counting.</p>
+<p>Two of the six packages are new. <strong>sf</strong> reads and transforms the boundary and the fire points. <strong>spatstat</strong> supplies the <code>ppp</code> and <code>owin</code> objects and the L function envelope. <strong>sparr</strong> computes the spatio-temporal kernel density and picks its bandwidths. <strong>stpp</strong> computes the spatio-temporal K function. <strong>tmap</strong> draws the point maps. <strong>tidyverse</strong> does the reading, filtering and counting.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spatstat, sparr, stpp, tmap, tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -324,8 +324,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>sparr</code> refused to load on my Mac. It pulls in a package called <code>rpanel</code> that wants X11, which Apple stopped shipping years ago.</p>
-<p>The fix is XQuartz, then logging out and back in so the display variable gets set. After that it loads with a warning about display <code>:0</code> that can be ignored. None of the X11 machinery is used for anything in this exercise. It is only there so <code>rpanel</code> can draw sliders I will never open.</p>
+<p><code>sparr</code> would not load on my Mac. It depends on a package called <code>rpanel</code>, which needs X11, and Apple stopped shipping X11 years ago.</p>
+<p>I fixed it by installing XQuartz, then logging out and back in so the display variable gets set. After that it loads with a warning about display <code>:0</code>, which I can ignore. X11 is only there so <code>rpanel</code> can draw sliders, and this exercise never uses them.</p>
 </div>
 </div>
 </section>
@@ -333,12 +333,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1 data-number="3"><span class="header-section-number">3</span> Preparing the Data</h1>
 <section id="importing-and-preparing-study-area" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="importing-and-preparing-study-area"><span class="header-section-number">3.1</span> Importing and Preparing Study Area</h2>
-<p>The book uses a kelurahan shapefile from an Indonesian portal. That download ran at 44 kilobytes a second on the day I tried it, with three hours on the clock for 553 MB. I used GADM level 2 instead, which is regency boundaries for the whole country in 4.6 MB.</p>
+<p>The book uses a kelurahan shapefile from an Indonesian portal, but the download ran at 44 kilobytes a second, three hours for 553 MB. I used GADM level 2 instead, which has regency boundaries for the whole country in 4.6 MB.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Importing the study area</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Converting to owin</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<p><code>st_read()</code> of <strong>sf</strong> reads the national GADM file. The chain then keeps the province, merges it into one outline, drops the Z dimension and projects it to UTM.</p>
+<p><code>st_read()</code> of <strong>sf</strong> reads the national GADM file. The rest of the chain keeps the province, merges it into one outline, drops the Z dimension and projects it to UTM.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>kbb_sf <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/rawdata/gadm/gadm41_IDN_2.json"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(NAME_1 <span class="sc">==</span> <span class="st">"BangkaBelitung"</span>) <span class="sc">%&gt;%</span></span>
@@ -366,15 +366,14 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Three things in that chain.</p>
-<p>The province name in GADM is <code>BangkaBelitung</code>, no space. I found that by printing the unique values rather than guessing, which saved a silent empty filter.</p>
-<p><code>st_union()</code> merges the seven level-2 units (six regencies and the city of Pangkal Pinang) into one outline. Since the rest of the exercise only needs the outer boundary, the admin level underneath does not matter. Kelurahan, kecamatan, kabupaten, all merge to the same shape.</p>
-<p>And the CRS is 32748, not 3414. That is UTM zone 48 south. Bangka Belitung sits at 106 east and 2 south, which puts it in zone 48, and the S is because it is below the equator. Using Singapore’s SVY21 here would put the whole island somewhere it is not.</p>
+<p>The province name in GADM is <code>BangkaBelitung</code>, with no space. I printed the unique values instead of guessing, which avoided a silent empty filter.</p>
+<p><code>st_union()</code> merges the seven level-2 units (six regencies and the city of Pangkal Pinang) into one outline. Only the outer boundary is needed, so kelurahan, kecamatan or kabupaten would all merge to the same shape.</p>
+<p>The CRS is 32748, UTM zone 48 south, not 3414. Bangka Belitung sits at 106 east, which is zone 48, and at 2 south, below the equator. Singapore’s SVY21 would put the island in the wrong place.</p>
 </div>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<p><code>as.owin()</code> of <strong>spatstat</strong> turns the merged outline into an observation window, the object every point pattern below gets clipped to.</p>
+<p><code>as.owin()</code> of <strong>spatstat</strong> turns the merged outline into an observation window. Every point pattern below is clipped to it.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>kbb_owin <span class="ot">&lt;-</span> <span class="fu">as.owin</span>(kbb_sf)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(kbb_owin)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -385,7 +384,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 </div>
-<p>A quick <code>plot()</code> of the window checks that the union and the projection both worked before any points go on it.</p>
+<p>A quick <code>plot()</code> of the window checks that the union and the projection worked before I add any points.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -412,7 +411,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </section>
 <section id="importing-and-preparing-forest-fire-data" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="importing-and-preparing-forest-fire-data"><span class="header-section-number">3.2</span> Importing and Preparing Forest Fire Data</h2>
-<p>FIRMS publishes MODIS detections one file per country per year. The whole-countries bundle I tried first arrived truncated at 43 of 82 MB and Indonesia was in the missing part, so I fetched the Indonesia file directly instead.</p>
+<p>FIRMS publishes MODIS detections as one file per country per year. The all-countries bundle arrived cut off at 43 of 82 MB, with Indonesia in the missing part, so I downloaded the Indonesia file directly.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">Importing the Indonesia file</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Checking the type column</a></li></ul>
 <div class="tab-content">
@@ -427,7 +426,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 <div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
-<p>That is every detection in Indonesia for 2023. Before clipping to the study area, one column the book never mentions. <code>table()</code> counts the rows of each <code>type</code>.</p>
+<p>This is every detection in Indonesia for 2023. Before clipping to the study area, I check one column the book never mentions. <code>table()</code> counts the rows of each <code>type</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(fire_all<span class="sc">$</span>type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -449,9 +448,9 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The book keeps every row and calls them forest fires. The <code>type</code> column says otherwise.</p>
-<p>Type 0 is a presumed vegetation fire. Type 1 is an active volcano. Type 2 is another static land source, which means gas flares, industrial heat, that kind of thing. Type 3 is offshore. Indonesia has a lot of volcanoes and a lot of flares, and 4,250 of these detections are one or the other (1,495 volcano, 2,755 static source), with another 23 offshore.</p>
-<p>A volcano showing up every day at the same spot would look like extreme spatio-temporal clustering. It is, but not of fires. I keep type 0 only.</p>
+<p>The book keeps every row and calls them all forest fires. The <code>type</code> column shows that some are not.</p>
+<p>Type 0 is a presumed vegetation fire. Type 1 is an active volcano. Type 2 is another static land source, such as gas flares or industrial heat. Type 3 is offshore. Indonesia has many volcanoes and flares, and 4,250 detections are one or the other (1,495 volcano, 2,755 static source), and another 23 are offshore.</p>
+<p>A volcano that shows up every day at the same spot would look like strong spatio-temporal clustering. But it is not a fire. I keep type 0 only.</p>
 </div>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
@@ -481,13 +480,13 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The book’s csv was already cut to Bangka Belitung, so it has no clipping step. Mine is all of Indonesia, so <code>st_filter()</code> does the cut. It keeps points that intersect the boundary polygon and drops the rest.</p>
-<p>I checked the count against the book’s 741. Mine is different, and it should be. Different boundary source, and the type filter removed one static-source row that the book’s approach would have kept.</p>
+<p>The book’s csv was already cut to Bangka Belitung, so it has no clipping step. Mine covers all of Indonesia, so <code>st_filter()</code> keeps only the points that intersect the boundary polygon.</p>
+<p>My count differs from the book’s 741, as expected. The boundary source is different, and the type filter removed one static-source row that the book would have kept.</p>
 </div>
 </div>
 </div>
 <div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
-<p><code>as.ppp()</code> only accepts numbers or text as marks, so the date has to become a number. <code>yday()</code> and <code>month()</code> of <strong>lubridate</strong> (part of <strong>tidyverse</strong>) give three versions, for three different uses later.</p>
+<p><code>as.ppp()</code> only accepts numbers or text as marks, so the date has to become a number. <code>yday()</code> and <code>month()</code> of <strong>lubridate</strong> (part of <strong>tidyverse</strong>) give three versions for three uses later on.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fire_sf <span class="ot">&lt;-</span> fire_sf <span class="sc">%&gt;%</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">acq_date =</span> <span class="fu">as.Date</span>(acq_date),</span>
@@ -534,7 +533,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </section>
 <section id="visualising-geographic-distribution-of-forest-fires-by-month" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="visualising-geographic-distribution-of-forest-fires-by-month"><span class="header-section-number">4.2</span> Visualising Geographic Distribution of Forest Fires by Month</h2>
-<p>Now by month, which is where the time dimension first shows. <code>tm_facets()</code> of <strong>tmap</strong> splits the same map into one panel per value of <code>Month_fac</code>.</p>
+<p>Next I split the map by month, which is where time first shows up. <code>tm_facets()</code> of <strong>tmap</strong> splits the same map into one panel per value of <code>Month_fac</code>.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -562,7 +561,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 </div>
-<p>To put numbers on the panels, <code>st_drop_geometry()</code> strips the points back to a table and <code>count()</code> tallies the detections per month.</p>
+<p>To get numbers for the panels, <code>st_drop_geometry()</code> turns the points back into a table and <code>count()</code> counts the detections per month.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fire_sf <span class="sc">%&gt;%</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
@@ -585,19 +584,19 @@ Geodetic CRS:  WGS 84</code></pre>
 12 December     12</code></pre>
 </div>
 </div>
-<p>The first half of the year is nearly empty, 101 of the 897 detections, and August to October carry most of the fires, 589 of them. That is the dry season, and it is the first hint that time matters at least as much as location here.</p>
+<p>The first half of the year is nearly empty, with 101 of the 897 detections. August to October have most of the fires, 589 of them. This is the dry season, and it suggests time matters at least as much as location.</p>
 </section>
 </section>
 <section id="computing-stkde-by-month" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Computing STKDE by Month</h1>
-<p>Exercise 2’s KDE gave one density surface for the whole year. Here there is one surface for every point in time, so the estimate at any location depends on how many fires happened nearby <em>and</em> recently.</p>
+<p>Exercise 2’s KDE gave one density surface for the whole year. Here there is one surface for every point in time. So the estimate at a location depends on how many fires happened nearby <em>and</em> recently.</p>
 <section id="creating-ppp-and-including-owin-object" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="creating-ppp-and-including-owin-object"><span class="header-section-number">5.1</span> Creating ppp and Including Owin Object</h2>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">Creating the ppp inside the owin</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">Checking for duplicates</a></li></ul>
 <div class="tab-content">
 <div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
-<p><code>as.ppp()</code> of <strong>spatstat</strong> turns the points into a point pattern with <code>Month_num</code> as the mark, and indexing it by <code>kbb_owin</code> clips it to the observation window.</p>
+<p><code>as.ppp()</code> of <strong>spatstat</strong> turns the points into a point pattern with <code>Month_num</code> as the mark. Indexing it by <code>kbb_owin</code> clips it to the observation window.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fire_month_ppp <span class="ot">&lt;-</span> fire_sf <span class="sc">%&gt;%</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Month_num) <span class="sc">%&gt;%</span></span>
@@ -935,7 +934,7 @@ Fraction of frame area: 0.19</code></pre>
 </div>
 </div>
 <div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
-<p><code>duplicated()</code> flags points that share both location and mark, which kernel estimators handle badly.</p>
+<p><code>duplicated()</code> flags points with the same location and mark. Kernel estimators do not handle these well.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">any</span>(<span class="fu">duplicated</span>(fire_month_owin))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -984,15 +983,15 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Two bandwidths come out of this, not one. <code>h</code> is the spatial one in metres, around 19 km. <code>lambda</code> is the temporal one in months, and it comes out at 0.027 of a month, which is less than a day.</p>
-<p>A day of smoothing on data recorded in whole months is odd. It means month 8 barely borrows anything from months 7 or 9.</p>
-<p>I did not understand why until the day-of-year section below, where the same function picks a very different lambda. The default rule reacts to how the time values are spaced, and whole months are very coarse.</p>
+<p>This gives two bandwidths. <code>h</code> is the spatial one in metres, around 19 km. <code>lambda</code> is the temporal one in months. It is 0.027 of a month, which is less than a day.</p>
+<p>Less than a day of smoothing on data recorded in whole months is odd. It means month 8 takes almost nothing from months 7 or 9.</p>
+<p>I did not understand why until the day-of-year section below, where the same function picks a very different lambda. The default rule depends on how the time values are spaced, and whole months are very coarse.</p>
 </div>
 </div>
 </section>
 <section id="plotting-the-spatio-temporal-kde-object" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="plotting-the-spatio-temporal-kde-object"><span class="header-section-number">5.3</span> Plotting the Spatio-Temporal KDE Object</h2>
-<p><strong>sparr</strong>’s <code>plot()</code> method draws one time slice per call. It also adds <code>axis(1)</code>, <code>axis(2)</code> and an L-shaped box after every panel, so my first version framed each small map in projected metres like 9.7e+06, which mean nothing to a reader and got cut off at the panel edges. The small function below does what that method does, one slice drawn with <strong>spatstat</strong>’s <code>plot()</code> for pixel images plus the window outline, just without the axes. It takes the colour range as an argument so that panels can share one scale.</p>
+<p><strong>sparr</strong>’s <code>plot()</code> method draws one time slice per call. It also adds <code>axis(1)</code>, <code>axis(2)</code> and an L-shaped box to every panel. So my first version labelled each small map in projected metres like 9.7e+06, which mean nothing to a reader and got cut off at the edges. The function below draws one slice with <strong>spatstat</strong>’s <code>plot()</code> for pixel images and adds the window outline, without the axes. It takes the colour range as an argument so panels can share one scale.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>plot_slice <span class="ot">&lt;-</span> <span class="cf">function</span>(kde, t, zlim, main) {</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  tt <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">names</span>(kde<span class="sc">$</span>z))</span>
@@ -1012,10 +1011,10 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The obvious fix, <code>par(xaxt = "n", yaxt = "n")</code> before the loop, would also have blanked the numbers on the colour ribbon. spatstat draws those with <code>axis()</code> on side 4, and a global <code>yaxt = "n"</code> switches that off too. Reading the source of <code>plot.stden()</code> showed it is a short loop around a <code>plot.im()</code> call, so copying the two lines I needed was simpler than fighting the axes.</p>
+<p>The obvious fix is <code>par(xaxt = "n", yaxt = "n")</code> before the loop. But that would also remove the numbers on the colour ribbon. spatstat draws those with <code>axis()</code> on side 4, and a global <code>yaxt = "n"</code> turns that off too. The source of <code>plot.stden()</code> is a short loop around a <code>plot.im()</code> call, so I copied the two lines I needed.</p>
 </div>
 </div>
-<p>The panels show July to December. The colour key is the estimated joint density, the share of the year’s detections per square metre per month, which is why the numbers are so small (the peak is about 6.4e-10). <code>zlim_month</code> is the range over all twelve monthly surfaces, so the six panels share one colour scale.</p>
+<p>The panels show July to December. The colour key is the estimated joint density, the share of the year’s detections per square metre per month, so the numbers are tiny (the peak is about 6.4e-10). <code>zlim_month</code> is the range over all twelve monthly surfaces, so the six panels share one colour scale.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1045,7 +1044,7 @@ Evaluation
 </div>
 </div>
 </div>
-<p>The shared <code>zlim</code> does the job of sparr’s <code>fix.range = TRUE</code>, which takes the same range over every time slice. Without it each month gets its own scale and a quiet December looks as busy as a peak September.</p>
+<p>The shared <code>zlim</code> works like sparr’s <code>fix.range = TRUE</code>, which uses the same range for every time slice. Without it each month gets its own scale, and a quiet December looks as busy as a peak September.</p>
 </section>
 </section>
 <section id="computing-stkde-by-day-of-year" class="level1" data-number="6">
@@ -1056,7 +1055,7 @@ Evaluation
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">Creating the ppp inside the owin</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">Computing the KDE</a></li></ul>
 <div class="tab-content">
 <div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
-<p>Same steps as the monthly version, with <code>DayofYear</code> as the mark this time.</p>
+<p>These are the same steps as the monthly version, but with <code>DayofYear</code> as the mark.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>fire_yday_owin <span class="ot">&lt;-</span> fire_sf <span class="sc">%&gt;%</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DayofYear) <span class="sc">%&gt;%</span></span>
@@ -1394,7 +1393,7 @@ Fraction of frame area: 0.19</code></pre>
 </div>
 </div>
 <div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
-<p><code>spattemp.density()</code> again with its default bandwidths, now on a time axis measured in days.</p>
+<p>I run <code>spattemp.density()</code> again with its default bandwidths, now with time measured in days.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>kde_yday <span class="ot">&lt;-</span> <span class="fu">spattemp.density</span>(fire_yday_owin)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(kde_yday)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1433,14 +1432,14 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The book’s next line is <code>plot(kde_yday)</code> and it produces 343 separate plots, one for every day in the temporal bound. The rendered chapter page has 343 image tags in a row. I know because I fetched it and counted.</p>
-<p>Do not do that. <code>plot()</code> on a sparr object accepts a <code>tselect</code> argument for which times to draw, and <code>plot_slice()</code> above takes one time the same way. Six days from the dry season say everything 343 would.</p>
+<p>The book’s next line is <code>plot(kde_yday)</code>. It produces 343 separate plots, one for every day in the temporal bound. I fetched the rendered chapter page and counted 343 image tags in a row.</p>
+<p><code>plot()</code> on a sparr object takes a <code>tselect</code> argument for which times to draw, and <code>plot_slice()</code> above takes one time in the same way. Six days from the dry season show the same pattern as all 343.</p>
 </div>
 </div>
 </section>
 <section id="plotting-the-spatio-temporal-kde-object-1" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="plotting-the-spatio-temporal-kde-object-1"><span class="header-section-number">6.2</span> Plotting the Spatio-Temporal KDE Object</h2>
-<p>Six days at fifteen-day steps, from 1 August to 15 October. The colour key is now the share of the year’s detections per square metre per day (the peak is about 1.9e-12), and <code>zlim_yday</code> gives all six panels one scale.</p>
+<p>I plot six days at fifteen-day steps, from 1 August to 15 October. The colour key is now the share of the year’s detections per square metre per day (the peak is about 1.9e-12). <code>zlim_yday</code> gives all six panels one scale.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-10-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-10-1" role="tab" aria-controls="tabset-10-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-10-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-10-2" role="tab" aria-controls="tabset-10-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1476,12 +1475,12 @@ Evaluation
 <h1 data-number="7"><span class="header-section-number">7</span> Computing STKDE by Day of Year: Improved Method</h1>
 <section id="computing-spatio-temporal-kde-2" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="computing-spatio-temporal-kde-2"><span class="header-section-number">7.1</span> Computing Spatio-Temporal KDE</h2>
-<p>The two defaults above came from a rule of thumb. <code>BOOT.spattemp()</code> of <strong>sparr</strong> picks them by bootstrap instead, minimising the estimated error of the whole surface.</p>
+<p>The two default bandwidths above come from a rule of thumb. <code>BOOT.spattemp()</code> of <strong>sparr</strong> picks them by bootstrap instead. It minimises the estimated error of the whole surface.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-11-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-1" role="tab" aria-controls="tabset-11-1" aria-selected="true" href="">Choosing the bandwidths by bootstrap</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-11-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-11-2" role="tab" aria-controls="tabset-11-2" aria-selected="false" href="">Refitting with the rounded bandwidths</a></li></ul>
 <div class="tab-content">
 <div id="tabset-11-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-11-1-tab">
-<p><code>set.seed()</code> fixes the resampling so the result repeats, then <code>BOOT.spattemp()</code> searches over both bandwidths at once.</p>
+<p><code>set.seed()</code> fixes the resampling so the result can be repeated. Then <code>BOOT.spattemp()</code> searches over both bandwidths at once.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>bw_boot <span class="ot">&lt;-</span> <span class="fu">BOOT.spattemp</span>(fire_yday_owin)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1534,7 +1533,7 @@ Done.</code></pre>
 </div>
 </div>
 <div id="tabset-11-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-11-2-tab">
-<p><code>spattemp.density()</code> again, with <code>h</code> and <code>lambda</code> passed in by hand.</p>
+<p>I run <code>spattemp.density()</code> again and pass in <code>h</code> and <code>lambda</code> by hand.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>kde_yday_boot <span class="ot">&lt;-</span> <span class="fu">spattemp.density</span>(fire_yday_owin,</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">h =</span> <span class="dv">45000</span>,</span>
@@ -1575,15 +1574,15 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The bootstrap is slow. It prints thirty odd iterations before settling, and each one refits the surface. This is the chunk that made me set <code>freeze: true</code> at the top of the file, otherwise every render would rerun it.</p>
-<p>The book’s bootstrap lands at h of 9000 and lambda of 19, and the chapter rounds them before use. Mine lands somewhere else, about 45.6 km and 17 days. Those are different samples, so I round my own numbers to 45000 and 17 rather than borrow the book’s.</p>
-<p>Rounding is the right call either way. Six decimal places from a bootstrap pretend to a precision the method does not have.</p>
+<p>The bootstrap is slow. It prints thirty or so iterations before it stops, and each one refits the surface. This chunk is why I set <code>freeze: true</code> at the top of the file, so every render does not rerun it.</p>
+<p>The book’s bootstrap gives h of 9000 and lambda of 19, and the chapter rounds them before use. Mine gives about 45.6 km and 17 days. The samples are different, so I round my own numbers to 45000 and 17 instead of using the book’s.</p>
+<p>Rounding makes sense in both cases. Six decimal places from a bootstrap suggest more precision than the method has.</p>
 </div>
 </div>
 </section>
 <section id="plotting-the-output-spatio-temporal-kde" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="plotting-the-output-spatio-temporal-kde"><span class="header-section-number">7.2</span> Plotting the Output Spatio-Temporal KDE</h2>
-<p>The same six days drawn from the bootstrap surface. The unit is the same as the default version above, but this figure has its own <code>zlim_boot</code>, so compare patterns between the two figures rather than colours.</p>
+<p>These are the same six days from the bootstrap surface, in the same unit as above. But this figure has its own <code>zlim_boot</code>, so I compare patterns between the two figures, not colours.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-12-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-1" role="tab" aria-controls="tabset-12-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-12-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-2" role="tab" aria-controls="tabset-12-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1622,22 +1621,21 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Same six days, two bandwidth choices, one figure above the other so they can be compared.</p>
-<p>The default gave h of about 19 km and lambda of about 6 days. The bootstrap gave 45 km and 17 days. So the bootstrap smooths harder on both axes, more than twice the spatial bandwidth and nearly three times the temporal one.</p>
-<p>Both sets of maps tell the same story. A hotspot starts in west Bangka in early August and moves to the south of the island by late September. Belitung stays quiet throughout.</p>
-<p>The difference is how they tell it. The default keeps the hotspot tight and Belitung dark. The bootstrap spreads the same hotspot across half of Bangka, halves its peak (the summaries give a maximum of 1.9e-12 for the default and 1.0e-12 for the bootstrap), and lets Belitung glow, because a 45 km kernel reaches across the strait.</p>
-<p>Which is right depends on the question. For where fires happen, the default’s sharper space is more useful. For when, the bootstrap’s smoother time is. The bootstrap minimises one overall error and does not know which question I am asking.</p>
-<p>The book got 9 km and 19 days on its 741 points, which is sharper space than its own default. Same method, different sample, opposite call on the spatial axis. Bandwidth is a property of the data in hand, not of the method.</p>
+<p>The default gave h of about 19 km and lambda of about 6 days. The bootstrap gave 45 km and 17 days. So the bootstrap smooths more on both axes, more than twice in space and nearly three times in time.</p>
+<p>Both sets of maps show the same pattern. A hotspot starts in west Bangka in early August and moves to the south of the island by late September. Belitung stays quiet the whole time.</p>
+<p>The default keeps the hotspot tight and Belitung dark. The bootstrap spreads the same hotspot across half of Bangka and halves its peak (the summaries give a maximum of 1.9e-12 for the default and 1.0e-12 for the bootstrap). It also makes Belitung light up, because a 45 km kernel reaches across the strait.</p>
+<p>Which one to use depends on the question. For where fires happen, the default’s sharper space is more useful. For when they happen, the bootstrap’s smoother time is better. The bootstrap minimises one overall error and does not know which question I am asking.</p>
+<p>The book got 9 km and 19 days on its 741 points, which is sharper in space than its own default. With the same method on a different sample, the spatial bandwidth moved the other way. So the bandwidth depends on the data in hand.</p>
 </div>
 </div>
 </section>
 </section>
 <section id="spatio-temporal-point-patterns-analysis-stpp-methods" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Spatio-Temporal Point Patterns Analysis: stpp Methods</h1>
-<p>The KDE is first order. It says where and when fires are dense. The K function is second order. It says whether fires happen near other fires, in space and time together, more than they would if location and timing were unrelated.</p>
+<p>The KDE is a first-order method. It shows where and when fires are dense. The K function is second order. It tests whether fires happen near other fires in space and time together, more than they would if location and timing were unrelated.</p>
 <section id="preparing-spatio-temporal-point-process-object-of-stpp" class="level2" data-number="8.1">
 <h2 data-number="8.1" class="anchored" data-anchor-id="preparing-spatio-temporal-point-process-object-of-stpp"><span class="header-section-number">8.1</span> Preparing Spatio-Temporal Point Process Object of stpp</h2>
-<p>stpp wants a plain three-column matrix, x, y and an integer time. <code>st_coordinates()</code> of <strong>sf</strong> pulls out the projected x and y, and <code>as.3dpoints()</code> of <strong>stpp</strong> wraps the three columns as an <code>stpp</code> object.</p>
+<p>stpp needs a plain three-column matrix with x, y and an integer time. <code>st_coordinates()</code> of <strong>sf</strong> pulls out the projected x and y, and <code>as.3dpoints()</code> of <strong>stpp</strong> wraps the three columns as an <code>stpp</code> object.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(fire_sf)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1651,7 +1649,7 @@ Evaluation
 <pre><code>[1] "stpp"</code></pre>
 </div>
 </div>
-<p>stpp’s own <code>plot()</code> for this object gives two panels titled “xy-locations” and “cumulative number”, with axes labelled x, y and t and a stretched map. I draw the same two panels by hand with base <code>plot()</code>, from <code>fire_df</code>, which holds the same three columns. The map uses <code>asp = 1</code> so a kilometre east is as long as a kilometre north, and the count is a step line.</p>
+<p>stpp’s own <code>plot()</code> for this object gives two panels titled “xy-locations” and “cumulative number”, with axes labelled x, y and t and a stretched map. I draw the same two panels with base <code>plot()</code> from <code>fire_df</code>, which has the same three columns. The map uses <code>asp = 1</code> so a kilometre east is as long as a kilometre north, and the count is a step line.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-13-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-1" role="tab" aria-controls="tabset-13-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-13-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-13-2" role="tab" aria-controls="tabset-13-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1678,7 +1676,7 @@ Evaluation
 </div>
 </div>
 </div>
-<p>The left panel places every detection in UTM metres, Bangka on the left and Belitung on the right. The right panel counts the fires cumulatively through the year, and the dry season shows as the steep climb from about day 200.</p>
+<p>The left panel shows every detection in UTM metres, with Bangka on the left and Belitung on the right. The right panel counts the fires cumulatively through the year. The dry season is the steep climb from about day 200.</p>
 </section>
 <section id="computing-spatio-temporal-k-function" class="level2" data-number="8.2">
 <h2 data-number="8.2" class="anchored" data-anchor-id="computing-spatio-temporal-k-function"><span class="header-section-number">8.2</span> Computing Spatio-Temporal K-Function</h2>
@@ -1696,12 +1694,12 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The book’s <code>plotK(kbb_stik)</code> rendered to nothing. The chunk ran, the page had an empty tab where the surface should be.</p>
-<p>The function source explains it. <code>plotK()</code> closes the current graphics device and opens a new one for its own layout. Knitr was recording into the device that got closed, so the plot went to a window nobody saw.</p>
-<p>The fix is to skip <code>plotK()</code> and draw the surface myself. The object holds <code>Khat</code>, the estimate, and <code>Ktheo</code>, the value expected if space and time were independent, both over <code>dist</code> and <code>times</code>. I plot the difference, since that is what the reading below is about, and I get to label the axes properly.</p>
+<p>The book’s <code>plotK(kbb_stik)</code> rendered nothing. The chunk ran, but the page had an empty tab where the surface should be.</p>
+<p>The function source explains why. <code>plotK()</code> closes the current graphics device and opens a new one for its own layout. Knitr was recording into the device that got closed, so the plot went to a window nobody saw.</p>
+<p>My fix was to skip <code>plotK()</code> and draw the surface myself. The object holds <code>Khat</code>, the estimate, and <code>Ktheo</code>, the value expected if space and time were independent. Both are over <code>dist</code> and <code>times</code>. I plot the difference, which the reading below uses, and label the axes properly.</p>
 </div>
 </div>
-<p><code>filled.contour()</code> from base <strong>graphics</strong> draws the difference as a coloured surface, and <code>contour()</code> adds labelled lines on top. <code>STIKhat()</code> returns distances in metres, so I divide <code>u</code> by 1000 to put the x axis in kilometres. The colour key, titled “K excess”, is <code>Khat</code> minus <code>Ktheo</code> in the K function’s own units, square metres times days.</p>
+<p><code>filled.contour()</code> from base <strong>graphics</strong> draws the difference as a coloured surface, and <code>contour()</code> adds labelled lines on top. <code>STIKhat()</code> returns distances in metres, so I divide <code>u</code> by 1000 to put the x axis in kilometres. The colour key, titled “K excess”, is <code>Khat</code> minus <code>Ktheo</code>. It is in the K function’s own units, square metres times days.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-14-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-14-1" role="tab" aria-controls="tabset-14-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-14-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-14-2" role="tab" aria-controls="tabset-14-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1751,22 +1749,22 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This took me a while to read, so here is the version I wish the book had given.</p>
-<p>The plot is a surface over two axes. <code>u</code> is distance in space, which I plotted in kilometres, and <code>v</code> is distance in days. The height at any point is how many more fires sit within <code>u</code> kilometres and <code>v</code> days of a typical fire than you would expect if space and time were independent. That is the <code>Khat</code> minus <code>Ktheo</code> I drew above.</p>
-<p>A surface that rises steeply near the origin, at small <code>u</code> and small <code>v</code>, means fires happen close to other fires and soon after them. That is space-time clustering. A flat surface means no such interaction.</p>
-<p>The word inhomogeneous in the name is a promise the call above does not keep. <code>STIKhat()</code> only corrects for varying intensity if you pass it a <code>lambda</code>, the intensity at every point. The book does not and neither did I. So it falls back to a constant, the point count divided by the space-time volume, and this is really a homogeneous K.</p>
-<p>The surface shows it. The excess is positive everywhere and keeps climbing with both <code>u</code> and <code>v</code>, out to 45 km and 80 days. Clustering that keeps growing with scale is the dry season and the fire belt of Bangka showing through. The KDE already found that. It is not fires near fires setting off more fires.</p>
-<p>A proper inhomogeneous version would feed the spatio-temporal KDE back in as <code>lambda</code>. That is the version I want for the take-home.</p>
+<p>This plot took me a while to read.</p>
+<p>The plot is a surface over two axes. <code>u</code> is distance in space, which I plotted in kilometres, and <code>v</code> is distance in days. The height is how many more fires lie within <code>u</code> kilometres and <code>v</code> days of a typical fire than expected if space and time were independent. This is the <code>Khat</code> minus <code>Ktheo</code> I drew above.</p>
+<p>If the surface rises steeply near the origin, at small <code>u</code> and small <code>v</code>, fires happen close to other fires and soon after them. That is space-time clustering. A flat surface means no such interaction.</p>
+<p>The name says inhomogeneous, but the call above is not. <code>STIKhat()</code> only corrects for varying intensity if you pass it a <code>lambda</code>, the intensity at every point. The book does not pass one and neither did I. So it uses a constant, the point count divided by the space-time volume, and is really a homogeneous K.</p>
+<p>The surface shows this. The excess is positive everywhere and keeps rising with both <code>u</code> and <code>v</code>, out to 45 km and 80 days. Clustering that keeps growing with scale comes from the dry season and the fire belt of Bangka. The KDE already found both. It does not show fires near fires setting off more fires.</p>
+<p>A proper inhomogeneous version would pass the spatio-temporal KDE in as <code>lambda</code>. I want to use that version for the take-home.</p>
 </div>
 </div>
 </section>
 </section>
 <section id="beyond-the-exercise" class="level1" data-number="9">
 <h1 data-number="9"><span class="header-section-number">9</span> Beyond the Exercise</h1>
-<p>Three things I wanted to check that the chapter does not.</p>
+<p>I checked three things that the chapter does not.</p>
 <section id="does-the-type-filter-change-the-answer" class="level2" data-number="9.1">
 <h2 data-number="9.1" class="anchored" data-anchor-id="does-the-type-filter-change-the-answer"><span class="header-section-number">9.1</span> Does the Type Filter Change the Answer</h2>
-<p>I dropped volcanoes and static sources while preparing the data. Worth showing what they would have done. The same <code>st_as_sf()</code>, <code>st_transform()</code> and <code>st_filter()</code> chain runs on the unfiltered table, and a <code>tibble()</code> sets the two counts side by side.</p>
+<p>I dropped volcanoes and static sources while preparing the data. Here I check what keeping them would have changed. The same <code>st_as_sf()</code>, <code>st_transform()</code> and <code>st_filter()</code> chain runs on the unfiltered table, and a <code>tibble()</code> puts the two counts side by side.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>fire_all_kbb <span class="ot">&lt;-</span> fire_all <span class="sc">%&gt;%</span></span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>), <span class="at">crs =</span> <span class="dv">4326</span>) <span class="sc">%&gt;%</span></span>
@@ -1809,14 +1807,14 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>For Bangka Belitung specifically the filter removes exactly one row, a single type 2 static-source detection, taking 898 down to 897. The maps above would look the same either way. There are no volcanoes on the island.</p>
-<p>That is a finding, not a failure. The filter was cheap, it was justified by the data dictionary, and for a Kalimantan regency in the take-home it will matter a great deal more, because Kalimantan has oil and gas flares and other industrial heat sources that FIRMS tags as type 2. Better to have the habit before it matters.</p>
+<p>For Bangka Belitung the filter removes exactly one row. It is a single type 2 static-source detection, and the count goes from 898 to 897. The maps above would look the same either way. There are no volcanoes on the island.</p>
+<p>This is still a useful result. The filter was cheap and the data dictionary supports it. For a Kalimantan regency in the take-home it will matter much more, because Kalimantan has oil and gas flares and other industrial heat sources that FIRMS tags as type 2. I would rather build the habit now.</p>
 </div>
 </div>
 </section>
 <section id="does-detection-confidence-change-the-answer" class="level2" data-number="9.2">
 <h2 data-number="9.2" class="anchored" data-anchor-id="does-detection-confidence-change-the-answer"><span class="header-section-number">9.2</span> Does Detection Confidence Change the Answer</h2>
-<p>MODIS reports a confidence score from 0 to 100 on every detection. The book ignores it. <code>quantile()</code> shows how the scores spread.</p>
+<p>MODIS gives every detection a confidence score from 0 to 100. The book ignores it. <code>quantile()</code> shows how the scores are spread.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(fire_sf<span class="sc">$</span>confidence, <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -1840,12 +1838,12 @@ Evaluation
 2 confidence &gt;= 80        164</code></pre>
 </div>
 </div>
-<p>The subset goes through the same <code>as.ppp()</code> and <code>spattemp.density()</code> steps, with the bootstrap bandwidths from above so that only the data change.</p>
+<p>The subset goes through the same <code>as.ppp()</code> and <code>spattemp.density()</code> steps with the bootstrap bandwidths, so only the data change.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fire_hi_owin <span class="ot">&lt;-</span> fire_hi <span class="sc">%&gt;%</span> <span class="fu">select</span>(DayofYear) <span class="sc">%&gt;%</span> <span class="fu">as.ppp</span>() <span class="sc">%&gt;%</span> .[kbb_owin]</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>kde_hi <span class="ot">&lt;-</span> <span class="fu">spattemp.density</span>(fire_hi_owin, <span class="at">h =</span> <span class="dv">45000</span>, <span class="at">lambda =</span> <span class="dv">17</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Three of the six days, every detection on the top row and the high confidence subset below. <code>zlim_conf</code> is the range over both surfaces, so all six panels share one colour scale, in the same share of detections per square metre per day as before.</p>
+<p>I plot three of the six days, with every detection on the top row and the high confidence subset below. <code>zlim_conf</code> is the range over both surfaces, so all six panels share one colour scale in the same unit as before.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-15-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-15-1" role="tab" aria-controls="tabset-15-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-15-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-15-2" role="tab" aria-controls="tabset-15-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1886,22 +1884,22 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Eighty is FIRMS’s own line for high confidence, and it is a hard one. Half the detections sit below 67 and only 164 of 897 clear 80, so the bottom row is drawn from under a fifth of the data.</p>
-<p>Top row is every detection, bottom row is the high confidence subset. Even with four fifths of the points gone the hotspots sit in the same places and move the same way through the season. Both surfaces are densities that integrate to one over space and time, so the smaller subset does not simply come out dimmer. What would matter is the bright patches moving, and they do not.</p>
-<p>That is a useful sanity check. If the high confidence subset had shown a completely different pattern, the full-data maps would have been driven by noise. It does not, so they are not. The question of which threshold to use is a data quality decision the chapter skips, and for the take-home it has to be stated and justified.</p>
+<p>Eighty is FIRMS’s own cut-off for high confidence, and it is strict. Half the detections are below 67 and only 164 of 897 reach 80. So the bottom row uses under a fifth of the data.</p>
+<p>Even with four fifths of the points gone, the hotspots are in the same places and move the same way through the season. Both surfaces are densities that integrate to one over space and time, so the smaller subset does not just come out dimmer. The thing to look for is the bright patches moving, and they do not.</p>
+<p>This is a useful sanity check. A very different pattern in the high confidence subset would have meant the full-data maps were driven by noise. The pattern held, so they are not. The chapter skips the choice of threshold, which is a data quality decision. For the take-home I have to state and justify it.</p>
 </div>
 </div>
 </section>
 <section id="is-it-space-time-or-both" class="level2" data-number="9.3">
 <h2 data-number="9.3" class="anchored" data-anchor-id="is-it-space-time-or-both"><span class="header-section-number">9.3</span> Is It Space, Time, or Both</h2>
-<p>The K surface above says whether there is space-time interaction. It does not say whether there would have been spatial clustering anyway, with time ignored. Exercise 2’s tools answer that. <code>unmark()</code> drops the day marks, and <code>envelope()</code> of <strong>spatstat</strong> simulates 39 random patterns in the same window around <code>Lest</code>, with <code>global = TRUE</code> for a simultaneous envelope.</p>
+<p>The K surface above tests for space-time interaction. It does not show whether there would be spatial clustering anyway with time ignored, which Exercise 2’s tools can check. <code>unmark()</code> drops the day marks. <code>envelope()</code> of <strong>spatstat</strong> simulates 39 random patterns in the same window around <code>Lest</code>, with <code>global = TRUE</code> for a simultaneous envelope.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>fire_sp <span class="ot">&lt;-</span> <span class="fu">unmark</span>(fire_yday_owin)</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
 <span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>L_sp <span class="ot">&lt;-</span> <span class="fu">envelope</span>(fire_sp, Lest, <span class="at">nsim =</span> <span class="dv">39</span>, <span class="at">rank =</span> <span class="dv">1</span>,</span>
 <span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">global =</span> <span class="cn">TRUE</span>, <span class="at">correction =</span> <span class="st">"Ripley"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The plot shows L(d) minus d against distance in metres. The solid line is the observed pattern, the dashed line at zero is complete spatial randomness, and the grey band is the global envelope.</p>
+<p>The plot shows L(d) minus d against distance in metres. The solid line is the observed pattern and the dashed line at zero is complete spatial randomness. The grey band is the global envelope.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-16-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-16-1" role="tab" aria-controls="tabset-16-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-16-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-16-2" role="tab" aria-controls="tabset-16-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
@@ -1935,10 +1933,10 @@ Evaluation
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Read the two together. The L function says the fires cluster in space when you collapse the whole year onto one map. The STIK surface says whether there is <em>additional</em> clustering once you also ask about time.</p>
+<p>The two results need to be read together. The L function shows the fires cluster in space when the whole year is put on one map. The STIK surface shows whether there is <em>additional</em> clustering once time is included.</p>
 <p>If both show clustering, fires are drawn to the same places and also happen in bursts. If only the spatial one does, the bursts are just the dry season, and nearby fires are not setting each other off.</p>
-<p>Here both show clustering. But the K surface was computed with a constant intensity, so the dry season is still inside it. The honest reading is that fires cluster in space and cluster in time, and whether the two interact stays untested until <code>lambda</code> goes in.</p>
-<p>The chapter runs the second test without the first, so it cannot make that distinction. Running both is what makes the space-time result readable.</p>
+<p>Here both show clustering. But the K surface used a constant intensity, so the dry season is still inside it. So I can only say fires cluster in space and in time. Whether the two interact is untested until I pass in <code>lambda</code>.</p>
+<p>The chapter runs the second test without the first, so it cannot make that distinction. I need both to interpret the space-time result.</p>
 </div>
 </div>
 </section>
@@ -1946,22 +1944,22 @@ Evaluation
 <section id="limitations" class="level1" data-number="10">
 <h1 data-number="10"><span class="header-section-number">10</span> Limitations</h1>
 <ul>
-<li>GADM’s boundary and the book’s kelurahan shapefile are different sources, so the observation window is not identical to the book’s and the point count differs.</li>
-<li>MODIS detects heat, not fire. A detection is a hot pixel about a kilometre across, so a single fire may appear as several points and several fires as one.</li>
-<li>Cloud cover hides fires. Missing days in the dry season may be weather, not absence of fire.</li>
-<li>Two satellites, Terra and Aqua, pass at different times of day, so the daily record is really two snapshots, not continuous.</li>
-<li>The bootstrap bandwidths optimise one overall error and do not know whether the analyst cares more about where or about when.</li>
-<li>The STIK surface has no envelope in this exercise, so a high contour is suggestive, not tested. It also used a constant intensity, so it is not yet the inhomogeneous version its name claims.</li>
+<li>GADM’s boundary and the book’s kelurahan shapefile come from different sources, so my observation window and point count differ from the book’s.</li>
+<li>MODIS detects heat, not fire. A detection is a hot pixel about a kilometre across, so one fire may show as several points and several fires as one.</li>
+<li>Cloud cover hides fires. Missing days in the dry season may be weather, not a lack of fire.</li>
+<li>Two satellites, Terra and Aqua, pass at different times of day, so the daily record is two snapshots, not a continuous one.</li>
+<li>The bootstrap bandwidths optimise one overall error. They do not know whether the analyst cares more about where or about when.</li>
+<li>The STIK surface has no envelope in this exercise, so a high contour is suggestive but not tested. It also used a constant intensity, so it is not yet the inhomogeneous version its name says.</li>
 </ul>
 </section>
 <section id="reflections" class="level1" data-number="11">
 <h1 data-number="11"><span class="header-section-number">11</span> Reflections</h1>
-<p>Five things I am taking from this one.</p>
-<p><strong>The <code>type</code> column was the most important thing in the file and the chapter never mentions it.</strong> Volcanoes, gas flares and offshore pixels are all in the same table as vegetation fires, and FIRMS labels them. Keeping everything and calling it forest fires would have been wrong, and for Kalimantan in the take-home it would have been badly wrong. Reading the data dictionary before the data is a habit that starts here, and I mean to keep it.</p>
-<p><strong>Two downloads failed before one worked.</strong> A 553 MB shapefile at 44 kilobytes a second, then a bundle that arrived truncated with Indonesia in the missing part. The per-country FIRMS file and GADM level 2 got me the same analysis from 9 MB total. Worth remembering that the book’s data path is one route, not the only one.</p>
-<p><strong>Bandwidth is now two numbers, and the selector does not know which one I care about.</strong> The default and the bootstrap disagreed on both. On my data the bootstrap smoothed harder on each, on the book’s data it went sharper in space. Neither is wrong. The right choice depends on whether the question is where or when, and no selector can know that.</p>
-<p><strong>A plot call can be a mistake.</strong> <code>plot(kde_yday)</code> with no time selected gives 343 images. <code>plotK()</code> gives none, because it swaps graphics devices under knitr. The first I caught because the book’s own rendered page is the warning. The second I caught only because I read my own render before pushing it.</p>
-<p><strong>The space-time K function needs two things next to it, the plain spatial L and an intensity.</strong> On its own it says there is clustering. Next to the L function from Exercise 2 it can say whether that clustering is more than the dry season. Without a <code>lambda</code> it cannot even ask, because inhomogeneous is just a word in the function name until you pass one. The chapter does neither, and I think that is a gap.</p>
+<p>These are five things I learned from this exercise.</p>
+<p><strong>The chapter never mentions the <code>type</code> column.</strong> It was the most important column, because FIRMS puts volcanoes, gas flares and offshore pixels in the same table as vegetation fires and labels them. Calling them all forest fires would have been wrong here, and much worse for Kalimantan in the take-home. I want to keep the habit of reading the data dictionary before the data.</p>
+<p><strong>Two downloads failed before one worked.</strong> First a 553 MB shapefile at 44 kilobytes a second, then a bundle that arrived cut off with Indonesia in the missing part. The per-country FIRMS file and GADM level 2 gave me the same analysis from 9 MB in total. The book’s data source is not the only option.</p>
+<p><strong>The default and bootstrap bandwidths disagreed on both space and time.</strong> Bandwidth is now two numbers. On my data the bootstrap smoothed more on both axes, but on the book’s data it went sharper in space. Neither is wrong, and the right choice depends on whether the question is where or when, which no selector can know.</p>
+<p><strong>Two plot calls in the book did not work as written.</strong> <code>plot(kde_yday)</code> with no time selected gives 343 images. <code>plotK()</code> gives none, because it swaps graphics devices under knitr. I caught the first from the book’s own rendered page, and the second only because I checked my own render before pushing it.</p>
+<p><strong>The space-time K function needs the spatial L function and an intensity next to it.</strong> By itself it only shows there is clustering. Next to the L function from Exercise 2, and with a <code>lambda</code> so it is really inhomogeneous, it can show whether the clustering is more than the dry season. The chapter does neither, and I think that is a gap.</p>
 
 
 </section>
