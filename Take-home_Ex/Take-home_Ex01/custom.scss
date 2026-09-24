@@ -77,3 +77,14 @@ $presentation-h2-font-size: 1.3em;
 .reveal img {
   max-height: 72vh;
 }
+
+.reveal .slides section .part {
+  position: absolute;
+  top: -34px;
+  left: 0;
+  font-size: 20px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #8E3B00;
+  font-weight: 600;
+}

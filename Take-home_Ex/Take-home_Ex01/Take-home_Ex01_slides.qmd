@@ -12,7 +12,7 @@ format:
     show-notes: false
     width: 1600
     height: 900
-    footer: "ISSS626 Take-home Exercise 1 | ZeXin Chen | [Technical report](Take-home_Ex01.html) | [Back to site](https://isss-626-gaa-six.vercel.app)"
+    footer: "ISSS626 Take-home Exercise 1 | ZeXin Chen | [Technical Report](Take-home_Ex01.html) | [Back to site](https://isss-626-gaa-six.vercel.app)"
     include-in-header:
       text: |
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,28 +64,31 @@ theme_slide <- theme_minimal(base_size = 18) +
 
 ::::: columns
 ::: {.column width="50%"}
-**Part 1, The problem and the data**
+**Part 1, The Problem and the Data**
 
 - Why Pulang Pisau
-- Three fixes and two checks on raw satellite data
+- Fixes and checks on the raw satellite data
 - Six questions and their null models
 
-**Part 2, First-order findings**
+**Part 2, First-Order Analysis**
 
-- When the fires came
-- Where they burned
+- Insight 1, when the fires came
+- Insight 2, where they burned
 :::
 
 ::: {.column width="50%"}
-**Part 3, Second-order findings**
+**Part 3, Second-Order Analysis**
 
-- What spatial clustering can and cannot show
-- Near-repeat fires in space and time
-- A watch zone against a hotspot map
+- Insight 3, clustering in space
+- Insight 4, fires close in space and time
 
-**Part 4, So what**
+**Part 4, Bonus**
 
-- Limitations
+- Insight 5, a daily watch zone
+
+**Part 5, So What**
+
+- Key findings and their limits
 - Public-safety implications
 :::
 :::::
@@ -95,6 +98,8 @@ This deck summarises the technical report. It moves from the problem and the dat
 :::
 
 ## Pulang Pisau had the densest fire detections of any Kalimantan regency
+
+<div class="part">Part 1 · The problem and the data</div>
 
 ::::: columns
 ::: {.column width="58%"}
@@ -129,7 +134,7 @@ tm_shape(kal_rate) +
 <div class="bigcap">burned in 8 subdistricts by 17 Sep</div>
 
 <div class="bignum">595 µg/m³</div>
-<div class="bigcap">PM2.5 on 17 Sep, about 40 times the WHO 24-hour guideline</div>
+<div class="bigcap">PM2.5 on 17 Sep, about 40 times the WHO 24-hour guideline (Berita Sampit, 2026; WHO, 2021)</div>
 
 <div class="small">The regent raised the fire status to emergency response. Most of the regency is deep peat inside the failed Mega Rice Project, drained by canals in the 1990s.
 
@@ -142,6 +147,8 @@ Pulang Pisau is on the south coast of Central Kalimantan. It had the most fire d
 :::
 
 ## Raw satellite detections needed three fixes and two checks
+
+<div class="part">Part 1 · The problem and the data</div>
 
 ::::: columns
 ::: {.column width="48%"}
@@ -172,6 +179,8 @@ The raw file had no missing or impossible coordinates. The real problems were le
 
 ## Six questions, each tested against a stated null model
 
+<div class="part">Part 1 · The problem and the data</div>
+
 | # | Question | Method | Null model |
 |--|------------|------------|------------|
 | Q1 | Where and when was intensity high? | KDE, adaptive KDE, spatio-temporal KDE | none, descriptive |
@@ -187,7 +196,9 @@ The raw file had no missing or impossible coordinates. The real problems were le
 Every second-order claim in this study is made against a named null model. Q2 uses complete spatial randomness. Q3 uses an inhomogeneous Poisson process, so clustering that comes only from uneven intensity is removed. Q4 shuffles the days, first across the regency and then only within 10 km blocks, so regional differences in timing cannot fake a result. Q5 and Q6 are the bonus parts.
 :::
 
-## Fire came late and fast, 82% of fire-days fell in September
+## Insight 1. Fire came late and fast, 82% of fire-days fell in September
+
+<div class="part">Part 2 · First-order analysis</div>
 
 ```{r}
 #| fig-width: 12
@@ -217,7 +228,9 @@ reburn_share <- fires %>% st_drop_geometry() %>% arrange(cell, date_local) %>%
 Through July and early August there was very little fire. From about 20 August the 7-day average climbs, and it peaks in the final week of the record. September holds 82 percent of all fire-days. The sharp one-day drops are more likely cloud or smoke than fires stopping, because satellites cannot see through them. Almost half of all fire-days were the same square kilometre burning again within a week, which is why crews need to go back to fires that look out.
 :::
 
-## Burning moved from the narrow neck in July to the southern peat in September
+## Insight 2. Burning moved from the narrow neck in July to the southern peat in September
+
+<div class="part">Part 2 · First-order analysis</div>
 
 ```{r}
 #| fig-width: 13
@@ -251,7 +264,9 @@ tm_shape(st_stack) +
 This is spatio-temporal kernel density at six dates. In July the main warm spot is the narrow neck of the regency. By late August the northern strip and the south warm up. By mid September the south-central peat has the highest density, with a second hot spot on the east edge. The report checks this with three different spatial bandwidths and the peak stays in the same place.
 :::
 
-## Fires cluster in space, but a map alone cannot say why
+## Insight 3. Fires cluster in space, but a map alone cannot say why
+
+<div class="part">Part 3 · Second-order analysis</div>
 
 ::::: columns
 ::: {.column width="62%"}
@@ -273,12 +288,13 @@ ggplot(so$env_df, aes(r)) +
 ```{r}
 bonus$l_compare %>%
   rename(`Null model` = 1, `Observed at 5 km` = 2, `Envelope top` = 3) %>%
+  mutate(`Null model` = c("CSR", "Access (OSM)", "KDE 7.5 km")) %>%
   kable()
 ```
 
-<div class="small">Black is the observed curve, orange the 95% global envelope. Fires are far more clustered than random, and roads, canals and rivers explain little of this.
+<div class="small">Black is observed, orange the 95% global envelope. Fires are far more clustered than random, and an access model of roads, canals and rivers barely changes this.
 
-After allowing for density, the answer depends on the bandwidth. The curve is inside the envelope at 5 km and above it at 7.5 and 10 km. One map cannot tell fires affecting each other apart from land that burns easily, so the space-time test gives the stronger evidence.</div>
+After allowing for density, the answer depends on the bandwidth, inside the envelope at 5 km and above it at 7.5 and 10 km. So the space-time test gives the stronger evidence.</div>
 :::
 :::::
 
@@ -286,7 +302,9 @@ After allowing for density, the answer depends on the bandwidth. The curve is in
 Against complete spatial randomness the fires are hugely clustered, but that mostly repeats what the density map shows. Against a KDE intensity, the answer depends on the bandwidth. With 7.5 or 10 km there is extra clustering, with 5 km there is not. Roads, canals and rivers barely reduce the clustering. One map cannot tell fires affecting each other apart from land that burns easily, or from the same land burning again, so the space-time test gives the stronger evidence.
 :::
 
-## Fire pairs under 3 km and 1 to 3 days apart are `r so$sens_tab[["Q4 ratio, under 3 km, 1 to 3 days"]][2]` times as common as with random dates
+## Insight 4. Fire pairs under 3 km and 1 to 3 days apart are `r so$sens_tab[["Q4 ratio, under 3 km, 1 to 3 days"]][2]` times as common as with random dates
+
+<div class="part">Part 3 · Second-order analysis</div>
 
 ::::: columns
 ::: {.column width="60%"}
@@ -326,7 +344,9 @@ so$sens_tab %>%
 This is the strongest finding. Pairs of fires under 3 kilometres and 1 to 3 days apart are about 1.33 times as common as shuffled dates give, even when each 10 kilometre block keeps its own fire season. It holds for a second sensor, for newly burning cells and for pairs 2 to 3 kilometres apart. The test cannot tell spread from one person lighting several plots, or from a fire front crossing part of a block, but all of these call for fast follow-up nearby.
 :::
 
-## A 3-day watch zone beat a same-size hotspot map, `r round(100 * bonus$watch_sum$watch_zone)`% to `r round(100 * max(bonus$watch_sum$hotspot_1.5km, bonus$watch_sum$hotspot_3km, bonus$watch_sum$hotspot_6km))`%
+## Insight 5. A 3-day watch zone beat a same-size hotspot map, `r round(100 * bonus$watch_sum$watch_zone)`% to `r round(100 * max(bonus$watch_sum$hotspot_1.5km, bonus$watch_sum$hotspot_3km, bonus$watch_sum$hotspot_6km))`%
+
+<div class="part">Part 4 · Bonus</div>
 
 ::::: columns
 ::: {.column width="36%"}
@@ -377,22 +397,32 @@ ggplot(bonus$watch_week, aes(week, share, colour = measure, linetype = measure))
 This tests whether the space-time result is actually useful. Each morning, draw 3 kilometres around every fire of the past three days. A crew could instead watch the places that have burned most so far, using a hotspot map of the same size. Over the season the watch zone caught clearly more newly burning cells than the hotspot map, at every bandwidth tried. The left map shows 18 September. It is one season, so it needs testing on another year.
 :::
 
-## Limitations, and what each one does to the results
+## Key findings and their limits {.smaller}
 
-| Limitation | Likely effect |
-|---|---|
-| Satellites miss fires under cloud and smoke, worst at the peak | September counts are low, daily timing is noisy |
-| Data after 30 June is provisional NRT | Counts may shift when standard processing replaces it |
-| Spatial tests cannot tell fires affecting each other apart from land that burns easily | Q3 is left open, and the space-time test gives the main evidence |
-| Wide off-track pixels and the fixed 1 km grid | One fire can become two events, same-day pairs are excluded for this reason |
-| One season, one regency, watch zone tested on its own data | The 3 km and 3 day rule needs a second year before it is fixed |
-| OSM misses many canals, especially in the north | The canal signal is weak and should not rank canal blocking |
+<div class="part">Part 5 · So what</div>
+
+| | Finding | Evidence | Main limit |
+|---|---|---|---|
+| **1** | The season came late and fast | 82% of fire-days fell in September | Cloud and smoke hide fires at the peak, and data after 30 June is provisional |
+| **2** | The south-central peat burned most | Same peak at 2 km, 7.5 km and adaptive bandwidths | Counts fire-days, not burned area or harm |
+| **3** | Fires cluster far beyond random | L function far above the envelope, Clark-Evans ratio 0.48 | After allowing for density, the result changes with bandwidth, so Q3 stays open |
+| **4** | Fires close in space are close in time | Pairs under 3 km and 1 to 3 days apart `r so$sens_tab[["Q4 ratio, under 3 km, 1 to 3 days"]][2]` times as common as chance, also for VIIRS | Cannot tell spread from one person lighting several plots |
+| **5** | Recent fires find new fires better than a hotspot map | Watch zone `r round(100 * bonus$watch_sum$watch_zone)`% against at most `r round(100 * max(bonus$watch_sum$hotspot_1.5km, bonus$watch_sum$hotspot_3km, bonus$watch_sum$hotspot_6km))`% on the same area | One season, and the 3 km and 3 days came from the same data |
+| **6** | Roads and canals explain little of the clustering | Only 4 of 3,065 fire-days over 14 km from a road, but the access model barely lowers L | OSM misses many canals |
+
+: {tbl-colwidths="[4,28,34,34]"}
+
+::: {.callout-note appearance="minimal"}
+**Core finding.** Density maps show where to base crews. The space-time result, and the watch zone built on it, show where to look each day.
+:::
 
 ::: notes
-The main limits come from the satellites and from using one season. Cloud and smoke hide fires. Post-June data is provisional. The spatial clustering test cannot tell fires affecting each other apart from land that burns easily, which is why the space-time test matters. And the watch zone needs testing on another year.
+This slide pulls the findings together, each with its evidence and its main limit. The season was late and fast. The south-central peat burned most at every bandwidth. Fires cluster far beyond random, but after allowing for density the answer depends on the bandwidth, so that question stays open. The space-time test is the strongest result, and the watch zone shows it is useful in practice, though only on one season so far. Roads and canals explain little of the clustering.
 :::
 
 ## What this means for fire management in Pulang Pisau {.smaller}
+
+<div class="part">Part 5 · So what</div>
 
 | | Evidence | Possible action | Needed first |
 |---|---|---|---|
@@ -402,8 +432,26 @@ The main limits come from the satellites and from using one season. Cloud and sm
 | **Where patrols can reach** | Only 4 of 3,065 fire-days lay over 14 km from a road or track | Plan routes along roads and tracks | Concession and land-use maps |
 | **Finishing the job** | Almost half of fire-days were a cell burning again within a week | Go back to put-out fires the next day | Ground records of rekindling |
 
-<div class="small">Nothing here shows cause. The watch zone says where the next fire is likely, not whether it spread or was lit. Full workflow, code and references are in the [technical report](Take-home_Ex01.html).</div>
+<div class="small">Nothing here shows cause. The watch zone says where the next fire is likely, not whether it spread or was lit. Full workflow, code and references are in the [Technical Report](Take-home_Ex01.html).</div>
 
 ::: notes
 The first-order maps say where to base crews. The space-time result says where to send them next, and it beats a plain hotspot map. Access corridors show where patrols can reach almost all fires. Each row separates the evidence from the recommendation and from what needs checking first. None of this shows cause.
 :::
+
+## References {.smaller}
+
+<div class="small">
+
+- Baddeley, A., Rubak, E. and Turner, R. (2015). *Spatial Point Patterns: Methodology and Applications with R*. Chapman and Hall/CRC.
+- Berita Sampit (2026, 18 September). Karhutla Pulpis capai 3.693 hektare, kualitas udara berada pada level berbahaya.
+- Davies, T. M., Marshall, J. C. and Hazelton, M. L. (2018). Tutorial on kernel estimation of continuous spatial and spatiotemporal relative risk. *Statistics in Medicine*, 37(7), 1191 to 1221.
+- Diggle, P. J. (2013). *Statistical Analysis of Spatial and Spatio-Temporal Point Patterns* (3rd ed.). CRC Press.
+- Giglio, L., Schroeder, W. and Justice, C. O. (2016). The collection 6 MODIS active fire detection algorithm and fire products. *Remote Sensing of Environment*, 178, 31 to 41.
+- Knox, E. G. (1964). The detection of space-time interactions. *Journal of the Royal Statistical Society, Series C*, 13(1), 25 to 30.
+- Page, S. E. and Hooijer, A. (2016). In the line of fire, the peatlands of Southeast Asia. *Philosophical Transactions of the Royal Society B*, 371, 20150176.
+- Townsley, M., Homel, R. and Chaseling, J. (2003). Infectious burglaries, a test of the near repeat hypothesis. *British Journal of Criminology*, 43(3), 615 to 633.
+- WHO (2021). *WHO Global Air Quality Guidelines*. World Health Organization, Geneva.
+
+Data from NASA FIRMS, GADM 4.1 and OpenStreetMap. Full list, code and workflow in the [Technical Report](Take-home_Ex01.html).
+
+</div>

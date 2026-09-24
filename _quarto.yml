@@ -26,11 +26,14 @@ website:
             href: "In-class_Ex/In-class_Ex04/In-class_Ex04.html"
       - text: "Take-home Exercise 1"
         menu:
+          - text: "Executive Summary"
+            href: "Take-home_Ex/Take-home_Ex01/Take-home_Ex01_slides.html"
           - text: "Technical Report"
             href: "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html"
-          - text: "Executive Summary Slides"
-            href: "Take-home_Ex/Take-home_Ex01/Take-home_Ex01_slides.html"
     right:
+      - icon: github
+        href: https://github.com/CZXTOM/ISSS626-GAA
+        aria-label: GitHub repository
       - href: index.qmd
         text: Home
       - href: about.qmd
