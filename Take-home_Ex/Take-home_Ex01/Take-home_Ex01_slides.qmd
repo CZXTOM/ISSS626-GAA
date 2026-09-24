@@ -499,22 +499,48 @@ This turns the space-time result into a daily rule. Each morning, draw 3 kilomet
 This slide pulls the findings together, each with its evidence and its main limit. The season was late and fast. The south-central peat burned most at every bandwidth. Fires cluster far beyond random, but after allowing for density the answer depends on the bandwidth, so that question stays open. The space-time test is the strongest result, and the watch zone shows it is useful in practice, though only on one season so far. Roads and canals explain little of the clustering.
 :::
 
-## What this means for fire management in Pulang Pisau {.smaller}
+## What this means for fire management in Pulang Pisau
 
 <div class="part">Part 5 · So what</div>
 
-| | Evidence | Possible action | Needed first |
-|---|---|---|---|
-| **Where to base crews** | South-central peat held peak intensity at every bandwidth, the east edge was a second belt | Standing crews and water points there | Burned area, peat depth, water access |
-| **When to scale up** | The neck burned from July, the rest from about 20 August | Check whether the neck burns first in other years | Earlier seasons, rainfall data |
-| **Where to send patrols** | The 3-day watch zone beat a same-size hotspot map, on this season's data | Draw the zone each morning, send patrols there first | A second season, crew travel times |
-| **Where patrols can reach** | Only 4 of 3,065 fire-days lay over 14 km from a road or track | Plan routes along roads and tracks | Concession and land-use maps |
-| **Finishing the job** | Almost half of fire-days were a cell burning again within a week | Go back to put-out fires the next day | Ground records of rekindling |
+::::: columns
+::: {.column width="34%"}
+```{r}
+#| fig-width: 4.6
+#| fig-height: 7.6
+kd <- density(unmark(ppp), sigma = 2)
+kd_df <- as.data.frame(to_rast(kd), xy = TRUE) %>% setNames(c("x", "y", "v")) %>% filter(v >= 2)
+plan_tags <- tibble(x = c(835.5, 868, 849, 822) * 1000, y = c(9627, 9716, 9745, 9800) * 1000,
+                    lab = c("South-central\npeat", "East\nedge", "Neck", "Northern\nstrip"),
+                    hj = c(0.5, 1, 0, 1))
+ggplot() +
+  geom_sf(data = pp_sf, fill = col_land, colour = "grey45") +
+  geom_sf(data = fires, colour = "grey75", size = 0.25) +
+  geom_raster(data = kd_df, aes(x, y), fill = col_fire, alpha = 0.85) +
+  geom_label(data = plan_tags, aes(x, y, label = lab, hjust = hj), size = 4.4, fontface = "bold",
+             lineheight = 0.85, label.size = 0, fill = alpha("white", 0.85)) +
+  coord_sf(crs = 32749, datum = NA) +
+  labs(x = NULL, y = NULL, caption = "Orange, the densest fire-days\n(2 km KDE, 2 or more per km²)") +
+  theme_void(base_size = 14) +
+  theme(plot.caption = element_text(hjust = 0.5, size = 13, colour = "grey30"))
+```
+:::
 
-<div class="small">Nothing here shows cause. The watch zone says where the next fire is likely, not whether it spread or was lit. Full workflow, code and references are in the [Technical Report](Take-home_Ex01.html).</div>
+::: {.column width="66%"}
+<div class="act"><b>Base crews and water in the south-central peat and east edge</b><br><span class="tag">Because</span> both had the densest burning at every bandwidth, and water shortages already slow firefighting<br><span class="tag">Check first</span> burned area and peat depth</div>
+
+<div class="act"><b>Draw a 3 km watch zone each morning and patrol it first</b><br><span class="tag">Because</span> it caught `r round(100 * bonus$watch_sum$watch_zone)`% of new fires, against `r round(100 * max(bonus$watch_sum$hotspot_1.5km, bonus$watch_sum$hotspot_3km, bonus$watch_sum$hotspot_6km))`% for a hotspot map of the same size<br><span class="tag">Check first</span> a test on another fire season</div>
+
+<div class="act"><b>Go back to put-out fires the next day</b><br><span class="tag">Because</span> `r round(100 * reburn_share)`% of fire-days were a square burning again within a week<br><span class="tag">Check first</span> field records of fires that restarted</div>
+
+<div class="act"><b>Watch the neck early in the season</b><br><span class="tag">Because</span> it burned from July, weeks before the rest of the regency<br><span class="tag">Check first</span> earlier years and rainfall data</div>
+
+<div class="small">Each action rests on evidence from this study but needs the check first. Nothing here shows cause. The watch zone says where the next fire is likely, not whether it spread or was lit.</div>
+:::
+:::::
 
 ::: notes
-The first-order maps say where to base crews. The space-time result says where to send them next, and it beats a plain hotspot map. Access corridors show where patrols can reach almost all fires. Each row separates the evidence from the recommendation and from what needs checking first. None of this shows cause.
+Four actions come out of the analysis. Base crews and water where burning was densest. Draw a watch zone around recent fires each morning, because it found more new fires than a hotspot map. Go back to fires that look out, because almost half of fire-days were the same square burning again. And watch the neck early. Each one names what should be checked before acting, and none of it claims to show cause.
 :::
 
 ## References {.smaller}

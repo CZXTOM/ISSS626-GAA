@@ -39,6 +39,12 @@ execute:
 .th-bar div{display:flex;justify-content:space-between}
 .th-bar i{display:block;height:6px;border-radius:3px;margin-top:.15rem;background:#E3DACB}
 .th-bar i b{display:block;height:6px;border-radius:3px}
+.qcard dl{display:grid;grid-template-columns:10.5rem 1fr;gap:.55rem 1.2rem;background:#F5EFE3;border-left:3px solid #D55E00;border-radius:8px;padding:1rem 1.2rem;margin:1.1rem 0 1.5rem}
+.qcard dt{font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#7A4A22;padding-top:.2rem}
+.qcard dd{margin:0;font-size:.95rem;line-height:1.55}
+@media (max-width:640px){.qcard dl{grid-template-columns:1fr}.qcard dd{margin-bottom:.4rem}}
+.verdict-ok{color:#8E3B00;font-weight:600}
+.leaflet-container img,.leaflet-control img{border:0 !important;padding:0 !important;border-radius:0 !important;background:none !important;max-width:none !important}
 </style>
 <div class="th-stats">
   <div class="th-stat"><div class="k">Fire-days</div><div class="n">3,065</div><div class="c">A 1 km square burning 3 days counts as 3</div></div>
@@ -981,6 +987,59 @@ In July almost all fires were in one patch below the narrow neck. From late Augu
 
 Only `r round(100 * sep_old)` percent of September fire-days were in cells that had burned before September, so the fires moved onto new ground. Most repeat burning (@fig-reburn) happened within September.
 
+@fig-explore lets the reader check any of this up close. It shows every fire-day over satellite imagery, and clicking a dot gives its date and confidence. Switching the base map to OpenStreetMap shows the roads and canals used in Q5.
+
+::: panel-tabset
+## The Map
+
+```{r}
+#| label: fig-explore
+#| fig-cap: "Interactive map of all 3,065 fire-days by month, over Esri World Imagery or OpenStreetMap. Data from NASA FIRMS MODIS C6.1"
+#| echo: false
+tmap_mode("view")
+fires_view <- fires %>%
+  mutate(Month = droplevels(month), Date = format(date_local, "%d %b %Y"), Confidence = confidence) %>%
+  arrange(desc(date_local)) %>%   # draw July last so early fires stay visible
+  select(Month, Date, Confidence)
+
+tm_basemap(c("Esri.WorldImagery", "OpenStreetMap")) +
+  tm_shape(pp_sf) +
+  tm_borders(col = "white", lwd = 2) +
+  tm_shape(fires_view) +
+  tm_dots(fill = "Month", size = 0.35,
+          fill.scale = tm_scale_categorical(values = c("#FDD0A2", "#FD8D3C", "#D94801")),
+          fill.legend = tm_legend(title = "Fire-days by month"),
+          id = "Date", popup.vars = c("Date", "Confidence")) +
+  tm_options(use_WebGL = FALSE)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tmap_mode("view")
+fires_view <- fires %>%
+  mutate(Month = droplevels(month), Date = format(date_local, "%d %b %Y"), Confidence = confidence) %>%
+  arrange(desc(date_local)) %>%   # draw July last so early fires stay visible
+  select(Month, Date, Confidence)
+
+tm_basemap(c("Esri.WorldImagery", "OpenStreetMap")) +
+  tm_shape(pp_sf) +
+  tm_borders(col = "white", lwd = 2) +
+  tm_shape(fires_view) +
+  tm_dots(fill = "Month", size = 0.35,
+          fill.scale = tm_scale_categorical(values = c("#FDD0A2", "#FD8D3C", "#D94801")),
+          fill.legend = tm_legend(title = "Fire-days by month"),
+          id = "Date", popup.vars = c("Date", "Confidence")) +
+  tm_options(use_WebGL = FALSE)
+```
+:::
+
+```{r}
+#| echo: false
+tmap_mode("plot")
+```
+
 ## Kernel Density Estimation
 
 KDE turns points into a smooth surface of fire-days per km². It is used instead of quadrat counts, which depend on where the grid is drawn. The bandwidth, sigma, sets how far each point is spread. A small sigma shows every small group of fires, and a large sigma blends them into wide zones.
@@ -1180,13 +1239,22 @@ Border correction is used, which spatstat applies by default to large patterns. 
 Yes, strongly. The L function sits far above the random envelope, and the nearest fire is about half as far away as it would be at random (Clark-Evans ratio 0.48). Most of this comes from the uneven density already seen in Q1, so Q3 and Q4 dig further.
 :::
 
-**Research question.** Are fires closer together than they would be at random?
+::: {.qcard}
+Question
+:   Are fires closer together than they would be at random?
 
-**Method.** Besag's L function, `Lest()`, with a global envelope from 99 simulations of complete spatial randomness (CSR). L is a rescaled form of Ripley's K function, which counts neighbours within distance r. Under CSR, L(r) − r is zero, so a curve above the envelope means clustering. L is used instead of G or F because it uses all pairs, not only nearest neighbours.
+Method, and why
+:   Besag's L function, `Lest()`. L rescales Ripley's K, which counts neighbours within distance r, so that L(r) − r is zero under randomness and a curve above the envelope means clustering. L is used instead of G or F because it uses all pairs, not only the nearest neighbour.
 
-**Null model.** CSR, where every location is equally likely and fires are independent.
+Compared with what
+:   Complete spatial randomness (CSR). Every location is equally likely and fires are independent.
 
-**Assumptions.** CSR assumes the same intensity everywhere. The first-order maps already show this is false, so this test is only a baseline.
+Assumptions
+:   CSR assumes the same intensity everywhere. The first-order maps already show this is false, so this test is only a baseline.
+
+Settings
+:   1 to 15 km, border correction, 99-simulation global envelope with `nrank = 5`.
+:::
 
 ```{r}
 #| filename: "L function against CSR"
@@ -1214,15 +1282,22 @@ Repeat burning also adds to L. The `r format(npoints(fire_ppp_km), big.mark = ",
 Not settled. Fires still cluster beyond a 7.5 km or 10 km density surface, but not beyond a 5 km one. One map cannot separate fires affecting each other from land that simply burns easily, so Q4 adds time.
 :::
 
-**Research question.** Do fires still cluster after allowing for uneven density?
+::: {.qcard}
+Question
+:   Do fires still cluster after allowing for uneven density?
 
-**Method.** The inhomogeneous L function, `Linhom()` (Baddeley, Møller and Waagepetersen, 2000). Pairs in dense areas count for less, so clustering that only comes from high density is removed.
+Method, and why
+:   The inhomogeneous L function, `Linhom()` (Baddeley, Møller and Waagepetersen, 2000). Pairs in dense areas count for less, so clustering that only comes from high density is removed.
 
-**Null model.** An inhomogeneous Poisson process with the Scott KDE as its intensity. Fires are more likely where density is high but are still independent of each other.
+Compared with what
+:   An inhomogeneous Poisson process with the Scott KDE as its intensity. Fires are more likely where density is high but are still independent of each other.
 
-**Parameters.** Sigma is `r round(sig_scott, 1)` km with leave-one-out, so a fire does not count toward its own density. The intensity is estimated again for each simulation (Baddeley et al., 2015).
+Assumptions
+:   The intensity surface must be right. If sigma is too small, the surface absorbs the clusters. If it is too large, uneven density shows up as clustering. One pattern cannot fully separate the two (Diggle, 2013).
 
-**Assumptions.** The intensity surface must be right. If sigma is too small, the surface absorbs the clusters. If it is too large, uneven density shows up as clustering. One pattern cannot fully separate the two (Diggle, 2013), so the [Robustness Checks](#sec-sens) try other values.
+Settings
+:   Sigma `r round(sig_scott, 1)` km with leave-one-out, so a fire does not count toward its own density. The intensity is estimated again for each simulation (Baddeley et al., 2015). The [Robustness Checks](#sec-sens) try 5 and 10 km.
+:::
 
 ```{r}
 #| filename: "inhomogeneous L function against inhomogeneous Poisson"
@@ -1310,17 +1385,25 @@ The CSR result mostly confirms the KDE maps. The second result means fires have 
 Yes. Fires under 3 km apart burned 1 to 3 days apart 1.33 times as often as chance, even with each 10 km block keeping its own fire season (p = 0.005). The result holds with VIIRS, for newly burning cells only, and for pairs 2 to 3 km apart.
 :::
 
-**Research question.** Are fires that are close in space also close in time, beyond each area's own fire season?
+::: {.qcard}
+Question
+:   Are fires that are close in space also close in time, beyond each area's own fire season?
 
-**Why not `STIKhat()`.** The space-time K function from class assumes constant intensity unless one is supplied, and supplying one brings back the bandwidth problem. A shuffling test avoids both.
+Method, and why
+:   A Knox-style test (Knox, 1964; Diggle et al., 1995). Pairs within 15 km are grouped by distance apart and days apart, and each group's count is compared with 199 copies of the data with the dates shuffled among the fixed locations. `STIKhat()` from class is not used, because it assumes constant intensity unless one is supplied, and supplying one brings back the bandwidth problem.
 
-**Method.** A Knox-style test (Knox, 1964; Diggle et al., 1995). Pairs of events within 15 km are grouped by distance apart and days apart. Each group's count is compared with 199 copies of the data in which the dates are shuffled among the fixed locations. Results are shown as observed divided by expected.
+Compared with, step 1
+:   Dates shuffled across the whole regency. Locations and daily counts stay the same, so only the link between where and when is removed. This is not enough, because different areas burned at different times (@fig-stkde).
 
-**Null model, step 1.** Dates are shuffled across the whole regency. Locations and daily counts stay the same, so only the link between where and when is removed.
+Compared with, step 2
+:   Dates shuffled only within each 10 km block, so each block keeps its own fire season. Extra pairs left over come from fires closer than a block, either fires affecting each other or a fire front crossing a block.
 
-Step 1 is not enough, because different areas burned at different times (@fig-stkde). That alone would make nearby fires look close in time.
+Assumptions
+:   Within a block, any date could have gone with any location. The 10 km block size is a judgement call.
 
-**Null model, step 2.** Dates are shuffled only within each 10 km block, so each block keeps its own fire season. Any extra pairs left come from fires closer than a block, either fires affecting each other or a fire front crossing a block. The 10 km size is a judgement call.
+Edge effects
+:   No correction is needed, because locations never move. Pairs lost at the boundary are missing from the data and the shuffles alike.
+:::
 
 ```{r}
 #| filename: "Knox style space-time test, optional shuffling within blocks"
@@ -1391,8 +1474,6 @@ n_blocks <- length(unique(block_10))
 ```
 
 Same-day pairs are shown but not counted, since one large fire in a wide pixel can look like two. The main test pools pairs under 3 km and 1 to 3 days apart, a range a patrol can cover. These boxes were chosen after seeing the grid, so the [Robustness Checks](#sec-sens) retest them on other data. The events fall into `r n_blocks` blocks, and `r sum(table(block_10) == 1)` blocks hold only one event.
-
-**Edge effects.** No edge correction is needed, because locations never move. Pairs lost at the boundary are missing from the data and the shuffles alike.
 
 ::: panel-tabset
 ## The Plot
@@ -1472,9 +1553,23 @@ The table below answers the integration questions from the brief, one per row.
 | What does first-order analysis show? | Fires were very uneven in space and time. Burning began at the neck in July, spread from late August and peaked in the south-central peat in September. Almost half of fire-days were a cell burning again within a week. |
 | What does second-order analysis show? | Fires are far more clustered than random. After allowing for density, the answer depends on the bandwidth. The space-time test is clearer. Fires under 3 km apart were 1 to 3 days apart more often than random dates give. |
 | How do they fit together? | The first-order maps show where to base crews. The space-time result, and the watch zone in the Bonus (Q6), show where to look each day. |
-| Are the results consistent? | Mostly. All first-order maps agree, and Q4 holds for VIIRS, new cells and pairs 2 to 3 km apart. Only Q3 changes with the bandwidth. |
+| Are the results consistent? | Mostly, as the next table shows. Only Q3 changes with the bandwidth. |
 | Which assumptions matter most? | The density surface in Q3, and in Q4 the assumption that dates can be swapped within a 10 km block. |
 | Other explanations? | Cloud hides fires on some days. One person lighting several plots looks the same as spread. A fire front crossing one block over a few days would also pass the Q4 test. |
+
+: {tbl-colwidths="[28,72]"}
+
+**How consistent are the findings?** Each finding below is checked against every analysis that bears on it.
+
+| Finding | Analyses that agree | Analyses that do not | Verdict |
+|---|---|---|---|
+| The south-central peat burned most | KDE at 2 km, 7.5 km and adaptive, STKDE, half-month maps | None | Robust |
+| Fires cluster far beyond random | L function against CSR, Clark-Evans ratio, L against the access model | None | Robust |
+| Fires cluster beyond the density map | Inhomogeneous L at 7.5 and 10 km, and with VIIRS | Inhomogeneous L at 5 km | Depends on bandwidth |
+| Nearby fires follow within 1 to 3 days | Knox test on MODIS, VIIRS, newly burning cells, and pairs 2 to 3 km apart | None | Robust |
+| Recent fires find new fires better than a hotspot map | All three hotspot bandwidths, 23 of the 29 days where the two differed, separate new fires | Weeks of 3 and 24 August | Holds this season |
+
+: {tbl-colwidths="[24,40,18,18]"}
 
 ## Robustness Checks {#sec-sens}
 
@@ -1632,6 +1727,7 @@ The main figures are listed below, and each one's reading sits directly under it
 | @fig-daily | Q1 | When the season started and peaked |
 | @fig-reburn | Q1 | How often a cell burned again |
 | @fig-halfmonth | Q1 | How burning moved across the regency |
+| @fig-explore | Q1 | Every fire-day up close, over satellite imagery |
 | @fig-kde | Q1 | Where density was highest, at three bandwidths |
 | @fig-stkde | Q1 | Where and when density peaked |
 | @fig-lfun | Q2, Q3 | Clustering against two null models |
@@ -1668,11 +1764,19 @@ Only partly. Fires burned within reach of roads and tracks, and just 4 of 3,065 
 
 
 
-**Research question.** Are fires closer to roads and canals, and does this explain the clustering?
+::: {.qcard}
+Question
+:   Are fires closer to roads and canals, and does this explain the clustering?
 
-**Why.** Most peat fires are started by people (Page and Hooijer, 2016), who reach the peat by road and canal. Canals also dry the peat out.
+Why ask
+:   Most peat fires are started by people (Page and Hooijer, 2016), who reach the peat by road and canal. Canals also dry the peat out.
 
-**Method.** Distance maps are built from OSM. `rhohat()` shows how fire intensity changes with each distance. `ppm()` then fits a Poisson point process model, a kind of regression for points, using the three distances. This model replaces the KDE in an inhomogeneous L test, to see how much clustering is left after allowing for access.
+Method
+:   Distance maps are built from OSM. `rhohat()` shows how fire intensity changes with each distance. `ppm()` then fits a Poisson point process model, a kind of regression for points, using the three distances.
+
+Compared with what
+:   The fitted access model replaces the KDE as the null in an inhomogeneous L test, to see how much clustering is left once access is allowed for.
+:::
 
 ### Preparing the OSM Layers
 
@@ -1869,11 +1973,18 @@ The access model fits much better than constant intensity, and its AIC (lower is
 Yes, on this season's data. A zone within 3 km of the last three days' fires caught 76 percent of newly burning cells on 15 percent of the land. A hotspot map of the same size caught at most 64 percent. The zone still needs testing on another year.
 :::
 
-**Research question.** Each morning a crew can watch only part of the regency. Should it watch near recent fires, or the places that have burned most?
+::: {.qcard}
+Question
+:   Each morning a crew can watch only part of the regency. Should it watch near recent fires, or the places that have burned most?
 
-**Why.** Q4 found that fires close in space were also close in time. Crime analysts call this a near-repeat pattern (Townsley et al., 2003). It is only useful if recent fires point to new fires better than a hotspot map does.
+Why ask
+:   Q4 found that fires close in space were also close in time. Crime analysts call this a near-repeat pattern (Townsley et al., 2003). It is only useful if recent fires point to new fires better than a hotspot map does.
 
-**Method.** The test runs for every day from 4 July to 22 September.
+Compared with what
+:   A hotspot zone of exactly the same size each day, and a zone that ignores fire history.
+:::
+
+**How the test works.** It runs for every day from 4 July to 22 September.
 
 - The **watch zone** is the area within 3 km of the previous three days' fires. The 3 km and 3 days come from @fig-knox, so this is an in-sample test and may flatter the zone.
 - The **hotspot zone** covers the same amount of land on the highest part of a KDE of all earlier fires, at 1.5, 3 and 6 km bandwidths.

@@ -115,3 +115,26 @@ $presentation-h2-font-size: 1.3em;
 .reveal .statrow .bigcap {
   margin-bottom: 0;
 }
+
+.reveal .act {
+  font-size: 0.62em;
+  line-height: 1.4;
+  border-left: 4px solid #D55E00;
+  padding: .1em 0 .1em .7em;
+  margin-bottom: .75em;
+}
+
+.reveal .act b {
+  font-size: 1.12em;
+  color: #16191D;
+}
+
+.reveal .act .tag {
+  display: inline-block;
+  min-width: 7.6em;
+  font-size: .78em;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #8E3B00;
+}
