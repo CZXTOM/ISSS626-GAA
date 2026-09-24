@@ -1,0 +1,79 @@
+/*-- scss:defaults --*/
+
+// Colours, same Okabe-Ito set as the coursework site, no green
+$body-bg: #FDFAF3;
+$body-color: #3E454E;
+$link-color: #0072B2;
+$selection-bg: #F4EFE3;
+
+// Fonts, same as the site
+$font-family-sans-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+$presentation-font-size-root: 36px;
+$presentation-line-height: 1.4;
+
+// Headings
+$presentation-heading-font: "Newsreader", Georgia, serif;
+$presentation-heading-color: #16191D;
+$presentation-heading-font-weight: 600;
+$presentation-h1-font-size: 2.0em;
+$presentation-h2-font-size: 1.3em;
+
+/*-- scss:rules --*/
+
+.reveal .slides section h2 {
+  border-bottom: 3px solid #D55E00;
+  padding-bottom: .2em;
+  margin-bottom: .5em;
+}
+
+.reveal .footer {
+  font-size: 0.5em;
+  color: #5D6672;
+}
+
+.reveal .slide-number {
+  font-size: 0.5em;
+  color: #5D6672;
+}
+
+.reveal table {
+  font-size: 0.8em;
+}
+
+.reveal table th {
+  border-bottom: 2px solid #3E454E;
+}
+
+.reveal .small {
+  font-size: 0.74em;
+  line-height: 1.35;
+}
+
+.reveal .kicker {
+  font-size: 0.62em;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #8E3B00;
+  font-weight: 600;
+}
+
+.reveal .bignum {
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 1.9em;
+  line-height: 1;
+  color: #16191D;
+}
+
+.reveal .bigcap {
+  font-size: 0.68em;
+  color: #3E454E;
+  margin-bottom: .8em;
+}
+
+.reveal .callout {
+  font-size: 0.62em;
+}
+
+.reveal img {
+  max-height: 72vh;
+}
