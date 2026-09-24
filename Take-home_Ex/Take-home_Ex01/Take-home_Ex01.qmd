@@ -122,7 +122,7 @@ set.seed(2026)
 | MODIS Collection 6.1 active fires | NASA FIRMS area API, accessed 23 Sep 2026 | Kalimantan bounding box, 1 Jan to 22 Sep 2026 | 1 km pixels, Terra and Aqua. Standard processing to 30 Jun, near real time after |
 | VIIRS S-NPP 375 m active fires | NASA FIRMS area API, accessed 23 Sep 2026 | Same | 375 m pixels (Schroeder et al., 2014). No detections at all from 28 April to 2 June or from 11 to 16 July, so used only as a sensitivity check |
 | GADM 4.1 level 2 boundaries | gadm.org, downloaded 10 Sep 2026 for Hands-on Exercise 3 | Indonesia, regency level | Used in place of the Indonesia Geospasial portal file, which failed to download |
-| OpenStreetMap | Geofabrik Kalimantan extract, accessed 23 Sep 2026 | Waterways and roads | Used for the value-added analysis |
+| OpenStreetMap | Geofabrik Kalimantan extract, accessed 23 Sep 2026 | Waterways and roads | Used for the bonus analysis (Q5) |
 
 The FIRMS data was downloaded with a short Python script through the FIRMS area API, five days at a time, for a box covering Kalimantan. It uses standard processing (SP) data up to 30 June and near real time (NRT) data after that.
 
@@ -196,7 +196,7 @@ for name, (sp, nrt) in SENSORS.items():
 
 ::: {.callout-caution}
 ## Two data versions in one year
-SP data ends on 30 June, and the NRT data after it is provisional. NRT data also has no `type` flag, so fixed heat sources cannot be filtered out. [Two further checks](#sec-static), under Merging Repeated Detections, looks for them instead.
+SP data ends on 30 June, and the NRT data after it is provisional. NRT data also has no `type` flag, so fixed heat sources cannot be filtered out. [A later check](#sec-static) looks for them instead.
 :::
 
 ## Study Design
@@ -264,7 +264,9 @@ kalimantan <- idn_adm2 %>%
 
 pp_sf <- kalimantan %>% filter(NAME_2 == "PulangPisau")
 
-kalimantan %>% st_drop_geometry() %>% count(NAME_1, name = "units") %>% kable()
+kalimantan %>% st_drop_geometry() %>% count(NAME_1, name = "units") %>%
+  mutate(NAME_1 = str_replace(NAME_1, "Kalimantan", "Kalimantan ")) %>%
+  kable(col.names = c("Province", "Regencies and cities"))
 ```
 
 GADM writes names without spaces, so the filter uses `"PulangPisau"`. GADM is also slightly out of date. It shows 55 Kalimantan units instead of 56, because Mahakam Ulu, created in 2013, is missing.
@@ -276,7 +278,7 @@ tibble(
   geometry   = as.character(st_geometry_type(pp_sf)),
   parts      = length(st_cast(st_geometry(pp_sf), "POLYGON")),
   area_km2   = round(as.numeric(st_area(pp_sf)) / 1e6, 1)
-) %>% kable()
+) %>% kable(col.names = c("Valid", "Geometry", "Parts", "Area (km²)"))
 ```
 
 The boundary is valid, is a single polygon and covers 9,740.1 km².
@@ -298,9 +300,9 @@ The raw file is first checked for the problems listed in the brief.
 ```{r}
 #| filename: "quality checks on the raw file"
 tibble(
-  check = c("rows", "missing coordinates", "coordinates out of range",
-            "exact duplicate rows", "dates outside 2026",
-            "SP rows", "NRT rows", "rows with no type flag"),
+  check = c("Rows", "Missing coordinates", "Coordinates out of range",
+            "Exact duplicate rows", "Dates outside 2026",
+            "Standard processing (SP) rows", "Near real time (NRT) rows", "Rows with no type flag"),
   value = c(nrow(modis_raw),
             sum(is.na(modis_raw$latitude) | is.na(modis_raw$longitude)),
             sum(abs(modis_raw$latitude) > 90 | abs(modis_raw$longitude) > 180, na.rm = TRUE),
@@ -309,7 +311,7 @@ tibble(
             sum(modis_raw$source == "MODIS_SP"),
             sum(modis_raw$source == "MODIS_NRT"),
             sum(is.na(modis_raw$type)))
-) %>% kable()
+) %>% kable(col.names = c("Check", "Result"), format.args = list(big.mark = ","))
 ```
 
 There are no missing coordinates, impossible values or duplicate rows. The real problems are the missing `type` flag in NRT data, repeat detections, UTC dates and low-confidence detections.
@@ -328,7 +330,8 @@ modis <- modis_raw %>%
 modis %>%
   filter(date_local != acq_date) %>%
   count(satellite, daynight, name = "rows_shifted") %>%
-  kable()
+  kable(col.names = c("Satellite", "Day (D) or night (N)", "Rows moved to the next day"),
+        format.args = list(big.mark = ","))
 ```
 
 ```{r}
@@ -471,12 +474,13 @@ fires_all <- pp_conf %>%
   slice_max(confidence, n = 1, with_ties = FALSE) %>%
   ungroup()
 
-fires_all %>% st_drop_geometry() %>% count(n_det, name = "cell_days") %>% kable()
+fires_all %>% st_drop_geometry() %>% count(n_det, name = "cell_days") %>%
+  kable(col.names = c("Detections of the same cell that day", "Cell-days"), format.args = list(big.mark = ","))
 ```
 
 Several hundred cell-days had two to four detections, which were the same fire seen on different passes.
 
-#### Two further checks {#sec-static}
+#### Checking for Fixed Heat Sources and Wide Pixels {#sec-static}
 
 The last checks look for fixed heat sources, which would burn on most days, and for wide pixels, using the `scan` column.
 
@@ -484,16 +488,16 @@ The last checks look for fixed heat sources, which would burn on most days, and 
 #| filename: "static sources and pixel size"
 days_per_cell <- fires_all %>% st_drop_geometry() %>% count(cell, name = "days")
 
-tibble(check = c("cells that ever burned", "most days any one cell burned",
-                 "cells burning on 20 or more days",
-                 "share of events with a pixel wider than 2 km"),
+tibble(check = c("Cells that ever burned", "Most days any one cell burned",
+                 "Cells burning on 20 or more days",
+                 "Events from a pixel wider than 2 km"),
        value = c(format(nrow(days_per_cell), big.mark = ","), max(days_per_cell$days),
                  sum(days_per_cell$days >= 20),
-                 round(mean(fires_all$scan > 2), 2))) %>%
-  kable()
+                 paste0(round(100 * mean(fires_all$scan > 2)), "%"))) %>%
+  kable(col.names = c("Check", "Result"))
 ```
 
-No cell burned on more than `r max(days_per_cell$days)` of the 84 days, so there is no fixed heat source. About `r round(100 * mean(fires_all$scan > 2))` percent of events come from pixels wider than 2 km, where one fire can light up two cells on the same day. The space-time test therefore treats same-day pairs separately.
+No cell burned on more than `r max(days_per_cell$days)` of the 84 days, so there is no fixed heat source. Pixels get wider toward the edge of the satellite's view. About `r round(100 * mean(fires_all$scan > 2))` percent of events come from a pixel wider than 2 km, which can make one fire show up in two neighbouring cells on the same day. So the space-time test leaves same-day pairs out.
 
 ### Temporal Filtering and Derived Fields
 
@@ -520,7 +524,7 @@ prep_log <- tibble(
   rows = c(nrow(modis_raw), nrow(pp_det), nrow(pp_conf),
            nrow(fires_all), nrow(fires))
 )
-kable(prep_log, format.args = list(big.mark = ","))
+kable(prep_log, col.names = c("Step", "Rows left"), format.args = list(big.mark = ","))
 ```
 
 The final dataset has `r format(nrow(fires), big.mark = ",")` fire events.
@@ -640,9 +644,11 @@ kal_rate %>%
          rank_by_count = min_rank(desc(detections))) %>%
   arrange(desc(per100)) %>%
   slice_head(n = 6) %>%
-  transmute(unit = NAME_2, type = TYPE_2, detections, area_km2 = round(area_km2),
-            per_100_km2 = round(per100, 1), rank_by_count) %>%
-  kable(format.args = list(big.mark = ","))
+  transmute(unit = str_replace_all(NAME_2, "([a-z])([A-Z])", "\\1 \\2"),
+            type = recode(TYPE_2, Kota = "City", Kabupaten = "Regency"),
+            detections, area_km2 = round(area_km2), per_100_km2 = round(per100, 1), rank_by_count) %>%
+  kable(col.names = c("Unit", "Type", "Detections", "Area (km²)", "Per 100 km²", "Rank by count"),
+        format.args = list(big.mark = ","))
 ```
 
 ```{r}
@@ -653,6 +659,64 @@ pp_per100 <- kal_rate$per100[kal_rate$NAME_2 == "PulangPisau"]
 **Reading the map.** Pulang Pisau had about `r round(pp_per100)` detections per 100 km², the most of any regency in Kalimantan. Only the city of Palangka Raya next door was denser. Both sit on the deep peat of the south coast.
 
 A detection is not a fire, though. One fire seen on four passes counts four times here, which is why repeats are merged.
+
+The rest of the report refers to five parts of the regency by name, shown in @fig-places.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| label: fig-places
+#| fig-cap: "Place names used in this report. Boundary from GADM 4.1, fire-days from NASA FIRMS MODIS C6.1"
+#| fig-width: 5.5
+#| fig-height: 7.5
+#| echo: false
+places <- tibble(
+  name  = c("Northern strip", "Neck", "South-central peat", "East edge", "South coast"),
+  x     = c(822, 849, 835.5, 866, 809) * 1000,
+  y     = c(9795, 9756, 9658.6, 9705, 9625) * 1000,
+  hjust = c(1, 0, 0.5, 1, 0.5),
+  nx    = c(-4, 4, 0, -4, 0) * 1000,
+  ny    = c(0, 0, -7, 0, -7) * 1000)
+
+ggplot() +
+  geom_sf(data = pp_sf, fill = col_land, colour = "grey45") +
+  geom_sf(data = fires, colour = "grey72", size = 0.35) +
+  geom_point(data = places, aes(x, y), size = 2.6) +
+  geom_label(data = places, aes(x + nx, y + ny, label = name, hjust = hjust),
+             size = 4.2, fontface = "bold", label.size = 0, fill = alpha("white", 0.85)) +
+  coord_sf(crs = 32749, datum = NA, xlim = c(755000, 885000)) +
+  labs(title = "Five parts of the regency named in this report",
+       subtitle = "Grey dots are all 3,065 fire-days, 1 Jul to 22 Sep 2026", x = NULL, y = NULL) +
+  theme_void(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+places <- tibble(
+  name  = c("Northern strip", "Neck", "South-central peat", "East edge", "South coast"),
+  x     = c(822, 849, 835.5, 866, 809) * 1000,
+  y     = c(9795, 9756, 9658.6, 9705, 9625) * 1000,
+  hjust = c(1, 0, 0.5, 1, 0.5),
+  nx    = c(-4, 4, 0, -4, 0) * 1000,
+  ny    = c(0, 0, -7, 0, -7) * 1000)
+
+ggplot() +
+  geom_sf(data = pp_sf, fill = col_land, colour = "grey45") +
+  geom_sf(data = fires, colour = "grey72", size = 0.35) +
+  geom_point(data = places, aes(x, y), size = 2.6) +
+  geom_label(data = places, aes(x + nx, y + ny, label = name, hjust = hjust),
+             size = 4.2, fontface = "bold", label.size = 0, fill = alpha("white", 0.85)) +
+  coord_sf(crs = 32749, datum = NA, xlim = c(755000, 885000)) +
+  labs(title = "Five parts of the regency named in this report",
+       subtitle = "Grey dots are all 3,065 fire-days, 1 Jul to 22 Sep 2026", x = NULL, y = NULL) +
+  theme_void(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+:::
 
 # Task 2. First-Order Point-Pattern Analysis
 
@@ -772,7 +836,7 @@ reburn <- fires %>%
 
 reburn_tab <- reburn %>% count(since, within_week)
 share_rep  <- mean(reburn$within_week)
-reburn_tab %>% select(-within_week) %>% kable(col.names = c("days since the cell last burned", "fire-days"))
+reburn_tab %>% select(-within_week) %>% kable(col.names = c("Days since the cell last burned", "Fire-days"), format.args = list(big.mark = ","))
 ```
 
 ::: panel-tabset
@@ -928,15 +992,15 @@ spatstat's bandwidth selectors give quite different answers.
 ```{r}
 #| filename: "four bandwidth selectors, in km"
 bw_tab <- tibble(
-  selector = c("bw.diggle", "bw.ppl", "bw.scott.iso", "bw.CvL"),
-  target   = c("mean square error of the intensity estimate (Berman and Diggle)",
-               "likelihood cross-validation",
-               "rule of thumb from the spread of points",
-               "sum of inverse intensities matches the window area"),
+  selector = c("bw.diggle()", "bw.ppl()", "bw.scott.iso()", "bw.CvL()"),
+  target   = c("Smallest error in the density estimate (Berman and Diggle)",
+               "Best fit when each point is left out in turn",
+               "Rule of thumb from how spread out the points are",
+               "Density adds up correctly over the whole window"),
   sigma_km = c(bw.diggle(fire_ppp_u), bw.ppl(fire_ppp_u),
                bw.scott.iso(fire_ppp_u), bw.CvL(fire_ppp_u))
 )
-kable(bw_tab, digits = 2)
+kable(bw_tab, digits = 2, col.names = c("Selector", "What it aims for", "Sigma (km)"))
 ```
 
 ```{r}
@@ -1025,8 +1089,7 @@ STKDE smooths over space and time together, so it avoids the fixed half-month br
 
 ```{r}
 #| filename: "STKDE with oversmoothing bandwidths"
-bw_st <- OS.spattemp(fire_ppp_km)
-bw_st
+bw_st <- OS.spattemp(fire_ppp_km)   # h in km, lambda in days
 
 fire_stkde <- spattemp.density(fire_ppp_km, h = bw_st[1], lambda = bw_st[2])
 ```
@@ -1036,26 +1099,26 @@ fire_stkde <- spattemp.density(fire_ppp_km, h = bw_st[1], lambda = bw_st[2])
 n_ev <- npoints(fire_ppp_km)
 snap_days <- c(196, 213, 227, 238, 254, 261)   # 15 Jul, 1 Aug, 15 Aug, 26 Aug, 11 Sep, 18 Sep
 snap_lab  <- format(as_date(snap_days - 1, origin = "2026-01-01"), "%d %b")
-st_stack <- do.call(c, lapply(snap_days, function(d) to_rast(fire_stkde$z[[as.character(d)]] * n_ev)))
+st_stack <- do.call(c, lapply(snap_days, function(d) to_rast(fire_stkde$z[[as.character(d)]] * n_ev * 100)))
 names(st_stack) <- snap_lab
 ```
 
-Values are expected fire-days per km² per day, so all six maps share one scale.
+Values are expected fire-days per 100 km² per day, so all six maps share one scale.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| label: fig-stkde
-#| fig-cap: "Spatio-temporal kernel density on six days, expected fire-days per km² per day. Data from NASA FIRMS MODIS C6.1"
+#| fig-cap: "Spatio-temporal kernel density on six days, expected fire-days per 100 km² per day. Data from NASA FIRMS MODIS C6.1"
 #| fig-height: 11
 #| echo: false
 tm_shape(st_stack) +
   tm_raster(col.scale = tm_scale_intervals(style = "fixed",
-              breaks = c(0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.2),
-              labels = c("under 0.005", "0.005 to 0.01", "0.01 to 0.025", "0.025 to 0.05", "0.05 to 0.1", "0.1 or more"),
+              breaks = c(0, 0.5, 1, 2.5, 5, 10, 20),
+              labels = c("under 0.5", "0.5 to 1", "1 to 2.5", "2.5 to 5", "5 to 10", "10 or more"),
               values = "brewer.oranges"),
-            col.legend = tm_legend(title = "Fire-days per km²\nper day",
+            col.legend = tm_legend(title = "Fire-days per\n100 km² per day",
               position = tm_pos_out("right", "center")),
             col.free = FALSE) +
   tm_shape(pp_sf) +
@@ -1073,10 +1136,10 @@ tm_shape(st_stack) +
 #| eval: false
 tm_shape(st_stack) +
   tm_raster(col.scale = tm_scale_intervals(style = "fixed",
-              breaks = c(0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.2),
-              labels = c("under 0.005", "0.005 to 0.01", "0.01 to 0.025", "0.025 to 0.05", "0.05 to 0.1", "0.1 or more"),
+              breaks = c(0, 0.5, 1, 2.5, 5, 10, 20),
+              labels = c("under 0.5", "0.5 to 1", "1 to 2.5", "2.5 to 5", "5 to 10", "10 or more"),
               values = "brewer.oranges"),
-            col.legend = tm_legend(title = "Fire-days per km²\nper day",
+            col.legend = tm_legend(title = "Fire-days per\n100 km² per day",
               position = tm_pos_out("right", "center")),
             col.free = FALSE) +
   tm_shape(pp_sf) +
@@ -1094,7 +1157,7 @@ tm_shape(st_stack) +
 st_peak <- max(values(st_stack[[6]]), na.rm = TRUE)
 ```
 
-In mid July and early August the main warm area is the neck. By 26 August the north and the south are warming, and by 18 September the south-central peat peaks at about `r round(st_peak, 2)` fire-days per km² per day, with a second hot spot on the east edge.
+In mid July and early August the main warm area is the neck. By 26 August the north and the south are warming, and by 18 September the south-central peat peaks at about `r round(st_peak)` fire-days per 100 km² per day, with a second hot spot on the east edge.
 
 The bandwidths are `r round(bw_st[1], 1)` km and `r round(bw_st[2], 1)` days, so short-lived hot spots are smoothed away. The neck burned weeks before the rest of the regency, which is worth checking in other years.
 
@@ -1106,9 +1169,9 @@ Task 3 answers Q2 to Q4.
 
 Second-order analysis looks at pairs of events and asks whether they are closer together than a null model predicts. Each test names its null model.
 
-The tests use Monte Carlo simulation. Many patterns are simulated from the null model, and their curves form a band called an envelope. An observed curve outside the envelope is a significant result. Global envelopes are used, which test all distances at once (Baddeley et al., 2015). With 99 simulations and `nrank = 5`, this is a test at the 5 percent level. Distances run from 1 to 15 km, since distances under 1 km are not reliable.
+The tests use Monte Carlo simulation. Many patterns are simulated from the null model, and their curves form a band called an envelope. An observed curve outside the envelope is a significant result. Global envelopes are used, which test all distances at once (Baddeley et al., 2015). With 99 simulations and `nrank = 5`, a pattern with no clustering would cross the envelope only 5 times in 100, so this is a test at the 5 percent level. Distances run from 1 to 15 km, since distances under 1 km are not reliable.
 
-Border correction is used, which spatstat applies by default to large patterns. It leaves out points too close to the edge, so the range stops at 15 km, before the narrow northern strip drops out.
+Border correction is used, which spatstat applies by default to large patterns. It only counts points far enough from the boundary, so distances stop at 15 km. Beyond that, almost no point in the narrow northern strip would still count.
 
 ## Q2. Are Fires More Clustered Than Random?
 
@@ -1138,6 +1201,8 @@ env_csr <- envelope(fire_ppp_u, Lest, nsim = 99, rmax = 15,
 ce_test <- clarkevans.test(fire_ppp_u, correction = "none", alternative = "clustered")
 ```
 
+The result is plotted in the left panel of @fig-lfun, under Q3. The observed curve is far above the envelope at every distance from 1 to 15 km.
+
 The Clark-Evans ratio is `r round(ce_test$statistic, 2)`, against about 1 under CSR, so the nearest fire is about half as far away as it would be at random. This is only a rough guide, because many nearest neighbours are under 1 km apart.
 
 Repeat burning also adds to L. The `r format(npoints(fire_ppp_km), big.mark = ",")` fire-days fall in only `r format(n_distinct(fires$cell), big.mark = ",")` cells, so a cell that burns on several days adds close pairs at every distance. This is another reason for the space-time test in Q4.
@@ -1155,7 +1220,7 @@ Not settled. Fires still cluster beyond a 7.5 km or 10 km density surface, but n
 
 **Null model.** An inhomogeneous Poisson process with the Scott KDE as its intensity. Fires are more likely where density is high but are still independent of each other.
 
-**Parameters.** Sigma is `r round(sig_scott, 1)` km with leave-one-out, and the intensity is estimated again for each simulation (Baddeley et al., 2015).
+**Parameters.** Sigma is `r round(sig_scott, 1)` km with leave-one-out, so a fire does not count toward its own density. The intensity is estimated again for each simulation (Baddeley et al., 2015).
 
 **Assumptions.** The intensity surface must be right. If sigma is too small, the surface absorbs the clusters. If it is too large, uneven density shows up as clustering. One pattern cannot fully separate the two (Diggle, 2013), so the [Robustness Checks](#sec-sens) try other values.
 
@@ -1299,9 +1364,10 @@ knox_free  <- knox_grid(fire_ppp_km, s_breaks, t_breaks)
 set.seed(2026)
 knox_block <- knox_grid(fire_ppp_km, s_breaks, t_breaks, block = block_10)
 
-bind_rows(core_test(knox_free) %>% mutate(test = "step 1"),
-          core_test(knox_block) %>% mutate(test = "step 2")) %>%
-  kable()
+bind_rows(core_test(knox_free) %>% mutate(test = "Step 1, dates shuffled across the regency"),
+          core_test(knox_block) %>% mutate(test = "Step 2, dates shuffled within 10 km blocks")) %>%
+  select(test, ratio, p) %>%
+  kable(col.names = c("Null model", "Observed ÷ expected, under 3 km and 1 to 3 days", "p-value"))
 ```
 
 ```{r}
@@ -1344,10 +1410,13 @@ ggplot(kx, aes(lag, dist, fill = pmin(pmax(log2(ratio), -2), 2))) +
                        limits = c(-2, 2), breaks = -2:2,
                        labels = c("1/4", "1/2", "1", "2", "4"),
                        name = "Observed /\nexpected") +
+  geom_rect(data = tibble(test = sort(unique(kx$test))[2]), inherit.aes = FALSE,
+            aes(xmin = 1.5, xmax = 3.5, ymin = 0.5, ymax = 3.5),
+            fill = NA, colour = "black", linewidth = 1.1) +
   facet_wrap(~ test) +
   labs(title = paste0("Pairs under 3 km and 1 to 3 days apart are ", core_test(knox_block)$ratio,
                       " times as common as with shuffled dates"),
-       subtitle = "* marks boxes where the observed count beat at least 95% of 199 shufflings, uncorrected for 49 tests",
+       subtitle = "Black box, the main test. * marks boxes that beat 95% of 199 shufflings, uncorrected for 49 tests",
        x = "Days apart", y = "Distance apart (km)") +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(face = "bold", size = 13),
@@ -1366,10 +1435,13 @@ ggplot(kx, aes(lag, dist, fill = pmin(pmax(log2(ratio), -2), 2))) +
                        limits = c(-2, 2), breaks = -2:2,
                        labels = c("1/4", "1/2", "1", "2", "4"),
                        name = "Observed /\nexpected") +
+  geom_rect(data = tibble(test = sort(unique(kx$test))[2]), inherit.aes = FALSE,
+            aes(xmin = 1.5, xmax = 3.5, ymin = 0.5, ymax = 3.5),
+            fill = NA, colour = "black", linewidth = 1.1) +
   facet_wrap(~ test) +
   labs(title = paste0("Pairs under 3 km and 1 to 3 days apart are ", core_test(knox_block)$ratio,
                       " times as common as with shuffled dates"),
-       subtitle = "* marks boxes where the observed count beat at least 95% of 199 shufflings, uncorrected for 49 tests",
+       subtitle = "Black box, the main test. * marks boxes that beat 95% of 199 shufflings, uncorrected for 49 tests",
        x = "Days apart", y = "Distance apart (km)") +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(face = "bold", size = 13),
@@ -1428,8 +1500,7 @@ linhom_check <- function(X, s, nsim = 99) {
 }
 
 set.seed(2026)
-sens_bw <- map_dfr(c(5, sig_scott, 10), ~ linhom_check(fire_ppp_u, .x))
-kable(sens_bw)
+sens_bw <- map_dfr(c(5, sig_scott, 10), ~ linhom_check(fire_ppp_u, .x))   # shown in the Q3 table below
 ```
 
 ```{r}
@@ -1455,10 +1526,9 @@ viirs_ev <- viirs_ev %>%
 
 viirs_ppp <- rescale.ppp(as.ppp(st_geometry(viirs_ev), W = pp_owin), 1000, "km")
 marks(viirs_ppp) <- yday(viirs_ev$date_local)
-npoints(viirs_ppp)
 ```
 
-VIIRS rows with low confidence (`l`) are removed, and the detection with the highest fire radiative power is kept for each cell and day.
+VIIRS rows with low confidence (`l`) are removed, and the strongest detection is kept for each cell and day. This leaves `r format(npoints(viirs_ppp), big.mark = ",")` VIIRS events, about twice as many as MODIS.
 
 ```{r}
 #| filename: "check 2 and 3, rerun Q3 and Q4"
@@ -1514,7 +1584,7 @@ sens_tab %>%
                       "MODIS, pairs 2 to 3 km only"),
             events, `observed over expected` = `Q4 ratio, under 3 km, 1 to 3 days`,
             `p-value` = `Q4 p-value`) %>%
-  kable()
+  kable(col.names = c("Check", "Events", "Observed ÷ expected", "p-value"))
 ```
 
 The Q4 result holds in every check. VIIRS gives `r core$ratio[2]` (99 shuffles, so the smallest p is 0.01), newly burning cells give `r core$ratio[3]`, and pairs 2 to 3 km apart give `r core$ratio[4]`. So the result is not just one cell burning day after day, or one fire seen in two cells, although a very wide pixel could still play a part.
@@ -1526,21 +1596,22 @@ The Q4 result holds in every check. VIIRS gives `r core$ratio[2]` (99 shuffles, 
 sens_tab %>%
   filter(`Q3, inhomogeneous L` != "not run") %>%
   select(check, events, `Q3, inhomogeneous L`) %>%
-  kable()
+  kable(col.names = c("Check", "Events", "Inhomogeneous L result"))
 ```
 
 The Q3 result changes with the bandwidth. The extra clustering disappears at 5 km and appears at 7.5 and 10 km, for the reasons given under Q3 (Diggle, 2013). Q3 is therefore left open. Q4 gives the stronger evidence, because timing differences between blocks cannot create its result.
 
 ## Limitations
 
-- **Satellites miss fires** under cloud and smoke, which is worst at the peak, so September counts are probably low.
-- **NRT data is provisional** and will change when SP data replaces it.
-- **The 1 km grid** can split one fire into two events, and the 7-day rule is a judgement call.
-- **GADM boundaries** are simplified and cut through peat.
-- **Q3 is unresolved**, because one pattern cannot separate fires affecting each other from land that burns easily.
-- **One season.** The watch zone was tested on the same data its settings came from.
-- **OSM is incomplete**, especially for canals.
-- **Many tests.** The Knox grid runs 49 tests, so the main result rests on one pooled test.
+| Limitation | What it could do | How it was handled |
+|---|---|---|
+| Satellites miss fires under cloud and smoke, worst at the peak | September counts are too low, and some days dip | 7-day averages are used, and dips are read as missing data |
+| Data after 30 June is provisional (NRT) with no `type` flag | Counts may change slightly later | A check found no fixed heat sources |
+| A wide pixel can show one fire in two 1 km cells | Extra close pairs on the same day | Same-day pairs are left out, and pairs 2 to 3 km apart are tested alone |
+| One map cannot tell fires affecting each other from land that burns easily | Q3 changes with the bandwidth | Q3 is left open, and Q4 uses time instead |
+| The Q4 box and the watch zone settings came from this season | Results may look better than they are | Q4 is retested on VIIRS and new cells. The watch zone needs another year |
+| The Knox grid runs 49 tests | Some stars may be chance | The conclusion rests on one pooled test |
+| OSM misses many canals, and GADM boundaries are simplified | The canal effect is understated | The canal result is reported as weak |
 
 # Task 5. Geovisualisation and Analytical Interpretation
 
@@ -1556,6 +1627,8 @@ The main figures are listed below, and each one's reading sits directly under it
 
 | Figure | Question | What it shows |
 |---|---|---|
+| @fig-locator | Study area | Why Pulang Pisau was chosen |
+| @fig-places | All | Where the named parts of the regency are |
 | @fig-daily | Q1 | When the season started and peaked |
 | @fig-reburn | Q1 | How often a cell burned again |
 | @fig-halfmonth | Q1 | How burning moved across the regency |
@@ -1620,10 +1693,15 @@ roads <- st_read("data/rawdata/osm/gis_osm_roads_free_1.shp",
 bind_rows(waterways %>% mutate(layer = "waterways"), roads %>% mutate(layer = "roads")) %>%
   mutate(km = as.numeric(st_length(geometry)) / 1000) %>%
   st_drop_geometry() %>%
-  group_by(layer, fclass) %>%
-  summarise(features = n(), km = round(sum(km)), .groups = "drop") %>%
-  arrange(layer, desc(km)) %>%
-  kable()
+  mutate(used_as = case_when(fclass %in% c("canal", "drain") ~ "Canal",
+                             fclass == "river" ~ "River",
+                             layer == "roads" & !fclass %in% c("footway", "steps", "pedestrian") ~ "Road or track",
+                             TRUE ~ "Not used")) %>%
+  group_by(used_as) %>%
+  summarise(types = paste(unique(fclass[order(-km)])[1:min(4, n_distinct(fclass))], collapse = ", "),
+            features = n(), km = round(sum(km)), .groups = "drop") %>%
+  arrange(desc(km)) %>%
+  kable(col.names = c("Used as", "Main OSM types", "Features", "Length (km)"), format.args = list(big.mark = ","))
 ```
 
 **Canals** are OSM canals and drains. **Roads** include all roads, tracks and paths except footways. **Rivers** are a control, because deep peat domes form between rivers.
@@ -1741,10 +1819,12 @@ m_access <- ppm(fire_ppp_u ~ log(d_canal + 0.5) + log(d_road + 0.5) + log(d_rive
                 data = covs)
 
 coef(summary(m_access))[, c("Estimate", "CI95.lo", "CI95.hi", "Zval")] %>%
-  round(3) %>% kable()
-
-tibble(model = c("constant intensity", "access model"),
-       AIC = round(c(AIC(m_null), AIC(m_access)))) %>% kable()
+  as_tibble() %>%
+  mutate(term = c("Intercept", "Distance to canal (log)", "Distance to road (log)", "Distance to river (log)"),
+         meaning = c("", "Fewer fires further from canals", "Fewer fires further from roads",
+                     "More fires further from rivers"), .before = 1) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  kable(col.names = c("Term", "Meaning", "Estimate", "95% CI low", "95% CI high", "z"))
 ```
 
 The 0.5 km added inside each log keeps zero distances usable and matches the pixel size.
@@ -1771,7 +1851,11 @@ l_compare <- tibble(
 
 ```{r}
 #| echo: false
-kable(l_compare)
+l_compare %>%
+  mutate(`null model` = c("CSR, fires placed at random",
+                          "Access model, more fires near roads and canals",
+                          paste0("KDE, fires follow the ", round(sig_scott, 1), " km density map"))) %>%
+  kable(col.names = c("Null model", "Observed L(5) minus 5 (km)", "Top of the envelope at 5 km"))
 ```
 
 The access model fits much better than constant intensity, and its AIC (lower is better) falls from `r format(round(AIC(m_null)), big.mark = ",")` to `r format(round(AIC(m_access)), big.mark = ",")`. But at 5 km, L(r) minus r only drops from `r l_compare[[2]][1]` km under CSR to `r l_compare[[2]][2]` km, against `r l_compare[[2]][3]` km for the KDE null. The observed curve stays far above the access model's envelope at all distances.
@@ -1842,7 +1926,6 @@ watch_sum <- watch %>%
             hotspot_1.5km = sum(hot_1.5) / newly_burning,
             hotspot_3km = sum(hot_3) / newly_burning,
             hotspot_6km = sum(hot_6) / newly_burning)
-kable(watch_sum, digits = 3)
 ```
 
 The next chunk gives a 95 percent interval for the gap, resampling whole weeks because nearby days share fires, and repeats the test for separate new fires.
@@ -1865,7 +1948,6 @@ gap_test <- tibble(
   ci_high = round(100 * quantile(gap_boot, 0.975), 1),
   days_watch_better = days_better, days_hotspot_better = days_worse,
   sign_test_p = signif(binom.test(days_better, days_better + days_worse)$p.value, 2))
-kable(gap_test)
 
 # separate new fires, no other event within 2 km in the previous 7 days
 fxy <- st_coordinates(fires)
@@ -1890,10 +1972,26 @@ strict_sum <- watch_strict %>%
   summarise(land_covered = weighted.mean(land, new), separate_new_fires = sum(new),
             watch_zone = sum(caught) / separate_new_fires,
             hotspot_1.5km = sum(hot) / separate_new_fires)
-kable(strict_sum, digits = 3)
 ```
 
-`land_covered` is the zone's average share of the regency, weighted by new cells per day. The test starts on 4 July and covers `r format(watch_sum$newly_burning, big.mark = ",")` newly burning cells (`r sum(fires$is_new) - watch_sum$newly_burning` fewer than the season total).
+```{r}
+#| label: tbl-watch
+#| tbl-cap: "Share of new fires each zone caught, 4 Jul to 22 Sep 2026. Each hotspot zone covers the same land as that day's watch zone"
+#| echo: false
+pct <- function(x) paste0(round(100 * x), "%")
+tibble(zone = c("Watch zone, 3 km around the last 3 days' fires",
+                "Hotspot zone, 1.5 km KDE of all earlier fires",
+                "Hotspot zone, 3 km KDE", "Hotspot zone, 6 km KDE",
+                "Chance, a zone that ignores fire history"),
+       new_cells = pct(c(watch_sum$watch_zone, watch_sum$hotspot_1.5km, watch_sum$hotspot_3km,
+                         watch_sum$hotspot_6km, watch_sum$land_covered)),
+       separate = c(pct(strict_sum$watch_zone), pct(strict_sum$hotspot_1.5km), "", "",
+                    pct(strict_sum$land_covered))) %>%
+  kable(col.names = c("Zone", paste0("Newly burning cells (", format(watch_sum$newly_burning, big.mark = ","), ")"),
+                      paste0("Separate new fires (", strict_sum$separate_new_fires, ")")))
+```
+
+The chance row is the zone's average share of the regency. The test starts on 4 July and covers `r format(watch_sum$newly_burning, big.mark = ",")` newly burning cells (`r sum(fires$is_new) - watch_sum$newly_burning` fewer than the season total).
 
 ```{r}
 #| echo: false

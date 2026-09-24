@@ -88,3 +88,30 @@ $presentation-h2-font-size: 1.3em;
   color: #8E3B00;
   font-weight: 600;
 }
+
+.reveal .fix {
+  font-size: 0.7em;
+  line-height: 1.38;
+  border-left: 4px solid #D55E00;
+  padding: .1em 0 .1em .65em;
+  margin-bottom: .7em;
+}
+
+.reveal .statrow {
+  display: flex;
+  gap: 1.4em;
+  margin-bottom: .3em;
+}
+
+.reveal .statrow > div {
+  flex: 1;
+}
+
+.reveal .statrow .bignum {
+  font-size: 1.55em;
+  color: #D55E00;
+}
+
+.reveal .statrow .bigcap {
+  margin-bottom: 0;
+}

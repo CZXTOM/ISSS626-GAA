@@ -1,8 +1,9 @@
 ---
 title: "Where and When Pulang Pisau Burned"
-subtitle: "Spatial and spatio-temporal point patterns of the 2026 fire season"
+subtitle: "Where fires burned, when, and whether one fire leads to the next"
 author: "ZeXin Chen"
-date: "September 27, 2026"
+date: "2026-09-27"
+date-format: "D MMMM YYYY"
 format:
   revealjs:
     theme: [default, custom.scss]
@@ -29,7 +30,7 @@ execute:
 ```{r}
 #| label: setup
 pacman::p_load(sf, spatstat, sparr, terra, tmap, tidyverse, knitr)
-knitr::opts_chunk$set(out.width = "100%", dpi = 150)
+knitr::opts_chunk$set(out.width = "100%", dpi = 150, dev.args = list(bg = "transparent"))
 
 prep   <- read_rds("data/rds/prepared.rds")
 so     <- read_rds("data/rds/results_second_order.rds")
@@ -67,8 +68,8 @@ theme_slide <- theme_minimal(base_size = 18) +
 **Part 1, The Problem and the Data**
 
 - Why Pulang Pisau
-- Fixes and checks on the raw satellite data
-- Six questions and their null models
+- Cleaning the raw satellite data
+- Six questions, each checked against chance
 
 **Part 2, First-Order Analysis**
 
@@ -79,12 +80,12 @@ theme_slide <- theme_minimal(base_size = 18) +
 ::: {.column width="50%"}
 **Part 3, Second-Order Analysis**
 
-- Insight 3, clustering in space
-- Insight 4, fires close in space and time
+- Insight 3, how clustered fires are
+- Insight 4, nearby fires follow each other
 
 **Part 4, Bonus**
 
-- Insight 5, a daily watch zone
+- Insight 5, a daily watch zone for patrols
 
 **Part 5, So What**
 
@@ -146,54 +147,65 @@ tm_shape(kal_rate) +
 Pulang Pisau is on the south coast of Central Kalimantan. It had the most fire detections per square kilometre of any regency in Kalimantan this year. Only Palangka Raya city next door was higher. Local reports put burned area at 3,694 hectares by 17 September and PM2.5 at a hazardous 595. The question is not just whether fires cluster, because fire maps always look clustered. It is whether they cluster beyond what the uneven spread of land that burns easily would give.
 :::
 
-## Raw satellite detections needed three fixes and two checks
+## Three fixes turned 50,877 raw detections into 3,065 fire-days
 
 <div class="part">Part 1 · The problem and the data</div>
 
 ::::: columns
-::: {.column width="48%"}
+::: {.column width="52%"}
 ```{r}
-kable(prep$prep_log %>% mutate(rows = format(rows, big.mark = ",")),
-      col.names = c("Step", "Rows"), align = c("l", "r"))
-```
+#| fig-width: 7.6
+#| fig-height: 5.6
+funnel <- prep$prep_log %>%
+  mutate(step = c("Detections over Kalimantan", "Inside Pulang Pisau", "Confidence 30 or above",
+                  "One per 1 km square per day", "1 Jul to 22 Sep 2026"),
+         step = factor(step, levels = rev(step)),
+         last = row_number() == n())
 
-<div class="small">**Event** = one 1 km cell burning on one local day. **Window** = the GADM regency boundary, 1 Jul to 22 Sep 2026. **CRS** = WGS 84 UTM 49S.</div>
+ggplot(funnel, aes(rows, step, fill = last)) +
+  geom_col(width = 0.62) +
+  geom_text(aes(label = format(rows, big.mark = ",")), hjust = -0.12, size = 6.2, fontface = "bold") +
+  scale_fill_manual(values = c("grey75", col_fire), guide = "none") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
+  labs(x = NULL, y = NULL) +
+  theme_slide +
+  theme(panel.grid = element_blank(), axis.text.x = element_blank(),
+        axis.text.y = element_text(size = 17, colour = "grey20"))
+```
 :::
 
-::: {.column width="52%"}
-| Problem | Fix |
-|---|---|
-| FIRMS dates are UTC. 6,026 Aqua night passes land a day early | Convert to local time, UTC+7 |
-| One fire is seen by up to four passes a day | Merge to one event per 1 km cell per day |
-| Low confidence detections include false alarms | Drop confidence under 30 |
-| Data after 30 June is provisional NRT with no `type` flag | Checked, no cell burned on more than 14 of 84 days, so no sign of a static source |
-| About 15% of pixels are wider than 2 km, so one fire can light two cells | Same-day pairs left out of the space-time test |
+::: {.column width="48%"}
+<div class="fix"><b>Wrong day.</b> Satellite times are in UTC. 6,026 night detections were moved to the right local day.</div>
 
-<div class="small">MODIS is the main sensor because VIIRS has gaps from late April to early June and in mid July. VIIRS is rerun as a check.</div>
+<div class="fix"><b>Counted up to four times.</b> Four passes a day can see the same fire, so repeats were merged to one event per 1 km square per day.</div>
+
+<div class="fix"><b>False alarms.</b> Detections with confidence under 30 were dropped.</div>
+
+<div class="small">A <b>fire-day</b> is one 1 km square burning on one local day. MODIS is the main sensor, and VIIRS is rerun as a check.</div>
 :::
 :::::
 
 ::: notes
-The raw file had no missing or impossible coordinates. The real problems were less obvious. FIRMS uses UTC dates, so every Aqua night pass sat a day early. The same fire is seen up to four times a day. Low confidence points include false alarms. And data after 30 June is provisional. After fixing these, 3,065 fire events remain in the 84-day window.
+The raw file had no missing or impossible coordinates, so the real work was elsewhere. Satellite times are in UTC, so night passes landed on the wrong day. The same fire is seen up to four times a day, so repeats were merged. Low confidence detections include false alarms, so they were dropped. That leaves 3,065 fire-days between 1 July and 22 September.
 :::
 
-## Six questions, each tested against a stated null model
+## Six questions, each checked against what chance would give
 
 <div class="part">Part 1 · The problem and the data</div>
 
-| # | Question | Method | Null model |
-|--|------------|------------|------------|
-| Q1 | Where and when was intensity high? | KDE, adaptive KDE, spatio-temporal KDE | none, descriptive |
-| Q2 | More clustered than random? | L function, 99-sim global envelope | CSR |
-| Q3 | Clustered beyond uneven intensity? | Inhomogeneous L function at 5, 7.5 and 10 km | Inhomogeneous Poisson, KDE intensity |
-| Q4 | Close in space also close in time? | Knox style test, 199 shuffles | Days shuffled, then shuffled within 10 km blocks |
-| Q5 | Does access explain where fires burn? | `rhohat()`, Poisson point process model | Inhomogeneous Poisson, road, canal and river intensity |
-| Q6 | Do recent fires beat a hotspot map? | Daily back-test, 4 Jul to 22 Sep | Hotspot zone of the same size from all earlier fires |
+| | Question | Method | Compared with |
+|---|---|---|---|
+| **Q1** | When and where did fires burn? | Kernel density, in space and in space-time | Nothing, it maps where fires were dense |
+| **Q2** | Are fires closer together than random? | L function | Fires placed at random |
+| **Q3** | Still closer once busy areas are allowed for? | Inhomogeneous L function | Random, but following the density map |
+| **Q4** | Do nearby fires also burn close in time? | Knox test | Same places, dates shuffled within 10 km blocks |
+| **Q5** | Do roads and canals explain it? *(bonus)* | Point process model | Random, but more fires near roads and canals |
+| **Q6** | Do recent fires point to new ones? *(bonus)* | Daily back-test | A hotspot map of the same size |
 
-<div class="small">Q5 and Q6 are the bonus analysis. Q6 tests whether the Q4 result is useful beyond a plain hotspot map.</div>
+: {tbl-colwidths="[6,34,26,34]"}
 
 ::: notes
-Every second-order claim in this study is made against a named null model. Q2 uses complete spatial randomness. Q3 uses an inhomogeneous Poisson process, so clustering that comes only from uneven intensity is removed. Q4 shuffles the days, first across the regency and then only within 10 km blocks, so regional differences in timing cannot fake a result. Q5 and Q6 are the bonus parts.
+A fire map always looks clustered, so every question is judged against what chance would give. Q2 compares with fires placed at random. Q3 allows for the fact that some areas burn more. Q4 keeps every location and shuffles only the dates, so it asks about timing alone. Q5 and Q6 are the bonus analysis.
 :::
 
 ## Insight 1. Fire came late and fast, 82% of fire-days fell in September
@@ -201,19 +213,31 @@ Every second-order claim in this study is made against a named null model. Q2 us
 <div class="part">Part 2 · First-order analysis</div>
 
 ```{r}
-#| fig-width: 12
-#| fig-height: 5
+#| fig-width: 13
+#| fig-height: 5.4
 daily <- fires %>% st_drop_geometry() %>% count(date_local, name = "events") %>%
   complete(date_local = seq(as_date("2026-07-01"), as_date("2026-09-22"), by = "day"),
            fill = list(events = 0)) %>%
   mutate(roll7 = as.numeric(stats::filter(events, rep(1 / 7, 7), sides = 1)))
+peak <- slice_max(daily, events, n = 1)
 
 ggplot(daily, aes(date_local, events)) +
-  geom_col(fill = "grey78", width = 1) +
-  geom_line(aes(y = roll7), colour = col_fire, linewidth = 1.4, na.rm = TRUE) +
-  annotate("text", x = as_date("2026-07-20"), y = 200, hjust = 0, size = 6,
-           label = "Grey bars are fire-days per day.\nThe line is the 7-day average.") +
-  scale_x_date(date_breaks = "2 weeks", date_labels = "%d %b") +
+  annotate("rect", xmin = as_date("2026-08-31") + 0.5, xmax = as_date("2026-09-22") + 0.5,
+           ymin = -Inf, ymax = Inf, fill = "#F3E6D3") +
+  annotate("text", x = as_date("2026-09-11"), y = 322, label = "September, 82% of fire-days",
+           size = 5.5, fontface = "bold", colour = "#8E3B00") +
+  geom_col(fill = "grey70", width = 1) +
+  geom_line(aes(y = roll7), colour = col_fire, linewidth = 1.6, na.rm = TRUE) +
+  annotate("text", x = peak$date_local - 1, y = peak$events - 2, hjust = 1,
+           label = paste0(format(peak$date_local, "%d %b"), ", busiest day, ", peak$events), size = 5) +
+  annotate("text", x = as_date("2026-08-19"), y = 60, hjust = 1, size = 5,
+           label = "Rise starts\naround 20 Aug") +
+  annotate("text", x = as_date("2026-07-20"), y = 40, size = 5, colour = col_fire, fontface = "bold",
+           label = "Orange line, 7-day average") +
+  annotate("text", x = as_date("2026-07-20"), y = 22, size = 5, colour = "grey40",
+           label = "Grey bars, fire-days per day") +
+  scale_x_date(date_breaks = "2 weeks", date_labels = "%d %b", expand = expansion(mult = 0.01)) +
+  scale_y_continuous(limits = c(0, 335), breaks = c(0, 100, 200, 300)) +
   labs(x = NULL, y = "Fire-days per day") +
   theme_slide + theme(panel.grid.major.x = element_blank())
 
@@ -222,179 +246,234 @@ reburn_share <- fires %>% st_drop_geometry() %>% arrange(cell, date_local) %>%
   ungroup() %>% summarise(mean(!is.na(gap) & gap <= 7)) %>% pull()
 ```
 
-<div class="small">The 7-day average starts rising around 20 August and peaks in the last week of the record. The one-day drops are most likely cloud or smoke hiding fires. `r round(100 * reburn_share)`% of fire-days were a 1 km cell burning again within a week, most often the next day.</div>
+<div class="small">The one-day dips, such as 16 and 17 Sep, are most likely cloud or smoke hiding fires. `r round(100 * reburn_share)`% of fire-days were a 1 km square burning again within a week, most often the next day, so crews should go back to fires that look out.</div>
 
 ::: notes
-Through July and early August there was very little fire. From about 20 August the 7-day average climbs, and it peaks in the final week of the record. September holds 82 percent of all fire-days. The sharp one-day drops are more likely cloud or smoke than fires stopping, because satellites cannot see through them. Almost half of all fire-days were the same square kilometre burning again within a week, which is why crews need to go back to fires that look out.
+Through July and early August there was very little fire. From about 20 August the 7-day average climbs, and it peaks in the final week of the record. September holds 82 percent of all fire-days. The sharp one-day drops are more likely cloud or smoke than fires stopping. Almost half of all fire-days were the same square kilometre burning again within a week.
 :::
 
-## Insight 2. Burning moved from the narrow neck in July to the southern peat in September
+## Insight 2. Fire spread from the neck to the southern peat
 
 <div class="part">Part 2 · First-order analysis</div>
 
+::::: columns
+::: {.column width="66%"}
 ```{r}
-#| fig-width: 13
-#| fig-height: 7.2
+#| fig-width: 10
+#| fig-height: 6.6
 bw_st <- OS.spattemp(ppp)
 st <- spattemp.density(ppp, h = bw_st[1], lambda = bw_st[2])
-days <- c(196, 213, 227, 238, 254, 261)
-st_stack <- do.call(c, lapply(days, function(d) to_rast(st$z[[as.character(d)]] * npoints(ppp))))
-names(st_stack) <- format(as_date(days - 1, origin = "2026-01-01"), "%d %b")
+days <- c(213, 238, 261)
+labs_d <- c("1 Aug", "26 Aug", "18 Sep")
+st_df <- map2_dfr(days, labs_d, function(d, l) {
+  as.data.frame(to_rast(st$z[[as.character(d)]] * npoints(ppp) * 100), xy = TRUE) %>%
+    setNames(c("x", "y", "v")) %>% mutate(day = l)
+}) %>%
+  mutate(day = factor(day, levels = labs_d),
+         cls = cut(v, c(-Inf, 0.5, 1, 2.5, 5, 10, Inf),
+                   labels = c("under 0.5", "0.5 to 1", "1 to 2.5", "2.5 to 5", "5 to 10", "10 or more")))
+tags <- tibble(day = factor(c("1 Aug", "26 Aug", "18 Sep", "18 Sep"), levels = labs_d),
+               x = c(851, 826, 835.5, 870) * 1000, y = c(9745, 9800, 9640, 9716) * 1000,
+               lab = c("Neck", "Northern\nstrip", "South-central\npeat", "East\nedge"),
+               hj = c(0, 1, 0.5, 1))
 
-tm_shape(st_stack) +
-  tm_raster(col.scale = tm_scale_intervals(style = "fixed",
-              breaks = c(0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.2),
-              labels = c("under 0.005", "0.005 to 0.01", "0.01 to 0.025",
-                         "0.025 to 0.05", "0.05 to 0.1", "0.1 or more"),
-              values = "brewer.oranges"),
-            col.legend = tm_legend(title = "Fire-days per km²\nper day",
-              position = tm_pos_out("right", "center")),
-            col.free = FALSE) +
-  tm_shape(pp_sf) + tm_borders(col = "grey30") +
-  tm_facets(ncol = 6) +
-  tm_layout(panel.label.size = 1.3, panel.label.bg.color = "white",
-            bg.color = "#FDFAF3", outer.bg.color = "#FDFAF3",
-            legend.text.size = 1.3, legend.title.size = 1.4,
-            outer.margins = 0, frame = FALSE)
-```
-
-<div class="small">Oversmoothing bandwidths `r round(bw_st[1], 1)` km and `r round(bw_st[2], 1)` days. The report finds the same peak at 2 km, 7.5 km and adaptive bandwidths.</div>
-
-::: notes
-This is spatio-temporal kernel density at six dates. In July the main warm spot is the narrow neck of the regency. By late August the northern strip and the south warm up. By mid September the south-central peat has the highest density, with a second hot spot on the east edge. The report checks this with three different spatial bandwidths and the peak stays in the same place.
-:::
-
-## Insight 3. Fires cluster in space, but a map alone cannot say why
-
-<div class="part">Part 3 · Second-order analysis</div>
-
-::::: columns
-::: {.column width="62%"}
-```{r}
-#| fig-width: 7.5
-#| fig-height: 5
-ggplot(so$env_df, aes(r)) +
-  geom_ribbon(aes(ymin = lo, ymax = hi), fill = col_band, alpha = 0.4) +
-  geom_line(aes(y = ref), colour = col_accent, linetype = "dashed", linewidth = 0.9) +
-  geom_line(aes(y = obs), colour = "black", linewidth = 1.2) +
-  facet_wrap(~ test, scales = "free_y",
-             labeller = labeller(test = function(x) str_wrap(x, 28))) +
-  labs(x = "Distance r (km)", y = "L(r) minus r (km)") +
-  theme_slide
+ggplot(st_df) +
+  geom_raster(aes(x, y, fill = cls)) +
+  geom_sf(data = pp_sf, fill = NA, colour = "grey30", linewidth = 0.4) +
+  geom_label(data = tags, aes(x, y, label = lab, hjust = hj), size = 4.6, fontface = "bold",
+             lineheight = 0.85, label.size = 0, fill = alpha("white", 0.8)) +
+  scale_fill_manual(values = c("#FEEDDE", "#FDD0A2", "#FDAE6B", "#FD8D3C", "#E6550D", "#A63603"),
+                    drop = FALSE, name = "Fire-days per\n100 km² per day") +
+  facet_wrap(~ day, nrow = 1) +
+  coord_sf(crs = 32749, datum = NA) +
+  labs(x = NULL, y = NULL) +
+  theme_void(base_size = 17) +
+  theme(strip.text = element_text(face = "bold", size = 19, margin = margin(b = 6)),
+        legend.position = "bottom", legend.title = element_text(size = 14),
+        legend.text = element_text(size = 13),
+        plot.background = element_rect(fill = "#FDFAF3", colour = NA)) +
+  guides(fill = guide_legend(nrow = 1, title.position = "left"))
 ```
 :::
 
-::: {.column width="38%"}
-```{r}
-bonus$l_compare %>%
-  rename(`Null model` = 1, `Observed at 5 km` = 2, `Envelope top` = 3) %>%
-  mutate(`Null model` = c("CSR", "Access (OSM)", "KDE 7.5 km")) %>%
-  kable()
-```
+::: {.column width="34%"}
+<div class="fix"><b>July.</b> Almost all burning was just below the narrow neck.</div>
 
-<div class="small">Black is observed, orange the 95% global envelope. Fires are far more clustered than random, and an access model of roads, canals and rivers barely changes this.
+<div class="fix"><b>Late August.</b> New fires started in the north, on the east edge and on the south coast.</div>
 
-After allowing for density, the answer depends on the bandwidth, inside the envelope at 5 km and above it at 7.5 and 10 km. So the space-time test gives the stronger evidence.</div>
+<div class="fix"><b>September.</b> The south-central peat burned hardest, with a second hot spot on the east edge.</div>
+
+<div class="small">Spatio-temporal kernel density. The same peak appears with 2 km, 7.5 km and adaptive bandwidths in the report.</div>
 :::
 :::::
 
 ::: notes
-Against complete spatial randomness the fires are hugely clustered, but that mostly repeats what the density map shows. Against a KDE intensity, the answer depends on the bandwidth. With 7.5 or 10 km there is extra clustering, with 5 km there is not. Roads, canals and rivers barely reduce the clustering. One map cannot tell fires affecting each other apart from land that burns easily, or from the same land burning again, so the space-time test gives the stronger evidence.
+This is spatio-temporal kernel density on three dates. In July the only warm spot is just below the narrow neck of the regency. By late August the northern strip and the south warm up. By mid September the south-central peat has by far the highest density, with a second hot spot on the east edge. The report checks this with three different bandwidths and the peak stays in the same place, so this is where crews and water points belong.
 :::
 
-## Insight 4. Fire pairs under 3 km and 1 to 3 days apart are `r so$sens_tab[["Q4 ratio, under 3 km, 1 to 3 days"]][2]` times as common as with random dates
+## Insight 3. Fires cluster far more than chance, but a map cannot say why
 
 <div class="part">Part 3 · Second-order analysis</div>
 
 ::::: columns
-::: {.column width="60%"}
+::: {.column width="58%"}
 ```{r}
-#| fig-width: 7.5
-#| fig-height: 5.2
-so$kx %>% filter(str_detect(test, "Step 2")) %>%
-  ggplot(aes(lag, dist, fill = pmin(pmax(log2(ratio), -2), 2))) +
+#| fig-width: 8.4
+#| fig-height: 5.6
+lc <- bonus$l_compare %>%
+  setNames(c("model", "obs", "hi")) %>%
+  mutate(model = factor(c("Fires placed at random", "Random, more fires near\nroads and canals",
+                          "Random, following the\n7.5 km density map"),
+                        levels = rev(c("Fires placed at random", "Random, more fires near\nroads and canals",
+                                       "Random, following the\n7.5 km density map"))))
+
+ggplot(lc, aes(y = model)) +
+  geom_segment(aes(x = 0, xend = hi, yend = model), linewidth = 9, colour = "grey80") +
+  geom_segment(aes(x = hi, xend = obs, yend = model), linewidth = 0.8, colour = "grey45",
+               linetype = "dotted") +
+  geom_point(aes(x = obs), size = 7, colour = col_fire) +
+  geom_text(aes(x = obs, label = sprintf("%.1f", obs)), vjust = -1.3, size = 6, fontface = "bold",
+            colour = col_fire) +
+  annotate("text", x = 0.02, y = 0.35, hjust = 0, size = 5, colour = "grey35",
+           label = "Grey bar = range from chance") +
+  annotate("text", x = 6.5, y = 0.35, hjust = 1, size = 5, colour = col_fire, fontface = "bold",
+           label = "Dot = the real fires") +
+  scale_x_continuous(limits = c(0, 6.6), expand = expansion(mult = c(0, 0.02))) +
+  scale_y_discrete(expand = expansion(add = c(1, 0.6))) +
+  labs(x = "Extra closeness at 5 km, L(5) minus 5 (km)", y = NULL) +
+  theme_slide +
+  theme(panel.grid.major.y = element_blank(), axis.text.y = element_text(size = 16, colour = "grey15"))
+```
+:::
+
+::: {.column width="42%"}
+<div class="fix"><b>Far from random.</b> The nearest fire is about half as far away as chance would put it (Clark-Evans ratio 0.48).</div>
+
+<div class="fix"><b>Roads and canals barely help.</b> Allowing for access closes little of the gap.</div>
+
+<div class="fix"><b>The density map decides.</b> With a 5 km map instead of 7.5 km, the gap disappears. One map cannot tell fires affecting each other from land that simply burns easily, so time is needed.</div>
+:::
+:::::
+
+::: notes
+The L function asks whether fires have more neighbours than chance would give. Against fires placed at random the answer is a clear yes. Allowing for roads and canals barely changes that. Allowing for the density map shrinks the gap, and with a 5 kilometre map it disappears. So space alone cannot say whether fires affect each other or whether some land simply burns easily. The next slide adds time.
+:::
+
+## Insight 4. Fires under 3 km apart follow each other within 1 to 3 days
+
+<div class="part">Part 3 · Second-order analysis</div>
+
+::::: columns
+::: {.column width="58%"}
+```{r}
+#| fig-width: 7.6
+#| fig-height: 5.9
+kx2 <- so$kx %>% filter(str_detect(test, "Step 2"))
+ggplot(kx2, aes(lag, dist, fill = pmin(pmax(log2(ratio), -2), 2))) +
   geom_tile(colour = "white", linewidth = 0.8) +
-  geom_text(aes(label = paste0(sprintf("%.1f", ratio), sig)), size = 4.5) +
+  geom_text(aes(label = sprintf("%.1f", ratio)), size = 4.6) +
+  annotate("rect", xmin = 1.5, xmax = 3.5, ymin = 0.5, ymax = 3.5,
+           fill = NA, colour = "black", linewidth = 1.4) +
   scale_fill_gradient2(low = col_accent, mid = "white", high = col_fire, midpoint = 0,
-                       limits = c(-2, 2), breaks = -2:2,
-                       labels = c("1/4", "1/2", "1", "2", "4"),
-                       name = "Observed /\nexpected") +
-  labs(x = "Days apart", y = "Distance apart (km)") +
+                       limits = c(-2, 2), guide = "none") +
+  labs(x = "Days apart", y = "Distance apart (km)",
+       caption = "Black box, the main test. Each value is observed pairs ÷ pairs expected when\ndates are shuffled within 10 km blocks. Orange, more than chance. Blue, fewer") +
+  coord_cartesian(clip = "off") +
   theme_slide + theme(panel.grid = element_blank(),
-                      axis.text.x = element_text(angle = 35, hjust = 1))
+                      plot.caption = element_text(size = 12.5, colour = "grey35", hjust = 0),
+                      axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 :::
 
-::: {.column width="40%"}
-<div class="small">Dates are shuffled only within 10 km blocks, so every location and each block's fire season stay the same. * marks cells that beat 95% of 199 shuffles. Same-day pairs are left out of the pooled test, because one wide pixel can split a fire in two.</div>
+::: {.column width="42%"}
+<div class="bignum">1.33×</div>
+<div class="bigcap">as many close pairs as chance, p = 0.005, even with each 10 km block keeping its own fire season</div>
 
 ```{r}
-so$sens_tab %>%
+#| fig-width: 5.6
+#| fig-height: 3
+chk <- so$sens_tab %>%
   filter(!is.na(`Q4 ratio, under 3 km, 1 to 3 days`)) %>%
-  transmute(Data = c("MODIS", "VIIRS", "Newly burning cells", "Pairs 2 to 3 km only"), Events = events,
-            Ratio = `Q4 ratio, under 3 km, 1 to 3 days`, p = `Q4 p-value`) %>%
-  kable()
+  transmute(check = factor(c("MODIS, main", "VIIRS satellite", "New fires only", "Pairs 2 to 3 km only"),
+                           levels = rev(c("MODIS, main", "VIIRS satellite", "New fires only", "Pairs 2 to 3 km only"))),
+            ratio = `Q4 ratio, under 3 km, 1 to 3 days`)
+ggplot(chk, aes(ratio, check)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_segment(aes(x = 1, xend = ratio, yend = check), colour = "grey70", linewidth = 1.2) +
+  geom_point(size = 4.5, colour = col_fire) +
+  geom_text(aes(label = sprintf("%.2f", ratio)), hjust = -0.45, size = 5) +
+  annotate("text", x = 1.01, y = 0.35, hjust = 0, size = 4.2, colour = "grey35", label = "chance = 1") +
+  scale_y_discrete(expand = expansion(add = c(0.9, 0.5))) +
+  scale_x_continuous(limits = c(0.97, 1.47)) +
+  labs(x = NULL, y = NULL, title = "Holds in every check") +
+  coord_cartesian(clip = "off") +
+  theme_slide + theme(panel.grid = element_blank(), axis.text.x = element_blank(),
+                      plot.title = element_text(size = 16, face = "bold", colour = "grey20"),
+                      axis.text.y = element_text(size = 14.5, colour = "grey15"))
 ```
-
-<div class="small">The result holds for a second satellite, for newly burning cells, and for pairs 2 to 3 km apart. It could still be one fire front moving across part of a block.</div>
 :::
 :::::
 
 ::: notes
-This is the strongest finding. Pairs of fires under 3 kilometres and 1 to 3 days apart are about 1.33 times as common as shuffled dates give, even when each 10 kilometre block keeps its own fire season. It holds for a second sensor, for newly burning cells and for pairs 2 to 3 kilometres apart. The test cannot tell spread from one person lighting several plots, or from a fire front crossing part of a block, but all of these call for fast follow-up nearby.
+This is the strongest finding. Pairs of fires under 3 kilometres and 1 to 3 days apart are about a third more common than shuffled dates give, even when each 10 kilometre block keeps its own fire season. It holds for a second satellite, for newly burning cells only, and for pairs 2 to 3 kilometres apart. The test cannot tell spread from one person lighting several plots, but both call for fast follow-up nearby.
 :::
 
-## Insight 5. A 3-day watch zone beat a same-size hotspot map, `r round(100 * bonus$watch_sum$watch_zone)`% to `r round(100 * max(bonus$watch_sum$hotspot_1.5km, bonus$watch_sum$hotspot_3km, bonus$watch_sum$hotspot_6km))`%
+## Insight 5. Watching near recent fires beat a hotspot map
 
 <div class="part">Part 4 · Bonus</div>
 
 ::::: columns
-::: {.column width="36%"}
+::: {.column width="30%"}
 ```{r}
-#| fig-width: 5.5
-#| fig-height: 7.5
+#| fig-width: 4.4
+#| fig-height: 7.6
 tm_shape(pp_sf) +
   tm_polygons(fill = col_land, col = "grey50") +
   tm_shape(bonus$ex_zone) +
   tm_polygons(fill = col_band, fill_alpha = 0.45, col = col_band) +
   tm_shape(bonus$ex_new) +
-  tm_dots(fill = "where", size = 0.35,
+  tm_dots(fill = "where", size = 0.4,
           fill.scale = tm_scale_categorical(values = c("inside the zone" = col_fire,
                                                        "outside the zone" = col_accent)),
-          fill.legend = tm_legend(title = "Newly burning, 18 Sep",
+          fill.legend = tm_legend(title = "New fires, 18 Sep",
                                   position = tm_pos_out("center", "bottom"))) +
   tm_layout(bg.color = "#FDFAF3", outer.bg.color = "#FDFAF3", frame = FALSE,
-            legend.text.size = 1.1, legend.title.size = 1.2)
+            legend.text.size = 1.2, legend.title.size = 1.3)
 ```
 :::
 
-::: {.column width="64%"}
-```{r}
-#| fig-width: 8
-#| fig-height: 5
-watch_lab <- bonus$watch_week %>% filter(!is.na(share)) %>% group_by(measure) %>%
-  slice_max(week, n = 1) %>% ungroup() %>%
-  mutate(label = c("Watch zone", "Hotspot zone,\nsame area", "Share of land\nin the zone")[as.integer(measure)])
+::: {.column width="70%"}
+<div class="statrow">
+<div><div class="bignum">`r round(100 * bonus$watch_sum$watch_zone)`%</div><div class="bigcap">of new fires caught by the watch zone</div></div>
+<div><div class="bignum" style="color:#6B6B6B">`r round(100 * max(bonus$watch_sum$hotspot_1.5km, bonus$watch_sum$hotspot_3km, bonus$watch_sum$hotspot_6km))`%</div><div class="bigcap">by the best hotspot map of the same size</div></div>
+<div><div class="bignum" style="color:#0072B2">`r round(100 * bonus$watch_sum$land_covered)`%</div><div class="bigcap">of the regency covered, on average</div></div>
+</div>
 
-ggplot(bonus$watch_week, aes(week, share, colour = measure, linetype = measure)) +
-  geom_line(linewidth = 1.3, na.rm = TRUE) + geom_point(size = 3, na.rm = TRUE) +
-  geom_text(data = watch_lab, aes(label = label), hjust = 0, nudge_x = 2.5,
-            size = 5, lineheight = 0.9, fontface = "bold") +
-  scale_colour_manual(values = c(col_fire, "grey35", col_accent), guide = "none") +
+```{r}
+#| fig-width: 10
+#| fig-height: 4.1
+ww <- bonus$watch_week %>% filter(week >= as_date("2026-08-01"))
+watch_lab <- ww %>% filter(!is.na(share)) %>% group_by(measure) %>%
+  slice_max(week, n = 1) %>% ungroup() %>%
+  mutate(label = c("Watch zone", "Hotspot map", "Land covered")[as.integer(measure)])
+
+ggplot(ww, aes(week, share, colour = measure, linetype = measure)) +
+  geom_line(linewidth = 1.4, na.rm = TRUE) + geom_point(size = 3.2, na.rm = TRUE) +
+  geom_text(data = watch_lab, aes(label = label), hjust = 0, nudge_x = 2, size = 5.3, fontface = "bold") +
+  scale_colour_manual(values = c(col_fire, "grey40", col_accent), guide = "none") +
   scale_linetype_manual(values = c("solid", "solid", "dashed"), guide = "none") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  scale_x_date(date_labels = "%d %b", breaks = as_date(c("2026-07-01", "2026-08-01", "2026-09-01")),
-               expand = expansion(mult = c(0.03, 0.32))) +
-  labs(x = "Week starting", y = "Newly burning cells caught") +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1), breaks = c(0, 0.5, 1)) +
+  scale_x_date(date_labels = "%d %b", expand = expansion(mult = c(0.02, 0.22))) +
+  labs(x = "Week starting", y = "New fires caught") +
   theme_slide
 ```
 
-<div class="small">Watch zone = the area within 3 km of the past three days' fires. Hotspot zone = the same amount of land on the densest part of a KDE of all earlier fires. Lines show the share of newly burning cells caught, for weeks with at least 15.</div>
+<div class="small">Watch zone, the land within 3 km of the last three days' fires. Hotspot map, the same amount of land where the most fires had burned so far.</div>
 :::
 :::::
 
 ::: notes
-This tests whether the space-time result is actually useful. Each morning, draw 3 kilometres around every fire of the past three days. A crew could instead watch the places that have burned most so far, using a hotspot map of the same size. Over the season the watch zone caught clearly more newly burning cells than the hotspot map, at every bandwidth tried. The left map shows 18 September. It is one season, so it needs testing on another year.
+This turns the space-time result into a daily rule. Each morning, draw 3 kilometres around every fire of the past three days, and send patrols there first. Over the season that zone caught 76 percent of newly burning cells while covering about 15 percent of the regency. A hotspot map of the same size, built from where the most fires had burned so far, caught at most 64 percent. It is one season, so it needs testing on another year.
 :::
 
 ## Key findings and their limits {.smaller}
