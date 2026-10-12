@@ -11,6 +11,7 @@ format:
     fig-width: 8
     fig-height: 6
     fig-align: center
+    code-overflow: wrap
 crossref:
   title-delim: "."
 execute:
@@ -31,20 +32,36 @@ execute:
 <style>
 .th-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.9rem;margin:1.4rem 0 1.8rem}
 .th-stat{background:#F5EFE3;border-radius:8px;border-top:3px solid #D55E00;padding:.85rem 1rem 1rem}
-.th-stat .k{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6B6B6B;white-space:nowrap}
+.th-stat .k{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6B6B6B;line-height:1.35;min-height:2em}
 .th-stat .n{font-family:Newsreader,Georgia,serif;font-size:2.4rem;line-height:1.1;color:#2B2B2B;margin:.15rem 0 .35rem;white-space:nowrap}
 .th-stat .c{font-size:.85rem;line-height:1.4;color:#4A4A4A}
 .qcard dl{display:grid;grid-template-columns:10.5rem 1fr;gap:.55rem 1.2rem;background:#F5EFE3;border-left:3px solid #D55E00;border-radius:8px;padding:1rem 1.2rem;margin:1.1rem 0 1.5rem}
 .qcard dt{font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#7A4A22;padding-top:.2rem}
 .qcard dd{margin:0;font-size:.95rem;line-height:1.55}
 .read{border-left:3px solid #D55E00;padding:.2rem 0 .2rem 1rem;margin:1rem 0 1.6rem}
-@media (max-width:640px){.qcard dl{grid-template-columns:1fr}.qcard dd{margin-bottom:.4rem}}
+@media (max-width:640px){.qcard dl{grid-template-columns:1fr}.qcard dd{margin-bottom:.4rem}
+  main table{display:block;overflow-x:auto;max-width:100%}
+  .pagefacts .fact{white-space:normal;max-width:100%}}
+/* code blocks with a caption showed the R tag twice, because Quarto now wraps the code in an extra div */
+.code-with-filename div.sourceCode::before{content:none}
+.code-with-filename div.sourceCode{margin-top:0;border-radius:0 0 9px 9px}
+/* breathing room between code, tables and the text that follows */
+div.sourceCode{margin-bottom:1.2rem}
+main table{margin:1.2rem 0 1.6rem}
+main .cell-output-display table.table{margin:.4rem 0 1.6rem}
+/* R tables size to their content, without zebra stripes, so they match the written tables */
+.cell-output-display table{width:auto;min-width:55%;max-width:100%}
+.cell-output-display .table-striped>tbody>tr:nth-of-type(odd)>*{--bs-table-accent-bg:transparent;--bs-table-bg-type:transparent;background:transparent}
+.cell-output-display td,.cell-output-display th{padding:8px 14px}
+/* plot tabs, one frame around the figure rather than two */
+.panel-tabset .tab-content{border:0;padding:.6rem 0 0}
+.panel-tabset .quarto-figure{margin-top:.6rem}
 </style>
 <div class="th-stats">
-  <div class="th-stat"><div class="k">Armed conflict events</div><div class="n">54,000</div><div class="c">battles, explosions and attacks on civilians in 330 townships</div></div>
+  <div class="th-stat"><div class="k">Conflict events</div><div class="n">54,000</div><div class="c">battles, explosions and attacks on civilians in 330 townships</div></div>
   <div class="th-stat"><div class="k">Hot spot townships</div><div class="n">40</div><div class="c">hold 31 percent of all events, 31 of them in the Dry Zone</div></div>
   <div class="th-stat"><div class="k">Military air strikes</div><div class="n">23×</div><div class="c">more in 2024 than in 2021, and 2025 passed 2024 within nine months</div></div>
-  <div class="th-stat"><div class="k">Changing townships</div><div class="n">151</div><div class="c">with a significant rise or fall in hot spot strength</div></div>
+  <div class="th-stat"><div class="k">Townships with a trend</div><div class="n">151</div><div class="c">with a significant rise or fall in hot spot strength</div></div>
 </div>
 ```
 
@@ -73,6 +90,8 @@ The brief sets two objectives. They lead to four questions, each answered in one
 | 2. Where, how fast and in what pattern violence evolves | Q3. Where are hot and cold spots emerging, growing or fading? | Task 3 | Mann-Kendall test, emerging hot spot analysis |
 | 1, extended to the kind of violence | Q4. Do neighbouring townships face the same *kind* of violence, and where does the mix stand out? | Bonus | Multivariate local Geary's c |
 
+: {tbl-colwidths="[24,38,10,28]"}
+
 Q4 matters because a township hit by air strikes and one hit by ground battles need different help, even if their totals look the same.
 
 ::: {.callout-tip}
@@ -95,11 +114,13 @@ Q4 matters because a township hit by air strikes and one hit by ground battles n
 | **sf** | Reads the township boundary, turns events into points, reprojects and joins them |
 | **sfdep** | Neighbours, weights, local Moran's I, Gi\*, local Geary's c, the space-time cube and EHSA |
 | **spdep** | Global Getis-Ord G and the neighbour summaries |
-| **tmap** | All maps |
-| **tidyverse** | Reading, filtering, counting and the non-map charts |
+| **tmap** | All other maps |
+| **tidyverse** | Reading, filtering, counting, the charts and the year-by-year map |
 | **Kendall** | The Mann-Kendall trend test |
 | **modifiedmk** | A Mann-Kendall test corrected for serial correlation, used as a check |
 | **knitr** | Tables |
+
+: {tbl-colwidths="[22,78]"}
 
 ```{r}
 pacman::p_load(sf, sfdep, spdep, tmap, tidyverse, Kendall, modifiedmk, knitr)
@@ -127,6 +148,8 @@ type_cols <- c(Battles = "#D55E00", `Explosions and remote violence` = "#0072B2"
 | ACLED event data, Myanmar | Armed Conflict Location & Event Data Project, file provided on eLearn | 1 Jan 2021 to 30 Sep 2025, 87,109 events | One row per event, with date, type, actors, coordinates and precision codes |
 | Myanmar Township Boundaries | Myanmar Information Management Unit (MIMU) GeoNode, geonode.themimu.info | 330 townships | Polygons with MIMU place codes (`TS_PCODE`) for state, district and township |
 
+: {tbl-colwidths="[20,28,22,30]"}
+
 The raw files sit in `data/rawdata/acled` and `data/rawdata/mimu`. The code reads whichever shapefile is in the MIMU folder, so a newer boundary release can be dropped in without changing any code.
 
 ### Study design
@@ -140,6 +163,8 @@ The raw files sit in `data/rawdata/acled` and `data/rawdata/mimu`. The code read
 | Variables | Counts of battles, explosions and remote violence, violence against civilians, and their total | The three ACLED types that are armed conflict |
 | CRS | WGS 84 / UTM zone 47N, EPSG 32647 | Covers most of Myanmar in metres. The far west lies in zone 46, but neighbours are found by ranking distances, and the rankings barely change |
 
+: {tbl-colwidths="[16,32,52]"}
+
 ACLED codes six event types. Only three are armed conflict.
 
 | ACLED event type | Kept? | Why |
@@ -150,6 +175,8 @@ ACLED codes six event types. Only three are armed conflict.
 | Protests | No | Mostly peaceful, so not armed conflict |
 | Riots | No | Mob violence rather than armed conflict |
 | Strategic developments | No | Not violent events, such as arrests or base handovers |
+
+: {tbl-colwidths="[30,12,58]"}
 
 ## Data Preparation and Quality Assessment
 
@@ -166,6 +193,8 @@ The brief warns that data are like a grassland full of land mines. The table lis
 | 7 | "Air/drone strike" mixes military aircraft and resistance drones | One label hides two opposite sides of the war | Split by the actor who carried it out | Military air strikes analysed on their own |
 | 8 | 10 townships have no event, and a third of township-quarters are empty | Dropping them would bias every statistic | Keep them as real zeros and fill every quarter | A complete space-time cube |
 | 9 | sfdep's emerging hot spot function can attach results to the wrong township | The map would be wrong without any warning | Sort the boundary by township code before building the cube | Checked against an independent trend test |
+
+: {tbl-colwidths="[5,24,25,24,22]"}
 
 ### Reading the township boundary
 
@@ -388,14 +417,40 @@ Each choice below is explained again where it is used.
 | Time step | Quarter | Enough events per bin, and 19 points for a trend test | Short bursts inside a quarter are smoothed |
 | Trend test | Mann-Kendall on Gi\* | Set by the brief | It assumes no serial correlation, which conflict series break. Checked with a corrected test |
 
+: {tbl-colwidths="[14,26,30,30]"}
+
 ## Where and When Conflict Happened
 
 Five views answer Q1 before any statistics. They show where the counts are high, how they changed, and why each type of violence needs a look of its own.
 
+Every map in this report shares the same state borders and state names, so these layers are built once. A few names in the crowded south are nudged a short way off their centre so that they do not overlap, each name sits on a pale box so it stays readable on dark fills, and all map text is enlarged by a fifth.
+
+```{r}
+#| filename: "shared map layers"
+mmr_st <- mmr_ts %>% group_by(ST) %>% summarise()
+
+nudge <- tribble(~ST, ~dx_km, ~dy_km,
+  "Ayeyarwady", -45, -15,   "Yangon", 15, -40,      "Mon", -15, -45,
+  "Bago (West)", -35, 25,   "Bago (East)", 30, -15, "Kayin", 45, 10,
+  "Shan (South)", -25, 0,   "Shan (East)", 40, 0,   "Tanintharyi", 80, 0)
+
+st_lab <- st_point_on_surface(mmr_st) %>%
+  mutate(x = st_coordinates(.)[, 1], y = st_coordinates(.)[, 2]) %>%
+  st_drop_geometry() %>%
+  left_join(nudge, by = "ST") %>%
+  mutate(x = x + coalesce(dx_km, 0) * 1000, y = y + coalesce(dy_km, 0) * 1000) %>%
+  st_as_sf(coords = c("x", "y"), crs = st_crs(mmr_st))
+
+state_borders <- tm_shape(mmr_st) + tm_borders(col = "grey20", lwd = 0.8)
+state_names   <- tm_shape(st_lab) +
+  tm_text("ST", size = 0.55, col = "grey5", bgcol = "white", bgcol_alpha = 0.65)
+
+# larger text on every map, and keep titles at full size instead of shrinking them to the map's width
+tmap_options(scale = 1.2, component.autoscale = FALSE)
+```
+
 ```{r}
 #| echo: false
-mmr_st <- mmr_ts %>% group_by(ST) %>% summarise()
-st_lab <- st_point_on_surface(mmr_st)
 dz <- c("Sagaing", "Magway", "Mandalay")
 f_pct <- function(x) paste0(round(100 * x), " percent")
 by_state <- mmr_conflict %>% st_drop_geometry() %>% group_by(ST) %>% summarise(total = sum(total))
@@ -410,7 +465,8 @@ top10 <- mmr_conflict %>% st_drop_geometry() %>% slice_max(total, n = 10)
 ```{r}
 #| label: fig-total
 #| fig-cap: "Armed conflict events by township, 1 Jan 2021 to 30 Sep 2025. Grey lines are state and region boundaries. Data from ACLED and MIMU"
-#| fig-height: 10
+#| fig-width: 6.5
+#| fig-height: 8.5
 #| echo: false
 tm_shape(mmr_conflict) +
   tm_polygons(fill = "total",
@@ -418,10 +474,11 @@ tm_shape(mmr_conflict) +
                 breaks = c(0, 1, 26, 101, 251, 501, 1100),
                 labels = c("0", "1 to 25", "26 to 100", "101 to 250", "251 to 500", "501 or more"),
                 values = "brewer.oranges"),
-              fill.legend = tm_legend(title = "Armed conflict\nevents", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Armed conflict events", position = tm_pos_in("left", "bottom"),
+                                      frame = FALSE),
               col = "white", lwd = 0.2) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.8) +
-  tm_shape(st_lab) + tm_text("ST", size = 0.55, col = "grey10") +
+  state_borders + state_names +
+  tm_layout(frame = FALSE) +
   tm_title("Conflict was heaviest in the central Dry Zone", size = 1.1, fontface = "bold")
 ```
 
@@ -454,16 +511,16 @@ trend_lab <- trend %>% filter(time == 19) %>%
 
 ggplot(trend, aes(time, n, colour = type)) +
   annotate("rect", xmin = 11.5, xmax = 12.5, ymin = -Inf, ymax = Inf, fill = "#F3E6D3") +
-  annotate("text", x = 12, y = 2080, label = "Operation 1027\nOct 2023", size = 3.3, lineheight = 0.9) +
+  annotate("text", x = 12, y = 2080, label = "Operation 1027\nOct 2023", size = 4, lineheight = 0.9) +
   geom_line(linewidth = 1.2) + geom_point(size = 1.8) +
-  geom_text(data = trend_lab, aes(label = type), hjust = 0, nudge_x = 0.3, size = 3.4, fontface = "bold") +
+  geom_text(data = trend_lab, aes(label = type), hjust = 0, nudge_x = 0.3, size = 4, fontface = "bold") +
   scale_colour_manual(values = type_cols, guide = "none") +
   scale_x_continuous(breaks = c(1, 5, 9, 13, 17), labels = c("2021", "2022", "2023", "2024", "2025"),
-                     expand = expansion(mult = c(0.02, 0.42))) +
+                     expand = expansion(mult = c(0.02, 0.55))) +
   scale_y_continuous(limits = c(0, 2180), labels = scales::comma) +
-  labs(title = "Conflict peaked in late 2023, and explosions have outnumbered battles since",
+  labs(title = "Conflict peaked in late 2023,\nand explosions have outnumbered battles since",
        x = NULL, y = "Events per quarter") +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank())
 ```
 
@@ -493,7 +550,7 @@ peak_q <- slice_max(q_tot, n, n = 1)
 ```{r}
 #| label: fig-remote
 #| fig-cap: "Explosions and remote violence by kind and year. Air strikes are split by who carried them out. 2025 covers January to September only. Data from ACLED"
-#| fig-height: 4.4
+#| fig-height: 5
 #| fig-width: 9
 #| echo: false
 remote_mix <- conflict_sf %>% st_drop_geometry() %>%
@@ -511,9 +568,9 @@ ggplot(remote_mix, aes(year, n, fill = weapon)) +
   geom_col(width = 0.7) +
   scale_fill_manual(values = c("grey72", "#E69F00", "#56B4E9", "#0072B2"), name = NULL) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Bombs gave way to the military's air strikes, which rose about 23-fold by 2024",
+  labs(title = "Bombs gave way to the military's air strikes,\nwhich rose about 23-fold by 2024",
        x = NULL, y = "Events") +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(plot.title = element_text(face = "bold"), legend.position = "top",
         panel.grid.major.x = element_blank(), panel.grid.minor = element_blank())
 ```
@@ -542,29 +599,31 @@ rm_n <- function(y, w) remote_mix$n[remote_mix$year == y & remote_mix$weapon == 
 
 ```{r}
 #| label: fig-types
-#| fig-cap: "Armed conflict events by township and type, 1 Jan 2021 to 30 Sep 2025. Data from ACLED and MIMU"
-#| fig-height: 6.5
-#| fig-width: 11
+#| fig-cap: "Armed conflict events by township and type, 1 Jan 2021 to 30 Sep 2025. Panels are labelled Battles, Explosions (explosions and remote violence) and Attacks on civilians (violence against civilians). Data from ACLED and MIMU"
+#| fig-height: 7
+#| fig-width: 10
 #| echo: false
 types_long <- mmr_conflict %>%
   select(TS_PCODE, battles, remote, civilians) %>%
   pivot_longer(c(battles, remote, civilians), names_to = "type", values_to = "events") %>%
   mutate(type = factor(recode(type, battles = "Battles", remote = "Explosions and remote violence",
                               civilians = "Violence against civilians"),
-                       levels = c("Battles", "Explosions and remote violence", "Violence against civilians")))
+                       levels = c("Battles", "Explosions and remote violence", "Violence against civilians"),
+                       labels = c("Battles", "Explosions", "Attacks on civilians")))   # short panel labels
 
 tm_shape(types_long) +
   tm_polygons(fill = "events",
               fill.scale = tm_scale_intervals(style = "fixed", breaks = c(0, 1, 11, 51, 101, 251, 700),
                 labels = c("0", "1 to 10", "11 to 50", "51 to 100", "101 to 250", "251 or more"),
                 values = "brewer.oranges"),
-              fill.legend = tm_legend(title = "Events", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Events", orientation = "landscape",
+                                      position = tm_pos_out("center", "bottom"), frame = FALSE),
               col = "white", lwd = 0.1) +
   tm_facets(by = "type", ncol = 3) +
   tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.5) +
-  tm_layout(panel.label.size = 1, panel.label.bg.color = "white") +
-  tm_title("Battles and explosions line the borders, while attacks on civilians centre on the Dry Zone",
-           size = 1, fontface = "bold")
+  tm_layout(frame = FALSE, panel.label.size = 1.1, panel.label.bg.color = "white", panel.label.frame = FALSE) +
+  tm_title("Battles and explosions line the borders,\nwhile attacks on civilians centre on the Dry Zone",
+           size = 1.1, fontface = "bold")
 ```
 
 ## The Code
@@ -596,26 +655,30 @@ Counts are shown per quarter so that 2025, which has only three quarters, can be
 ```{r}
 #| label: fig-years
 #| fig-cap: "Average armed conflict events per quarter by township and year. Grey lines are state and region boundaries. Data from ACLED and MIMU"
-#| fig-height: 5.2
-#| fig-width: 11
+#| fig-height: 9
+#| fig-width: 8
 #| echo: false
 yearly <- cube_counts %>%
   mutate(year = substr(quarter, 1, 4)) %>%
   group_by(TS_PCODE, year) %>%
   summarise(per_q = mean(total), .groups = "drop")
-yearly_sf <- mmr_ts %>% select(TS_PCODE) %>% left_join(yearly, by = "TS_PCODE")
+yearly_sf <- mmr_ts %>% select(TS_PCODE) %>% left_join(yearly, by = "TS_PCODE") %>%
+  mutate(band = cut(per_q, breaks = c(0, 0.5, 2, 5, 10, 20, Inf), right = FALSE,
+                    labels = c("under 0.5", "0.5 to 2", "2 to 5", "5 to 10", "10 to 20", "20 or more")))
 
-tm_shape(yearly_sf) +
-  tm_polygons(fill = "per_q",
-              fill.scale = tm_scale_intervals(style = "fixed", breaks = c(0, 0.5, 2, 5, 10, 20, 100),
-                labels = c("under 0.5", "0.5 to 2", "2 to 5", "5 to 10", "10 to 20", "20 or more"),
-                values = "brewer.oranges"),
-              fill.legend = tm_legend(title = "Events per\nquarter", position = tm_pos_out("right", "center")),
-              col = "white", lwd = 0.05) +
-  tm_facets(by = "year", ncol = 5) +
-  tm_shape(mmr_st) + tm_borders(col = "grey35", lwd = 0.4) +
-  tm_layout(panel.label.size = 1, panel.label.bg.color = "white") +
-  tm_title("Sagaing burned hardest in 2022 and 2023, then Rakhine and Bago rose", size = 1.05, fontface = "bold")
+# ggplot is used here because it can place the legend in the empty sixth panel
+ggplot(yearly_sf) +
+  geom_sf(aes(fill = band), colour = "white", linewidth = 0.05) +
+  geom_sf(data = mmr_st, fill = NA, colour = "grey30", linewidth = 0.25) +
+  scale_fill_brewer(palette = "Oranges", name = "Events per quarter", drop = FALSE) +
+  facet_wrap(~ year, ncol = 3) +
+  labs(title = "Sagaing burned hardest in 2022 and 2023,\nthen Rakhine and Bago rose") +
+  theme_void(base_size = 13) +
+  theme(plot.title = element_text(face = "bold", size = 15, margin = margin(b = 12)),
+        strip.text = element_text(size = 13, margin = margin(b = 4)),
+        legend.position = c(0.84, 0.25), legend.key.size = unit(0.6, "cm"),
+        plot.margin = margin(10, 10, 10, 10),
+        plot.background = element_rect(fill = "white", colour = NA))
 ```
 
 ## The Code
@@ -742,7 +805,8 @@ lisa %>% st_drop_geometry() %>% count(quadrant, .drop = FALSE) %>%
 ```{r}
 #| label: fig-lisa
 #| fig-cap: "Local Moran's I of total armed conflict events, significant townships only (p < 0.05). Data from ACLED and MIMU"
-#| fig-height: 10
+#| fig-width: 6.5
+#| fig-height: 8.5
 #| echo: false
 lisa_cols <- c("High-High" = col_high, "Low-Low" = col_low, "High-Low" = col_hl,
                "Low-High" = col_lh, "Not significant" = col_ns)
@@ -750,12 +814,13 @@ lisa_cols <- c("High-High" = col_high, "Low-Low" = col_low, "High-Low" = col_hl,
 tm_shape(lisa) +
   tm_polygons(fill = "quadrant",
               fill.scale = tm_scale_categorical(values = lisa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "LISA class, p < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "LISA class, p < 0.05", position = tm_pos_in("left", "bottom"),
+                                      frame = FALSE),
               col = "white", lwd = 0.2) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.8) +
-  tm_shape(st_lab) + tm_text("ST", size = 0.55, col = "grey10") +
-  tm_title("One High-High block covers the Dry Zone, and Low-Low clusters cover the south and east",
-           size = 1, fontface = "bold")
+  state_borders + state_names +
+  tm_layout(frame = FALSE) +
+  tm_title("One High-High block covers the Dry Zone,\nand Low-Low clusters cover the south and east",
+           size = 1.1, fontface = "bold")
 ```
 
 ## The Code
@@ -825,7 +890,8 @@ hot_share <- sum(hq$total[hq$hot]) / sum(hq$total)
 ```{r}
 #| label: fig-gi
 #| fig-cap: "Getis-Ord Gi* of total armed conflict events, significant townships only (p < 0.05). Data from ACLED and MIMU"
-#| fig-height: 10
+#| fig-width: 6.5
+#| fig-height: 8.5
 #| echo: false
 gi_cols <- c("Hot spot, p < 0.01" = "#B2400B", "Hot spot, p < 0.05" = "#F1A26B",
              "Cold spot, p < 0.05" = "#8FBCE0", "Cold spot, p < 0.01" = "#0B5A99", "Not significant" = col_ns)
@@ -833,10 +899,10 @@ gi_cols <- c("Hot spot, p < 0.01" = "#B2400B", "Hot spot, p < 0.05" = "#F1A26B",
 tm_shape(hcsa) +
   tm_polygons(fill = "spot",
               fill.scale = tm_scale_categorical(values = gi_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Gi* class", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Gi* class", position = tm_pos_in("left", "bottom"), frame = FALSE),
               col = "white", lwd = 0.2) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.8) +
-  tm_shape(st_lab) + tm_text("ST", size = 0.55, col = "grey10") +
+  state_borders + state_names +
+  tm_layout(frame = FALSE) +
   tm_title(paste0(sum(hq$hot), " hot spot townships hold ", round(100 * hot_share), " percent of all events"),
            size = 1.1, fontface = "bold")
 ```
@@ -889,28 +955,30 @@ lmsa_types %>% st_drop_geometry() %>% count(type, quadrant, .drop = FALSE) %>%
 
 ```{r}
 #| label: fig-lisa-types
-#| fig-cap: "Local Moran's I (top) and Gi* (bottom) by type of conflict, significant townships only (p < 0.05). Data from ACLED and MIMU"
+#| fig-cap: "Local Moran's I (top) and Gi* (bottom) by type of conflict, significant townships only (p < 0.05). Panels are labelled Battles, Explosions (explosions and remote violence) and Attacks on civilians (violence against civilians). Data from ACLED and MIMU"
 #| fig-height: 11
-#| fig-width: 11
+#| fig-width: 10
 #| echo: false
-m_lisa <- tm_shape(lmsa_types) +
+short_type <- function(x) x %>% mutate(type = factor(type, levels = levels(type),
+                                       labels = c("Battles", "Explosions", "Attacks on civilians")))
+m_lisa <- tm_shape(short_type(lmsa_types)) +
   tm_polygons(fill = "quadrant",
               fill.scale = tm_scale_categorical(values = lisa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "LISA class", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Local Moran's I", position = tm_pos_out("right", "center"), frame = FALSE),
               col = "white", lwd = 0.1) +
   tm_facets(by = "type", ncol = 3) +
   tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.5) +
-  tm_layout(panel.label.size = 1, panel.label.bg.color = "white") +
-  tm_title("Every type clusters in the Dry Zone, and each has its own second cluster", size = 1, fontface = "bold")
-m_gi <- tm_shape(lmsa_types) +
+  tm_layout(frame = FALSE, panel.label.size = 1.1, panel.label.bg.color = "white", panel.label.frame = FALSE) +
+  tm_title("Every type clusters in the Dry Zone, and each has its own second cluster", size = 1.1, fontface = "bold")
+m_gi <- tm_shape(short_type(lmsa_types)) +
   tm_polygons(fill = "spot",
               fill.scale = tm_scale_categorical(values = c("Hot spot" = "#B2400B", "Cold spot" = "#0B5A99",
                                                            "Not significant" = col_ns)),
-              fill.legend = tm_legend(title = "Gi* class", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Gi*", position = tm_pos_out("right", "center"), frame = FALSE),
               col = "white", lwd = 0.1) +
   tm_facets(by = "type", ncol = 3) +
   tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.5) +
-  tm_layout(panel.label.size = 1, panel.label.bg.color = "white")
+  tm_layout(frame = FALSE, panel.label.size = 1.1, panel.label.bg.color = "white", panel.label.frame = FALSE)
 tmap_arrange(m_lisa, m_gi, nrow = 2)
 ```
 
@@ -1057,7 +1125,7 @@ ggplot(pair_series, aes(time, gi_star, colour = label)) +
   labs(title = "Mann-Kendall picks up steady change, not single spikes",
        subtitle = "Dashed lines mark Gi* of plus and minus 1.96, roughly the 5 percent level",
        x = NULL, y = "Gi* of total events") +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(plot.title = element_text(face = "bold"), legend.position = "top", panel.grid.minor = element_blank())
 ```
 
@@ -1120,6 +1188,8 @@ Reading sfdep's source code shows two rules that differ from the definitions in 
 | Sporadic hot or cold spot | Must be significant in the **final** quarter | Does not check the final quarter | Fading townships are labelled sporadic |
 | Intensifying hot spot | Hot in at least 90 percent of quarters | Significant in 90 percent of quarters, hot **or cold** | A cold spot that is warming can be labelled an intensifying hot spot |
 | Consecutive and oscillating hot spot | A township that was cold, then hot to the end, fits both definitions | Treats it as oscillating, since a consecutive hot spot may have no significant quarter of either kind before its final run | The lecture gives no order, so sfdep's choice is kept and applied to every township |
+
+: {tbl-colwidths="[18,26,30,26]"}
 
 The report keeps sfdep's classes but corrects the first two cases using the lecture rules, applied to sfdep's own Gi\* values. `lecture_class()` below translates the lecture tables, using sfdep's order where they overlap.
 
@@ -1202,25 +1272,28 @@ ehsa_map <- mmr_ts %>% select(TS_PCODE, TS, ST) %>%
 ```{r}
 #| label: fig-ehsa
 #| fig-cap: "Left, emerging hot spot patterns of all armed conflict, townships with a significant trend only (Mann-Kendall p < 0.05). Right, number of quarters out of 19 in which each township was a significant hot spot. Data from ACLED and MIMU"
-#| fig-height: 9
-#| fig-width: 11
+#| fig-height: 8.5
+#| fig-width: 10
 #| echo: false
 tot_map <- ehsa_map %>% filter(variable == "All armed conflict") %>%
   mutate(hot_band = cut(hot_q, c(-1, 0, 4, 9, 14, 19),
                         labels = c("Never", "1 to 4", "5 to 9", "10 to 14", "15 to 19")))
 m1 <- tm_shape(tot_map) +
   tm_polygons(fill = "shown", fill.scale = tm_scale_categorical(values = ehsa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "EHSA pattern, p < 0.05", position = tm_pos_in("left", "bottom")),
+              fill.legend = tm_legend(title = "EHSA pattern, p < 0.05", position = tm_pos_in("left", "bottom"),
+                                      frame = FALSE),
               col = "white", lwd = 0.15) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.7) +
-  tm_shape(st_lab) + tm_text("ST", size = 0.5, col = "grey10") +
-  tm_title("Trend, where hot spots are emerging or fading", size = 0.95, fontface = "bold")
+  state_borders + state_names +
+  tm_layout(frame = FALSE) +
+  tm_title("Trend, where hot spots are emerging or fading", size = 1.1, fontface = "bold")
 m2 <- tm_shape(tot_map) +
   tm_polygons(fill = "hot_band", fill.scale = tm_scale_categorical(values = c("#F7F2EA", "#FDD0A2", "#FD8D3C", "#D94801", "#7F2704")),
-              fill.legend = tm_legend(title = "Quarters as a\nsignificant hot spot", position = tm_pos_in("left", "bottom")),
+              fill.legend = tm_legend(title = "Quarters as a\nsignificant hot spot", position = tm_pos_in("left", "bottom"),
+                                      frame = FALSE),
               col = "white", lwd = 0.15) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.7) +
-  tm_title("Persistence, how often each township was hot", size = 0.95, fontface = "bold")
+  state_borders +
+  tm_layout(frame = FALSE) +
+  tm_title("Persistence, how often each township was hot", size = 1.1, fontface = "bold")
 tmap_arrange(m1, m2, ncol = 2)
 ```
 
@@ -1278,8 +1351,8 @@ ggplot(series, aes(time, gi_star)) +
   facet_wrap(~ panel, ncol = 4) +
   labs(title = "Hot patterns climbed after 2022, while Yangon's cold patterns slid steadily",
        x = NULL, y = "Gi*") +
-  theme_minimal(base_size = 11) +
-  theme(plot.title = element_text(face = "bold"), strip.text = element_text(face = "bold"),
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"), strip.text = element_text(face = "bold", size = 11.5),
         panel.grid.minor = element_blank())
 ```
 
@@ -1314,20 +1387,21 @@ The same analysis is repeated for each conflict variable in the cube.
 
 ```{r}
 #| label: fig-ehsa-types
-#| fig-cap: "Emerging hot spot patterns by type of conflict, townships with a significant trend only (Mann-Kendall p < 0.05). Data from ACLED and MIMU"
-#| fig-height: 6.8
-#| fig-width: 11
+#| fig-cap: "Emerging hot spot patterns by type of conflict, townships with a significant trend only (Mann-Kendall p < 0.05). Panels are labelled Battles, Explosions (explosions and remote violence) and Attacks on civilians (violence against civilians). Data from ACLED and MIMU"
+#| fig-height: 7
+#| fig-width: 10
 #| echo: false
 tm_shape(ehsa_map %>% filter(variable %in% ehsa_vars[c("battles", "remote", "civilians")]) %>%
-           mutate(variable = fct_drop(variable))) +
+           mutate(variable = factor(fct_drop(variable), labels = c("Battles", "Explosions", "Attacks on civilians")))) +
   tm_polygons(fill = "shown", fill.scale = tm_scale_categorical(values = ehsa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "EHSA pattern, p < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "EHSA pattern,\np < 0.05", position = tm_pos_out("right", "center"),
+                                      frame = FALSE),
               col = "white", lwd = 0.1) +
   tm_facets(by = "variable", ncol = 3) +
   tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.5) +
-  tm_layout(panel.label.size = 1, panel.label.bg.color = "white") +
-  tm_title("Battles moved to the coasts, explosions to Bago and the south, and attacks on civilians to Bago (West)",
-           size = 0.95, fontface = "bold")
+  tm_layout(frame = FALSE, panel.label.size = 1.1, panel.label.bg.color = "white", panel.label.frame = FALSE) +
+  tm_title("Battles moved to the coasts, explosions to Bago and the south,\nand attacks on civilians to Bago (West)",
+           size = 1.1, fontface = "bold")
 ```
 
 ## The Code
@@ -1361,15 +1435,17 @@ tsn <- function(v, p, s = NULL) paste(et$TS[et$variable == v & et$p_value < 0.05
 ```{r}
 #| label: fig-ehsa-air
 #| fig-cap: "Emerging hot spot patterns of the military's air strikes, townships with a significant trend only (Mann-Kendall p < 0.05). Data from ACLED and MIMU"
-#| fig-height: 10
+#| fig-width: 6.5
+#| fig-height: 8.5
 #| echo: false
 tm_shape(ehsa_map %>% filter(variable == "Military air strikes")) +
   tm_polygons(fill = "shown", fill.scale = tm_scale_categorical(values = ehsa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "EHSA pattern, p < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "EHSA pattern, p < 0.05", position = tm_pos_in("left", "bottom"),
+                                      frame = FALSE),
               col = "white", lwd = 0.15) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.8) +
-  tm_shape(st_lab) + tm_text("ST", size = 0.55, col = "grey10") +
-  tm_title("Air strikes turned hot across the Dry Zone and on most new fronts", size = 1.05, fontface = "bold")
+  state_borders + state_names +
+  tm_layout(frame = FALSE) +
+  tm_title("Air strikes turned hot across the Dry Zone\nand on most new fronts", size = 1.1, fontface = "bold")
 ```
 
 ## The Code
@@ -1478,16 +1554,17 @@ geary <- geary_in %>%
 ```{r}
 #| filename: "what each group's mix really is"
 nat <- colSums(st_drop_geometry(mmr_conflict)[, c("battles", "remote", "civilians")]) / sum(mmr_conflict$total)
+f1 <- function(x) sprintf("%.1f", ifelse(abs(x) < 0.05, 0, x))   # avoids printing -0.0
+shares <- function(b, r, c) paste(round(100 * b), round(100 * r), round(100 * c), sep = " / ")
 geary %>% st_drop_geometry() %>%
   group_by(profile) %>%
-  summarise(townships = n(), z_b = mean(z_battles), z_r = mean(z_remote), z_c = mean(z_civilians),
-            battles = sum(battles) / sum(total), remote = sum(remote) / sum(total),
-            civilians = sum(civilians) / sum(total)) %>%
-  mutate(across(z_b:z_c, ~ round(.x, 1)), across(battles:civilians, ~ scales::percent(.x, 1))) %>%
-  add_row(profile = "National share", battles = scales::percent(nat[["battles"]], 1),
-          remote = scales::percent(nat[["remote"]], 1), civilians = scales::percent(nat[["civilians"]], 1)) %>%
-  kable(col.names = c("Group", "Townships", "Battles (z)", "Explosions (z)", "Civilians (z)",
-                      "Battles share", "Explosions share", "Civilians share"))
+  summarise(townships = n(),
+            z_mix = paste(f1(mean(z_battles)), f1(mean(z_remote)), f1(mean(z_civilians)), sep = " / "),
+            share = shares(sum(battles) / sum(total), sum(remote) / sum(total), sum(civilians) / sum(total))) %>%
+  add_row(profile = "Myanmar as a whole", share = shares(nat[["battles"]], nat[["remote"]], nat[["civilians"]])) %>%
+  kable(col.names = c("Group", "Townships", "Average z, battles / explosions / civilians",
+                      "Share of events %, battles / explosions / civilians"),
+        align = c("l", "r", "c", "c"))
 ```
 
 ```{r}
@@ -1505,7 +1582,8 @@ The battle shares confirm the names. In the group called "few battles, more bomb
 ```{r}
 #| label: fig-geary
 #| fig-cap: "Multivariate local Geary's c on battles, explosions and attacks on civilians, significant townships only (p < 0.05), grouped by their shared mix. Data from ACLED and MIMU"
-#| fig-height: 10
+#| fig-width: 9
+#| fig-height: 8.5
 #| echo: false
 geary_cols <- c("All three high" = col_high, "Mostly battles" = col_hl,
                 "Few battles, more bombs or attacks on civilians" = "#CC79A7", "All three low" = col_low,
@@ -1514,12 +1592,16 @@ geary_cols <- c("All three high" = col_high, "Mostly battles" = col_hl,
 tm_shape(geary) +
   tm_polygons(fill = "profile",
               fill.scale = tm_scale_categorical(values = geary_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Shared mix, p < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Shared mix, p < 0.05", position = tm_pos_out("right", "center"),
+                                      frame = FALSE),
               col = "white", lwd = 0.2) +
-  tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.8) +
-  tm_shape(st_lab) + tm_text("ST", size = 0.55, col = "grey10") +
-  tm_title("Yangon and Mandalay city share a mix of bombs and attacks on civilians",
-           size = 1.05, fontface = "bold")
+  state_borders +
+  # Yangon and Mandalay are left unnamed here so the labels do not cover the townships this map is about
+  tm_shape(filter(st_lab, !ST %in% c("Yangon", "Mandalay"))) +
+  tm_text("ST", size = 0.55, col = "grey5", bgcol = "white", bgcol_alpha = 0.65) +
+  tm_layout(frame = FALSE) +
+  tm_title("Yangon and Mandalay city share a mix\nof bombs and attacks on civilians",
+           size = 1.1, fontface = "bold")
 ```
 
 ## The Code
@@ -1593,13 +1675,14 @@ geary_time %>% st_drop_geometry() %>%
 tm_shape(geary_time) +
   tm_polygons(fill = "profile",
               fill.scale = tm_scale_categorical(values = geary_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Shared mix, p < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend(title = "Shared mix, p < 0.05", position = tm_pos_out("right", "center"),
+                                      frame = FALSE),
               col = "white", lwd = 0.1) +
   tm_facets(by = "period", ncol = 2) +
   tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.5) +
-  tm_layout(panel.label.size = 1, panel.label.bg.color = "white") +
-  tm_title("Around Mandalay city, fighting left but the bombs and attacks on civilians stayed",
-           size = 1, fontface = "bold")
+  tm_layout(frame = FALSE, panel.label.size = 1.1, panel.label.bg.color = "white", panel.label.frame = FALSE) +
+  tm_title("Around Mandalay city, fighting left\nbut the bombs and attacks on civilians stayed",
+           size = 1.1, fontface = "bold")
 ```
 
 ## The Code
@@ -1659,6 +1742,8 @@ The urban group is stable. Almost all of its townships stay in it with 6 or 10 n
 | Small townships in Yangon have low counts | The urban group rests on tens of events per township | Checked with FDR and with 6 and 10 neighbours |
 | Geary's c is a similarity measure | It cannot say why neighbours share a mix | Read together with Task 2 and Task 3, not alone |
 
+: {tbl-colwidths="[28,36,36]"}
+
 ```{r}
 #| echo: false
 write_rds(list(geary = geary %>% st_drop_geometry() %>%
@@ -1699,6 +1784,8 @@ Four design choices shape every figure.
 | Counts use one orange scale with fixed breaks, and types and years are small multiples | Darker always means more, and panels can be compared directly |
 | The EHSA trend map sits beside a map of how often each township was hot | The brief's p < 0.05 trend filter hides steady hot spots, and the second map shows them |
 
+: {tbl-colwidths="[45,55]"}
+
 # Peace-keeping Implications
 
 The brief hopes the results can help peace-building and prevent further conflict. The table links each finding to an action that peace-keepers, ceasefire monitors or aid agencies could consider, and to what should be checked first. ACLED records reported events, not need or harm, and the analysis shows where and when, not why or who is responsible. Each row is therefore a starting point for planning, not a conclusion.
@@ -1711,6 +1798,8 @@ The brief hopes the results can help peace-building and prevent further conflict
 | The military's air strikes keep returning to the core and the new fronts | Support early warning, shelters and trauma care in these townships | Casualty records, because strike counts do not show harm |
 | Yangon and Mandalay city share a mix of bombs and attacks on civilians | Treat them as settings for civilian protection and monitoring, not front-line aid | Under-reporting in cities under tight control |
 | Northern Shan turned from the hottest area to a cold spot after the early 2024 ceasefire | Monitor the ceasefire townships for relapse, and study what made the ceasefire hold | Whether the ceasefire still holds, and what it meant for the people living there |
+
+: {tbl-colwidths="[30,40,30]"}
 
 # Limitations
 

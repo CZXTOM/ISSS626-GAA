@@ -71,7 +71,15 @@ $presentation-h2-font-size: 1.3em;
 }
 
 .reveal .callout {
-  font-size: 0.62em;
+  font-size: 0.7em;
+}
+
+.reveal .findings table {
+  font-size: 0.6em;
+}
+
+.reveal .findings table td {
+  padding: .45em .5em;
 }
 
 .reveal img {
@@ -117,11 +125,16 @@ $presentation-h2-font-size: 1.3em;
 }
 
 .reveal .act {
-  font-size: 0.62em;
+  font-size: 0.68em;
   line-height: 1.4;
   border-left: 4px solid #D55E00;
   padding: .1em 0 .1em .7em;
   margin-bottom: .75em;
+}
+
+.reveal .act .row {
+  display: grid;
+  grid-template-columns: 7.6em 1fr;
 }
 
 .reveal .act b {
@@ -130,8 +143,7 @@ $presentation-h2-font-size: 1.3em;
 }
 
 .reveal .act .tag {
-  display: inline-block;
-  min-width: 7.6em;
+  padding-top: .15em;
   font-size: .78em;
   font-weight: 600;
   letter-spacing: .06em;
@@ -145,4 +157,62 @@ $presentation-h2-font-size: 1.3em;
   line-height: 1.25;
   color: #16191D;
   margin: .2em 0 .8em;
+}
+
+.reveal .contents p, .reveal .contents li {
+  font-size: 0.82em;
+}
+
+.reveal .contents ul {
+  margin-top: .2em;
+  margin-bottom: .6em;
+}
+
+.reveal .lgd span {
+  white-space: nowrap;
+  margin-right: .9em;
+}
+
+.reveal .lgd i {
+  font-style: normal;
+}
+
+.reveal .lgd .note {
+  display: block;
+  color: #5D6672;
+}
+
+.reveal .lgd-c {
+  text-align: center;
+  margin: -.2em 0 .6em;
+}
+
+.reveal .mapleg {
+  display: flex;
+  align-items: center;
+  gap: .4em;
+}
+
+.reveal .mapleg > .cell {
+  flex: 0 0 62%;
+}
+
+.reveal .lgd-v span {
+  display: block;
+  margin: 0 0 .25em;
+}
+
+.reveal .lgd-v .note {
+  color: #3E454E;
+  font-weight: 600;
+  margin-bottom: .5em;
+}
+
+.reveal .lgd-tight {
+  font-size: 0.6em;
+  margin-top: .2em;
+}
+
+.reveal .lgd-v {
+  font-size: 0.6em;
 }

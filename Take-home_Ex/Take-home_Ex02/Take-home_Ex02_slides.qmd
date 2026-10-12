@@ -41,7 +41,15 @@ charts <- read_rds("data/rds/charts.rds")
 
 mmr <- prep$mmr_conflict
 mmr_st <- mmr %>% group_by(ST) %>% summarise()
-st_lab <- st_point_on_surface(mmr_st)
+nudge <- tribble(~ST, ~dx_km, ~dy_km,
+  "Ayeyarwady", -45, -15, "Yangon", 15, -40, "Mon", -15, -45, "Bago (West)", -35, 25, "Bago (East)", 30, -15,
+  "Kayin", 45, 10, "Shan (South)", -25, 0, "Shan (East)", 40, 0, "Tanintharyi", 80, 0)
+st_lab <- st_point_on_surface(mmr_st) %>%
+  mutate(x = st_coordinates(.)[, 1], y = st_coordinates(.)[, 2]) %>%
+  st_drop_geometry() %>% left_join(nudge, by = "ST") %>%
+  mutate(x = x + coalesce(dx_km, 0) * 1000, y = y + coalesce(dy_km, 0) * 1000) %>%
+  st_as_sf(coords = c("x", "y"), crs = st_crs(mmr_st))
+tmap_options(scale = 1.3, component.autoscale = FALSE)
 dz <- c("Sagaing", "Magway", "Mandalay")
 
 col_high <- "#D55E00"; col_low <- "#0072B2"; col_hl <- "#E69F00"; col_lh <- "#56B4E9"; col_ns <- "#EDE8DF"
@@ -55,8 +63,10 @@ ehsa_cols <- c("New hotspot" = "#7A0177", "Consecutive hotspot" = "#67001F", "In
                "No pattern detected" = "#A8A8A8", "Not significant" = col_ns)
 ehsa_levels <- names(ehsa_cols)
 
-map_layout <- tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE,
-                        legend.text.size = 0.9, legend.title.size = 1)
+map_layout <- tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, legend.bg.color = bg,
+                        inner.margins = c(0.01, 0.01, 0.01, 0.01), outer.margins = 0)
+name_box <- function(st) tm_shape(filter(st_lab, ST %in% st)) +
+  tm_text("ST", size = 0.75, col = "grey5", bgcol = "white", bgcol_alpha = 0.7)
 states <- tm_shape(mmr_st) + tm_borders(col = "grey25", lwd = 0.7)
 
 theme_slide <- theme_minimal(base_size = 18) +
@@ -80,12 +90,21 @@ urban <- gq %>% filter(profile == "Few battles, more bombs or attacks on civilia
 core <- lq %>% filter(quadrant == "High-High", ST == "Sagaing") %>% pull(TS_PCODE)
 core_q <- range(tot$hot_q[tot$TS_PCODE %in% core])
 
+html_legend <- function(cols, present) {
+  keep <- cols[names(cols) %in% present]
+  paste0(sprintf('<span><i style="color:%s">&#9632;</i> %s</span>', keep, names(keep)), collapse = " ")
+}
+shown_levels <- function(v) {
+  x <- ehsa_sf(v)$shown
+  levels(droplevels(x))
+}
+
 ehsa_sf <- function(v) mmr %>% select(TS_PCODE) %>%
   left_join(et %>% filter(variable %in% v), by = "TS_PCODE") %>%
   mutate(shown = factor(if_else(p_value < 0.05, pattern, "Not significant"), levels = ehsa_levels))
 ```
 
-## Contents
+## Contents {.contents}
 
 ::::: columns
 ::: {.column width="50%"}
@@ -97,15 +116,15 @@ ehsa_sf <- function(v) mmr %>% select(TS_PCODE) %>%
 **Part 2, Local Spatial Association**
 
 - Insight 1, one hot core and its edges
-:::
 
-::: {.column width="50%"}
 **Part 3, Emerging Hot Spots**
 
 - Insight 2, the core stayed hot and the war widened
-- Insight 3, each type of violence is moving its own way
+- Insight 3, each type of violence moves its own way
 - Insight 4, air strikes follow the ground war
+:::
 
+::: {.column width="50%"}
 **Part 4, Bonus**
 
 - Insight 5, when fighting leaves, violence changes kind
@@ -135,12 +154,11 @@ tm_shape(mmr) +
               fill.scale = tm_scale_intervals(style = "fixed", breaks = c(0, 1, 26, 101, 251, 501, 1100),
                 labels = c("0", "1 to 25", "26 to 100", "101 to 250", "251 to 500", "501 or more"),
                 values = "brewer.oranges"),
-              fill.legend = tm_legend(title = "Armed conflict\nevents", position = tm_pos_in("left", "bottom")),
+              fill.legend = tm_legend(title = "Armed conflict\nevents", position = tm_pos_in("left", "bottom"), frame = FALSE),
               col = "white", lwd = 0.2) +
   states +
   tm_shape(filter(mmr_st, ST %in% dz)) + tm_borders(col = "black", lwd = 2.4) +
-  tm_shape(filter(st_lab, ST %in% c("Sagaing", "Rakhine", "Yangon", "Tanintharyi", "Kachin"))) +
-  tm_text("ST", size = 0.8, col = "grey5", fontface = "bold") +
+  name_box(c("Sagaing", "Magway", "Mandalay", "Rakhine", "Yangon", "Tanintharyi", "Kachin")) +
   map_layout
 ```
 :::
@@ -211,12 +229,12 @@ gi_cols <- c("Hot spot, p < 0.01" = "#B2400B", "Hot spot, p < 0.05" = "#F1A26B",
              "Cold spot, p < 0.05" = "#8FBCE0", "Cold spot, p < 0.01" = "#0B5A99", "Not significant" = col_ns)
 m1 <- tm_shape(lmsa$lisa) +
   tm_polygons(fill = "quadrant", fill.scale = tm_scale_categorical(values = lisa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Local Moran's I", position = tm_pos_in("left", "bottom")),
-              col = "white", lwd = 0.15) + states + map_layout + tm_title("Clusters and outliers", size = 1.1)
+              fill.legend = tm_legend(title = "Local Moran's I", position = tm_pos_in("left", "bottom"), frame = FALSE),
+              col = "white", lwd = 0.15) + states + map_layout + tm_title("Clusters and outliers", size = 1.1, fontface = "bold")
 m2 <- tm_shape(lmsa$hcsa) +
   tm_polygons(fill = "spot", fill.scale = tm_scale_categorical(values = gi_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Gi*", position = tm_pos_in("left", "bottom")),
-              col = "white", lwd = 0.15) + states + map_layout + tm_title("Hot and cold spots", size = 1.1)
+              fill.legend = tm_legend(title = "Gi*", position = tm_pos_in("left", "bottom"), frame = FALSE),
+              col = "white", lwd = 0.15) + states + map_layout + tm_title("Hot and cold spots", size = 1.1, fontface = "bold")
 tmap_arrange(m1, m2, ncol = 2)
 ```
 :::
@@ -254,14 +272,12 @@ tm_tot <- ehsa_sf("All armed conflict") %>%
   mutate(hot_band = cut(hot_q, c(-1, 0, 4, 9, 14, 19), labels = c("Never", "1 to 4", "5 to 9", "10 to 14", "15 to 19")))
 e1 <- tm_shape(tm_tot) +
   tm_polygons(fill = "shown", fill.scale = tm_scale_categorical(values = ehsa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Trend, p < 0.05", position = tm_pos_in("left", "bottom")),
-              col = "white", lwd = 0.15) + states + map_layout +
-  tm_layout(legend.text.size = 0.75, legend.title.size = 0.9) + tm_title("Emerging or fading", size = 1.1)
+              fill.legend = tm_legend(title = "Trend, p < 0.05", position = tm_pos_in("left", "bottom"), frame = FALSE),
+              col = "white", lwd = 0.15) + states + map_layout + tm_title("Emerging or fading", size = 1.1, fontface = "bold")
 e2 <- tm_shape(tm_tot) +
   tm_polygons(fill = "hot_band", fill.scale = tm_scale_categorical(values = c("#F7F2EA", "#FDD0A2", "#FD8D3C", "#D94801", "#7F2704")),
-              fill.legend = tm_legend(title = "Quarters as a\nhot spot", position = tm_pos_in("left", "bottom")),
-              col = "white", lwd = 0.15) + states + map_layout +
-  tm_layout(legend.text.size = 0.75, legend.title.size = 0.9) + tm_title("How often hot", size = 1.1)
+              fill.legend = tm_legend(title = "Quarters as a\nhot spot", position = tm_pos_in("left", "bottom"), frame = FALSE),
+              col = "white", lwd = 0.15) + states + map_layout + tm_title("How often hot", size = 1.1, fontface = "bold")
 tmap_arrange(e1, e2, ncol = 2)
 ```
 :::
@@ -285,28 +301,32 @@ Emerging hot spot analysis maps change, not level. The growing hot spots form a 
 
 <div class="part">Part 3 · Emerging hot spots</div>
 
+::::: columns
+::: {.column width="66%"}
 ```{r}
-#| fig-width: 15
-#| fig-height: 6.2
+#| fig-width: 9
+#| fig-height: 6.4
 types_sf <- ehsa_sf(c("Battles", "Explosions and remote violence", "Violence against civilians")) %>%
-  mutate(variable = factor(variable, levels = c("Battles", "Explosions and remote violence", "Violence against civilians")))
+  mutate(variable = factor(variable, levels = c("Battles", "Explosions and remote violence", "Violence against civilians"),
+                           labels = c("Battles", "Explosions", "Attacks on civilians")))
 tm_shape(types_sf) +
   tm_polygons(fill = "shown", fill.scale = tm_scale_categorical(values = ehsa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Trend, p < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend_hide(),
               col = "white", lwd = 0.1) +
   tm_facets(by = "variable", ncol = 3) + states +
-  tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, panel.label.size = 1.3,
-            panel.label.bg.color = bg, legend.text.size = 0.9, legend.title.size = 1)
+  tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, panel.label.size = 1.2,
+            panel.label.bg.color = bg, panel.label.frame = FALSE, outer.margins = 0,
+            legend.bg.color = bg)
 ```
 
-::::: columns
-::: {.column width="33%"}
-<div class="fix"><b>Battles moved south and west.</b> Tanintharyi and central Rakhine turned hot. Northern Shan went cold after the ceasefire.</div>
+<div class="small lgd lgd-c lgd-tight">`r html_legend(ehsa_cols, shown_levels(c("Battles", "Explosions and remote violence", "Violence against civilians")))`</div>
 :::
-::: {.column width="33%"}
-<div class="fix"><b>Explosions spread to the hills.</b> Bago (East) and Tanintharyi turned hot. Yangon's bombings faded.</div>
-:::
+
 ::: {.column width="34%"}
+<div class="fix"><b>Battles moved south and west.</b> Tanintharyi and central Rakhine turned hot. Northern Shan went cold after the ceasefire.</div>
+
+<div class="fix"><b>Explosions spread to the hills.</b> Bago (East) and Tanintharyi turned hot. Yangon's bombings faded.</div>
+
 <div class="fix"><b>Attacks on civilians moved to the lowlands.</b> `r np("Oscillating hotspot", "Violence against civilians", "Bago (West)")` townships in Bago (West) turned hot, an area of little fighting.</div>
 :::
 :::::
@@ -338,17 +358,20 @@ ggplot(charts$remote_mix, aes(year, n, fill = weapon)) +
 :::
 
 ::: {.column width="48%"}
+::: {.mapleg}
 ```{r}
-#| fig-width: 7
-#| fig-height: 7.4
+#| fig-width: 5
+#| fig-height: 6.6
 tm_shape(ehsa_sf("Military air strikes")) +
   tm_polygons(fill = "shown", fill.scale = tm_scale_categorical(values = ehsa_cols, levels.drop = TRUE),
-              fill.legend = tm_legend(title = "Air strike trend,\np < 0.05", position = tm_pos_out("right", "center")),
+              fill.legend = tm_legend_hide(),
               col = "white", lwd = 0.15) + states +
-  tm_shape(filter(st_lab, ST %in% c("Sagaing", "Magway", "Yangon"))) +
-  tm_text("ST", size = 0.8, fontface = "bold", col = "grey5") +
+  name_box(c("Sagaing", "Magway", "Mandalay", "Rakhine", "Yangon", "Tanintharyi")) +
   map_layout
 ```
+
+<div class="small lgd lgd-v"><span class="note">Air strike trend,<br>p < 0.05</span> `r html_legend(ehsa_cols, shown_levels("Military air strikes"))`</div>
+:::
 :::
 :::::
 
@@ -374,11 +397,12 @@ tm_shape(gt_sf) +
               fill.legend = tm_legend_hide(),
               col = "white", lwd = 0.1) +
   tm_facets(by = "period", ncol = 2) + states +
-  tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, panel.label.size = 1.2,
-            panel.label.bg.color = bg)
+  tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, panel.label.size = 1.1,
+            panel.label.bg.color = bg, panel.label.frame = FALSE, outer.margins = 0,
+            legend.bg.color = bg)
 ```
 
-<div class="small"><span style="color:#D55E00">■</span> All three high &nbsp; <span style="color:#E69F00">■</span> Mostly battles &nbsp; <span style="color:#CC79A7">■</span> <b>Few battles, more bombs or attacks on civilians</b> &nbsp; <span style="color:#0072B2">■</span> All three low &nbsp; <span style="color:#000000">■</span> Mix unlike its neighbours. Significant townships only, p < 0.05.</div>
+<div class="small lgd"><span><i style="color:#CC79A7">■</i> <b>Few battles, more bombs or attacks on civilians</b></span> <span><i style="color:#D55E00">■</i> All three high</span> <span><i style="color:#E69F00">■</i> Mostly battles</span> <span><i style="color:#0072B2">■</i> All three low</span> <span><i style="color:#000000">■</i> Mix unlike its neighbours</span> <span class="note">Significant townships only, p < 0.05</span></div>
 :::
 
 ::: {.column width="42%"}
@@ -399,7 +423,7 @@ tm_shape(gt_sf) +
 Local Moran's I looks at one type at a time. Multivariate local Geary's c asks whether neighbours share the same mix of battles, explosions and attacks on civilians. It finds 29 townships, mostly in Yangon and around Mandalay city, with few battles but many bombs and attacks on civilians. Count maps call them quiet. Run on two periods, it shows the pattern spreading around Mandalay as battles moved away. The violence did not stop. It changed kind.
 :::
 
-## Key findings and their limits {.smaller}
+## Key findings and their limits {.findings}
 
 <div class="part">Part 5 · So what</div>
 
@@ -426,15 +450,15 @@ Each finding comes with its evidence and its main limit. The trend tests also su
 
 <div class="part">Part 5 · So what</div>
 
-<div class="act"><b>Treat the Dry Zone as a long-term crisis, not a passing one</b><br><span class="tag">Because</span> its core was a hot spot in most quarters for almost five years<br><span class="tag">Check first</span> displacement and access data from UN agencies and local partners</div>
+<div class="act"><b>Treat the Dry Zone as a long-term crisis, not a passing one</b><div class="row"><span class="tag">Because</span><span>its core was a hot spot in most quarters for almost five years</span></div><div class="row"><span class="tag">Check first</span><span>displacement and access data from UN agencies and local partners</span></div></div>
 
-<div class="act"><b>Use the new hot spots as an early-warning list</b><br><span class="tag">Because</span> the war is widening into Bago (East), the road to northern Shan, central Rakhine and the far south, with Bago (West) warming next<br><span class="tag">Check first</span> whether local partners see the same spread, and which roads are open</div>
+<div class="act"><b>Use the new hot spots as an early-warning list</b><div class="row"><span class="tag">Because</span><span>the war is widening into Bago (East), the road to northern Shan, central Rakhine and the far south, with Bago (West) warming next</span></div><div class="row"><span class="tag">Check first</span><span>whether local partners see the same spread, and which roads are open</span></div></div>
 
-<div class="act"><b>Protect civilians from the air where strikes keep returning</b><br><span class="tag">Because</span> military air strikes turned hot across the core and most new fronts<br><span class="tag">Check first</span> casualty records, since strike counts do not show harm</div>
+<div class="act"><b>Protect civilians from the air where strikes keep returning</b><div class="row"><span class="tag">Because</span><span>military air strikes turned hot across the core and most new fronts</span></div><div class="row"><span class="tag">Check first</span><span>casualty records, since strike counts do not show harm</span></div></div>
 
-<div class="act"><b>Keep watching towns after the fighting moves on</b><br><span class="tag">Because</span> around Mandalay city, bombs and attacks on civilians stayed after battles left<br><span class="tag">Check first</span> under-reporting in tightly controlled cities</div>
+<div class="act"><b>Keep watching towns after the fighting moves on</b><div class="row"><span class="tag">Because</span><span>around Mandalay city, bombs and attacks on civilians stayed after battles left</span></div><div class="row"><span class="tag">Check first</span><span>under-reporting in tightly controlled cities</span></div></div>
 
-<div class="act"><b>Monitor ceasefire areas for relapse</b><br><span class="tag">Because</span> northern Shan went from the hottest area to a cold spot after the 2024 ceasefire<br><span class="tag">Check first</span> whether the ceasefire still holds</div>
+<div class="act"><b>Monitor ceasefire areas for relapse</b><div class="row"><span class="tag">Because</span><span>northern Shan went from the hottest area to a cold spot after the 2024 ceasefire</span></div><div class="row"><span class="tag">Check first</span><span>whether the ceasefire still holds</span></div></div>
 
 <div class="small">The analysis shows where and when, not why or who is responsible. Each action needs its check first.</div>
 

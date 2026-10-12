@@ -544,3 +544,9 @@ main tbody tr:last-child td { border-bottom: 0; }
   #title-block-header::before { display: none; }
   .callout, figure, table, .cell { break-inside: avoid; }
 }
+
+/* phones: let the page-fact chips and long reference links wrap */
+@media (max-width: 640px) {
+  .pagefacts .fact { flex-wrap: wrap; }
+  main li { overflow-wrap: anywhere; }
+}
