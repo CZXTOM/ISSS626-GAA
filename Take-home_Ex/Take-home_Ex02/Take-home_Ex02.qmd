@@ -65,7 +65,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 </div>
 ```
 
-**In short.** Myanmar's war since the 2021 coup is not spread across the country. It is anchored in the central Dry Zone, where one block of Sagaing, Magway and Mandalay townships stayed a hot spot through almost every quarter. Over five years the conflict did not move away from this core. It spread outward from it, into Bago, the road to northern Shan, central Rakhine and the far south, while Yangon and the Ayeyarwady delta grew steadily colder. The military's air strikes grew about 23-fold and grew fastest in the Dry Zone and on most of the new fronts. The bonus analysis finds a quieter but distinct pattern in Yangon and Mandalay city, where battles are rare but bombs and attacks on civilians are common, a pattern that maps of total counts miss.
+**In short.** Myanmar's war since the 2021 coup is not spread across the country. It is anchored in the central Dry Zone, where one block of Sagaing, Magway and Mandalay townships stayed a hot spot through almost every quarter. Over five years the conflict did not move away from this core. It spread outward from it, into Bago, the road to northern Shan, central Rakhine and the far south, while Yangon and the Ayeyarwady delta grew steadily colder. The military's air strikes grew about 23-fold and grew fastest in the Dry Zone and on most of the new fronts. Two bonus analyses add what the core methods cannot see. The first finds a quieter but distinct pattern in Yangon and Mandalay city, where battles are rare but bombs and attacks on civilians are common, a pattern that maps of total counts miss. The second groups neighbouring townships into eight conflict regions that went through the same war at the same time, from the early Sagaing core to the late-rising south-east and Rakhine.
 
 The task is set out in the [Take-home Exercise 2 brief](https://isss626-ay2026-27aug.netlify.app/take-home_ex02). The Executive Summary is [here](Take-home_Ex02_slides.html).
 
@@ -75,24 +75,25 @@ In February 2021 Myanmar's military seized power from the elected government. Pe
 
 The violence is uneven. Some townships see fighting every week, while others see almost none. For anyone planning aid, protecting civilians or watching a ceasefire, two things matter most. Where is the violence concentrated now, and where is it heading next?
 
-This report answers both at township level for January 2021 to September 2025. It uses local measures of spatial association to find where conflict clusters and where townships stand out, and emerging hot spot analysis to see how those clusters grew, faded or moved.
+This report answers both at township level for January 2021 to September 2025. It uses local measures of spatial association to find where conflict clusters and where townships stand out, and emerging hot spot analysis to see how those clusters grew, faded or moved. Space-time exploration of this kind has been used on conflict data before (Mack and Kam, 2018).
 
 # Research Question and Objectives
 
 **Research question.** Where does armed conflict in Myanmar cluster, and how have these clusters changed since the 2021 coup?
 
-The brief sets two objectives. They lead to four questions, each answered in one part of the report.
+The brief sets two objectives. They lead to five questions, each answered in one part of the report.
 
 | Brief objective | Question | Part | Main method |
 |---|---|---|---|
 | (Groundwork) | Q1. Where and when did armed conflict happen? | Task 1 | Choropleth maps, small multiples, time series |
 | 1. Hot spots, cold spots and outliers | Q2. Where does conflict cluster, and which townships stand out from their neighbours? | Task 2 | Local Moran's I, Getis-Ord Gi\* |
 | 2. Where, how fast and in what pattern violence evolves | Q3. Where are hot and cold spots emerging, growing or fading? | Task 3 | Mann-Kendall test, emerging hot spot analysis |
-| 1, extended to the kind of violence | Q4. Do neighbouring townships face the same *kind* of violence, and where does the mix stand out? | Bonus | Multivariate local Geary's c |
+| 1, extended to the kind of violence | Q4. Do neighbouring townships face the same *kind* of violence, and where does the mix stand out? | Bonus 1 | Multivariate local Geary's c |
+| 2, extended from townships to regions | Q5. Which neighbouring townships went through the same timeline of conflict? | Bonus 2 | SKATER spatially constrained clustering |
 
 : {tbl-colwidths="[24,38,10,28]"}
 
-Q4 matters because a township hit by air strikes and one hit by ground battles need different help, even if their totals look the same.
+Q4 matters because a township hit by air strikes and one hit by ground battles need different help, even if their totals look the same. Q5 matters because aid and ceasefire monitoring are planned for areas, and two neighbouring townships with the same EHSA label can have had their worst fighting years apart.
 
 ::: {.callout-tip}
 ## Five terms used throughout
@@ -113,7 +114,7 @@ Q4 matters because a township hit by air strikes and one hit by ground battles n
 |---|---|
 | **sf** | Reads the township boundary, turns events into points, reprojects and joins them |
 | **sfdep** | Neighbours, weights, local Moran's I, Gi\*, local Geary's c, the space-time cube and EHSA |
-| **spdep** | Global Getis-Ord G and the neighbour summaries |
+| **spdep** | Global Getis-Ord G, the neighbour summaries, the spatial correlogram and SKATER clustering |
 | **tmap** | All other maps |
 | **tidyverse** | Reading, filtering, counting, the charts and the year-by-year map |
 | **Kendall** | The Mann-Kendall trend test |
@@ -165,7 +166,7 @@ The raw files sit in `data/rawdata/acled` and `data/rawdata/mimu`. The code read
 
 : {tbl-colwidths="[16,32,52]"}
 
-ACLED codes six event types. Only three are armed conflict.
+ACLED codes six event types (Raleigh et al., 2010). Only three are armed conflict.
 
 | ACLED event type | Kept? | Why |
 |---|---|---|
@@ -185,7 +186,7 @@ The brief warns that data are like a grassland full of land mines. The table lis
 | # | Land mine | Why it matters | What was done | Result |
 |---|---|---|---|---|
 | 1 | 6 rows are not in Myanmar at all | They are incidents off the coast of India and Sri Lanka, filed under "Indian Ocean" | Keep only rows where `country` is Myanmar | 6 rows removed |
-| 2 | Half the file is not armed conflict | Protests and arrests would inflate the counts | Keep only the three conflict types | 54,000 events kept |
+| 2 | Over a third of the file is not armed conflict | Protests and arrests would inflate the counts | Keep only the three conflict types | 54,000 events kept |
 | 3 | 1,118 events have no township name, and others use names the boundary file does not have | A name join would drop or misplace them | Place every event by its coordinates | No event lost to names |
 | 4 | 14 events fall just outside every township | They sit on the coastline, where the boundary is simplified | Snap them to the nearest township if within 5 km | All 14 snapped |
 | 5 | Some events are placed only roughly | They could land in the wrong township | Count how many are placed only to a region | 93 events, too few to move any result |
@@ -338,7 +339,7 @@ tibble(check = c("Events placed only to a region", "Week-dated events within 3 d
   kable(col.names = c("Check", "Events", "Share of all events"))
 ```
 
-About `r round(100 * mean(acled_raw$geo_precision == 2))` percent of events are placed at a nearby town rather than the exact spot, which is close enough for township counts. The two risky groups are tiny, each well under one percent of events, so they are kept.
+About `r round(100 * mean(conflict_sf$geo_precision == 2))` percent of the kept events are placed at a nearby town rather than the exact spot, which is close enough for township counts. The two risky groups are tiny, each well under one percent of events, so they are kept.
 
 ### Counting by township (land mine 8)
 
@@ -402,22 +403,6 @@ write_rds(list(mmr_conflict = mmr_conflict, cube_counts = cube_counts,
                  select(TS_PCODE, year, quarter, type, sub_event_type, military_air)),
           "data/rds/prepared.rds")
 ```
-
-## Analytical Assumptions and Methodological Decisions
-
-Each choice below is explained again where it is used.
-
-| Decision | Choice | Why | Risk, and how it is checked |
-|---|---|---|---|
-| Measure | Event counts, not rates | Counts are what the brief asks for, and no reliable township population for 2021 to 2025 is available | A busy town may look high because more happens there. Read with care |
-| Neighbours | 8 nearest townships, by centre point | Townships range from under 1 km² to over 12,000 km², 3 are islands, and counts are skewed. The lecture notes advise about 8 neighbours in this case | Rural neighbours reach further than urban ones. Checked with queen contiguity |
-| Weights | Row-standardised. The township itself is included for Gi\* | Standard for local Moran's I and Gi\* (Getis and Ord, 1992) | Every neighbour counts the same |
-| Null model | Conditional permutation, 999 shuffles (199 for EHSA) | Makes no assumption that counts are normally distributed | Permutation p-values vary slightly by run, so the seed is fixed |
-| Significance | p < 0.05. Two-sided for local Moran's I and Gi\*. EHSA uses sfdep's own per-quarter p-value | Set by the brief | With 330 tests some results are false alarms. Checked with the false discovery rate |
-| Time step | Quarter | Enough events per bin, and 19 points for a trend test | Short bursts inside a quarter are smoothed |
-| Trend test | Mann-Kendall on Gi\* | Set by the brief | It assumes no serial correlation, which conflict series break. Checked with a corrected test |
-
-: {tbl-colwidths="[14,26,30,30]"}
 
 ## Where and When Conflict Happened
 
@@ -491,7 +476,7 @@ tm_shape(mmr_conflict) +
 :::
 
 ::: {.read}
-**One region carries the war.** The darkest block is the central Dry Zone, the Sagaing, Magway and Mandalay regions. Together they hold `r f_pct(sum(by_state$total[by_state$ST %in% dz]) / sum(by_state$total))` of all events, and Sagaing alone holds `r f_pct(by_state$total[by_state$ST == "Sagaing"] / sum(by_state$total))`. Of the ten busiest townships, `r sum(top10$ST %in% dz)` are there, led by Monywa with `r format(max(mmr_conflict$total), big.mark = ",")` events. Outside the Dry Zone, the dark townships run along the borders, through Kachin around Hpakant, northern Shan, Kayin and down Tanintharyi. The lightest areas are the Ayeyarwady delta, Nay Pyi Taw and Shan (East), which recorded only `r by_state$total[by_state$ST == "Shan (East)"]` events in almost five years. A township's size does not explain its colour. The correlation between area and event count is only `r round(cor(area_km2, mmr_conflict$total), 2)`.
+**One zone carries the war.** The darkest block is the central Dry Zone, made up of the Sagaing, Magway and Mandalay regions. Together they hold `r f_pct(sum(by_state$total[by_state$ST %in% dz]) / sum(by_state$total))` of all events, and Sagaing alone holds `r f_pct(by_state$total[by_state$ST == "Sagaing"] / sum(by_state$total))`. Of the ten busiest townships, `r sum(top10$ST %in% dz)` are there, led by Monywa with `r format(max(mmr_conflict$total), big.mark = ",")` events. Outside the Dry Zone, the dark townships run along the borders, through Kachin around Hpakant, northern Shan, Kayin and down Tanintharyi. The lightest areas are the Ayeyarwady delta, Nay Pyi Taw and Shan (East), which recorded only `r by_state$total[by_state$ST == "Shan (East)"]` events in almost five years. A township's size does not explain its colour. The correlation between area and event count is only `r round(cor(area_km2, mmr_conflict$total), 2)`.
 :::
 
 ### How conflict changed over time
@@ -642,7 +627,7 @@ nat_civ <- sum(st_type$civilians) / sum(st_type$total)
 ```
 
 ::: {.read}
-**The three types share a core but differ at the edges.** All three are heaviest in the Dry Zone. Beyond it, battles and explosions run along nearly every border, through Kachin, northern Shan, Kayah, Kayin and Tanintharyi, where ethnic armed groups and the military fight over territory. Violence against civilians is the smallest type, at `r format(sum(st_type$civilians), big.mark = ",")` events, and its map is lighter. Almost half of it, `r f_pct(sum(st_type$civilians[st_type$ST %in% dz]) / sum(st_type$civilians))`, falls in the three Dry Zone regions. The mix also changes with place. In lowland areas with little fighting, attacks on civilians make up a bigger share of the violence, `r f_pct(st_type$civ_share[st_type$ST == "Bago (West)"])` in Bago (West) and `r f_pct(st_type$civ_share[st_type$ST == "Yangon"])` in Yangon, against `r f_pct(nat_civ)` nationally. Task 2 therefore maps each type, and the bonus tests whether these differences in mix form clusters of their own.
+**The three types share a core but differ at the edges.** All three are heaviest in the Dry Zone. Beyond it, battles and explosions run along nearly every border, through Kachin, northern Shan, Kayah, Kayin and Tanintharyi, where ethnic armed groups and the military fight over territory. Violence against civilians is the smallest type, at `r format(sum(st_type$civilians), big.mark = ",")` events, and its map is lighter. Almost half of it, `r f_pct(sum(st_type$civilians[st_type$ST %in% dz]) / sum(st_type$civilians))`, falls in the three Dry Zone regions. The mix also changes with place. In lowland areas with little fighting, attacks on civilians make up a bigger share of the violence, `r f_pct(st_type$civ_share[st_type$ST == "Bago (West)"])` in Bago (West) and `r f_pct(st_type$civ_share[st_type$ST == "Yangon"])` in Yangon, against `r f_pct(nat_civ)` nationally. Task 2 therefore maps each type, and Bonus 1 tests whether these differences in mix form clusters of their own.
 :::
 
 ### How the map changed year by year
@@ -698,7 +683,7 @@ sy <- function(s, y) round(st_year$per_q[st_year$ST == s & st_year$year == y])
 ```
 
 ::: {.read}
-**The conflict widened rather than moved.** In 2021 the darkest areas were Sagaing, Yangon and the Kachin and northern Shan borders. Sagaing was darkest in 2022 and 2023, at about `r sy("Sagaing", "2022")` events a quarter, then cooled to about `r sy("Sagaing", "2025")` a quarter in 2025. Other areas went the other way. Northern Shan flared in 2023 with Operation 1027. Rakhine rose from about `r sy("Rakhine", "2021")` events a quarter in 2021 to `r sy("Rakhine", "2024")` in 2024, as the Arakan Army took control of much of the state. Bago (East) and Bago (West), which lie between the Dry Zone and Yangon, grew year after year. Yangon went from about `r sy("Yangon", "2021")` events a quarter in 2021 to about `r sy("Yangon", "2025")` in 2025. These are counts, so Task 3 tests whether the shifts are real trends in where conflict clusters.
+**The conflict widened rather than moved.** In 2021 the darkest areas were Sagaing, Yangon and the Kachin and northern Shan borders. Sagaing was darkest in 2022 and 2023, at about `r sy("Sagaing", "2022")` events a quarter across the whole region, then cooled to about `r sy("Sagaing", "2025")` a quarter in 2025. Other areas went the other way. Northern Shan flared in 2023 with Operation 1027. Rakhine rose from about `r sy("Rakhine", "2021")` events a quarter in 2021 to `r sy("Rakhine", "2024")` in 2024, as the Arakan Army took control of much of the state. Bago (East) and Bago (West), which lie between the Dry Zone and Yangon, grew year after year. Yangon went from about `r sy("Yangon", "2021")` events a quarter in 2021 to about `r sy("Yangon", "2025")` in 2025. These are counts, so Task 3 tests whether the shifts are real trends in where conflict clusters.
 :::
 
 ```{r}
@@ -706,13 +691,29 @@ sy <- function(s, y) round(st_year$per_q[st_year$ST == s & st_year$year == y])
 write_rds(list(remote_mix = remote_mix, trend = trend), "data/rds/charts.rds")
 ```
 
+## Analytical Assumptions and Methodological Decisions
+
+The maps above show a skewed, uneven and shifting war. The choices below set up Tasks 2 and 3 for it, and each is explained again where it is used.
+
+| Decision | Choice | Why | Risk, and how it is checked |
+|---|---|---|---|
+| Measure | Event counts, not rates | Counts are what the brief asks for, and no reliable township population for 2021 to 2025 is available | A busy town may look high because more happens there. Read with care |
+| Neighbours | 8 nearest townships, by centre point | Townships range from under 1 km² to over 12,000 km², 3 are islands, and counts are skewed. The lecture notes advise about 8 neighbours in this case | Rural neighbours reach further than urban ones. Checked with queen contiguity |
+| Weights | Row-standardised. The township itself is included for Gi\* | Standard for local Moran's I and Gi\* (Getis and Ord, 1992) | Every neighbour counts the same |
+| Null model | Conditional permutation, 999 shuffles (199 in Task 3, explained there) | Makes no assumption that counts are normally distributed | Permutation p-values vary slightly by run, so the seed is fixed |
+| Significance | p < 0.05. Two-sided for local Moran's I and Gi\*. EHSA uses sfdep's own per-quarter p-value | Set by the brief | With 330 tests some results are false alarms. Checked with the false discovery rate |
+| Time step | Quarter | Enough events per bin, and 19 points for a trend test | Short bursts inside a quarter are smoothed |
+| Trend test | Mann-Kendall on Gi\* | Set by the brief | It assumes no serial correlation, which conflict series break. Checked with a corrected test |
+
+: {tbl-colwidths="[14,26,30,30]"}
+
 # Task 2. Local Measures of Spatial Association
 
 Task 2 answers Q2 and the brief's first objective. It finds the townships where conflict clusters, and the ones that behave unlike their neighbours.
 
 ::: {.callout-note icon=false}
 ## Short answer
-Conflict is strongly clustered. One block of 28 townships in the Dry Zone forms the main High-High cluster, with a smaller one around Dawei in Tanintharyi. Low-Low clusters cover Yangon, the Ayeyarwady delta and eastern Shan. Gi\* finds 40 hot spots that hold 31 percent of all events. No township is a lone hot point among quiet neighbours. The 8 outliers are quieter townships on the edge of hot areas, and a median split adds two borderline busy spots in quiet areas, Pathein and Thaketa. Each type of violence shares the Dry Zone core but has its own second cluster. These results hold under a false discovery rate correction and a different neighbour rule.
+Conflict is strongly clustered. One block of 28 townships in the Dry Zone forms the main High-High cluster, with a smaller one around Dawei in Tanintharyi. Low-Low clusters cover Yangon, the Ayeyarwady delta and eastern Shan. Gi\* finds 40 hot spots that hold 31 percent of all events. No township is a lone hot point among quiet neighbours. The 8 outliers are quieter townships on the edge of hot areas, and a median split adds two borderline busy spots in quiet areas, Pathein and Thaketa. Each type of violence shares the Dry Zone core but has its own second cluster. The High-High core holds under a false discovery rate correction and a different neighbour rule. The Low-Low areas shrink and most outliers do not hold, so the outliers are the least certain result.
 :::
 
 ## Step 1. Choosing the neighbours
@@ -734,7 +735,7 @@ bind_rows(nb_summary(nb_queen, "Queen contiguity"), nb_summary(nb_knn, "8 neares
   kable(col.names = c("Rule", "Fewest neighbours", "Median", "Most", "Townships with none", "Separate groups"))
 ```
 
-Queen contiguity leaves `r sum(spdep::card(nb_queen) == 0)` island townships (`r paste(mmr_conflict$TS[spdep::card(nb_queen) == 0], collapse = ", ")`) with no neighbour at all, and splits Myanmar into pieces that cannot be compared. Townships also differ hugely in size, and the counts are skewed. The Lesson 5 notes recommend nearest neighbours in exactly this case, with about eight neighbours when values are skewed. So **8 nearest neighbours** is used throughout, and queen contiguity is kept as a check in Step 5.
+Queen contiguity leaves `r sum(spdep::card(nb_queen) == 0)` island townships (`r paste(mmr_conflict$TS[spdep::card(nb_queen) == 0], collapse = ", ")`) with no neighbour at all, and splits Myanmar into pieces that cannot be compared. Townships also differ hugely in size, and the counts are skewed. The Lesson 5 notes recommend nearest neighbours in exactly this case, with about eight neighbours when values are skewed. So **8 nearest neighbours** is used throughout, and queen contiguity is kept as a check in Step 6. This follows the course. Section 10.5.1.2 of the course text builds adaptive weights in exactly this way, `include_self(st_knn())` with row-standardised weights, for Gi\* (Kam, 2026).
 
 ```{r}
 #| filename: "weights"
@@ -746,25 +747,49 @@ wm_gi  <- mmr_conflict %>%
 
 ## Step 2. Is there clustering at all?
 
-Local statistics only make sense if the map is clustered overall. Global Moran's I tests whether similar values sit together. Getis-Ord global G tests whether it is the *high* values that sit together. Global G is computed with binary weights, as its formula expects.
+Local statistics only make sense if the map is clustered overall. The three global measures in Lesson 5 each ask this a different way. Global Moran's I compares each township with the national average and is above 0 when similar values sit together. Global Geary's c compares each township with its immediate neighbours and is below 1 when they are alike. Getis-Ord global G tests whether it is the *high* values that sit together, and is computed with binary weights, as its formula expects. All three use 999 permutations or the randomisation test as the null model.
 
 ```{r}
-#| filename: "global Moran's I and global G for the four variables"
+#| filename: "global Moran's I, Geary's c and G for the four variables"
 var_names <- c(total = "Total", battles = "Battles", remote = "Explosions and remote violence",
                civilians = "Violence against civilians")
 set.seed(1234)
 global_tab <- map_dfr(names(var_names), function(v) {
-  m <- global_moran_perm(wm_knn[[v]], wm_knn$nb, wm_knn$wt, nsim = 999)
+  m <- global_moran_perm(wm_knn[[v]], wm_knn$nb, wm_knn$wt, nsim = 999, alternative = "greater")
+  c <- global_c_perm(wm_knn[[v]], wm_knn$nb, wm_knn$wt, nsim = 999)
   g <- global_g_test(wm_knn[[v]], wm_knn$nb, st_weights(wm_knn$nb, style = "B"))
   tibble(variable = var_names[[v]], moran_i = round(m$statistic, 2),
-         moran_p = format.pval(m$p.value, eps = 0.001, digits = 2),
+         moran_p = sprintf("%.3f", m$p.value),
+         geary_c = round(c$statistic, 2), geary_p = sprintf("%.3f", c$p.value),
          g_z = round(g$statistic[[1]], 1), g_p = format.pval(g$p.value, eps = 0.001, digits = 2))
 })
-global_tab %>% kable(col.names = c("Variable", "Moran's I", "p-value", "Global G, z", "p-value"))
+global_tab %>% kable(col.names = c("Variable", "Moran's I", "p-value", "Geary's c", "p-value", "Global G, z", "p-value"))
 ```
 
 ::: {.read}
-**All four variables are clearly clustered.** Moran's I is between `r sprintf('%.2f', min(global_tab$moran_i))` and `r sprintf('%.2f', max(global_tab$moran_i))`, and none of the 999 random shuffles came close, so the null hypothesis of random placement is rejected for every variable (p < 0.01). Global G is strongly positive too, with z-scores of `r floor(min(global_tab$g_z))` to `r ceiling(max(global_tab$g_z))`, which says the clustering is driven by high counts sitting together. The four results are almost the same size, so no single type drives the pattern. The next step finds where these clusters are.
+**All four variables are clearly clustered.** Moran's I is between `r sprintf('%.2f', min(global_tab$moran_i))` and `r sprintf('%.2f', max(global_tab$moran_i))`, and none of the 999 random shuffles came close, so the null hypothesis of random placement is rejected for every variable (one-sided test for clustering as in chapter 9 of the course text, p = 0.001, the smallest value 999 shuffles can give). Geary's c, between `r sprintf('%.2f', min(global_tab$geary_c))` and `r sprintf('%.2f', max(global_tab$geary_c))`, is well below 1, so neighbouring townships are also alike when compared directly with each other. The two measures agree, as the lecture expects, since a high Moran's I goes with a low Geary's c. Global G is strongly positive too, with z-scores of `r floor(min(global_tab$g_z))` to `r ceiling(max(global_tab$g_z))`, which says the clustering is driven by high counts sitting together. The four results are almost the same size, so no single type drives the pattern.
+:::
+
+### How far does the clustering reach?
+
+The neighbour rule fixes the scale of every local statistic, so it is worth checking how far the clustering actually reaches. A spatial correlogram, `sp.correlogram()` from **spdep** as in chapter 9 of the course text, repeats Moran's I for neighbours of neighbours. Order 1 is the 8 nearest townships, order 2 adds their 8 nearest, and so on. The table also gives the typical distance between a township and its neighbours at each order.
+
+```{r}
+#| filename: "Moran's I correlogram over six orders of neighbours"
+corr <- sp.correlogram(nb_knn, mmr_conflict$total, order = 6, method = "I", style = "W", zero.policy = TRUE)
+lags <- nblag(nb_knn, 6)
+corr_tab <- tibble(order = 1:6,
+                   distance_km = map_dbl(lags, ~ median(unlist(nbdists(.x, st_coordinates(centres)))) / 1000),
+                   moran_i = corr$res[, 1],
+                   p = 2 * pnorm(-abs((corr$res[, 1] - corr$res[, 2]) / sqrt(corr$res[, 3]))))
+corr_tab %>%
+  mutate(distance_km = round(distance_km), moran_i = round(moran_i, 2),
+         p = format.pval(p, eps = 0.001, digits = 2)) %>%
+  kable(col.names = c("Order of neighbours", "Median distance, km", "Moran's I", "p-value"))
+```
+
+::: {.read}
+**Clustering reaches about `r round(corr_tab$distance_km[4], -1)` km and then fades.** Moran's I is strongest among the nearest townships (`r sprintf('%.2f', corr_tab$moran_i[1])`) and weakens with each ring, staying significant up to order 4, about `r round(corr_tab$distance_km[4], -1)` km away. By order 5 it is close to zero, and at order 6 it turns slightly negative, the quiet country on the far side of the clusters. The 8 nearest neighbours, a median of `r round(corr_tab$distance_km[1])` km away, sit well inside this range, so the local statistics compare each township with places that genuinely share its level of conflict. A much wider neighbourhood would blur separate clusters together. The next step finds where these clusters are.
 :::
 
 ## Step 3. Clusters and outliers, local Moran's I
@@ -783,7 +808,7 @@ Assumptions
 :   The 8 nearest townships are the right comparison group. Counts are not rates, so a busy town may look high because more happens there.
 
 Settings
-:   Total events, row-standardised weights, 999 permutations, p < 0.05 from `p_ii_sim`. The quadrant uses the mean, as in the course. A median split is tested in Step 5.
+:   Total events, row-standardised weights, 999 permutations, p < 0.05 from the permutation p-value (`p_ii_sim`). The quadrant uses the mean, as in the course. A median split is tested in Step 6.
 :::
 
 ```{r}
@@ -839,7 +864,51 @@ nqs <- function(q, s) sum(lq$quadrant == q & lq$ST %in% s)
 ```
 
 ::: {.read}
-**The Dry Zone is one solid cluster, and there are no lone hot points.** For `r nrow(lq) - nq("Not significant")` townships the null hypothesis of random placement is rejected at p < 0.05. `r nq("High-High")` are High-High, busy townships with busy neighbours, and `r nqs("High-High", dz)` of them form one block across Sagaing, Magway and Mandalay, around Monywa, Shwebo, Myaing and Pakokku. A smaller High-High group of `r nqs("High-High", "Tanintharyi")` sits around Dawei in Tanintharyi. `r nq("Low-Low")` townships are Low-Low, in Yangon (`r nqs("Low-Low", "Yangon")`), the Ayeyarwady delta (`r nqs("Low-Low", "Ayeyarwady")`), Shan (East) (`r nqs("Low-Low", "Shan (East)")`), southern Shan and around Nay Pyi Taw. No township is a High-Low outlier, a lone hot point among quiet neighbours. The `r nq("Low-High")` Low-High outliers are quieter townships on the edge of hot areas, such as Nyaung-U and Seikphyu beside the Dry Zone block. They may be safer pockets, or places where events go unreported. High counts alone do not make a cluster. Kawkareik in Kayin, the second busiest township, is not significant, because six of its eight nearest neighbours are quiet Mon townships.
+**The Dry Zone is one solid cluster, and there are no lone hot points.** For `r nrow(lq) - nq("Not significant")` townships the null hypothesis of random placement is rejected at p < 0.05. `r nq("High-High")` are High-High, busy townships with busy neighbours, and `r nqs("High-High", dz)` of them form one block across Sagaing, Magway and Mandalay, around Monywa, Shwebo, Myaing and Pakokku. A smaller High-High group of `r nqs("High-High", "Tanintharyi")` sits around Dawei in Tanintharyi. `r nq("Low-Low")` townships are Low-Low, in Yangon (`r nqs("Low-Low", "Yangon")`), the Ayeyarwady delta (`r nqs("Low-Low", "Ayeyarwady")`), Shan (East) (`r nqs("Low-Low", "Shan (East)")`), southern Shan and around Nay Pyi Taw. No township is a High-Low outlier, a lone hot point among quiet neighbours. The `r nq("Low-High")` Low-High outliers are quieter townships on the edge of hot areas, such as Nyaung-U and Seikphyu beside the Dry Zone block. They may be safer pockets, or places where events go unreported, but Step 6 shows they are the least stable result. High counts alone do not make a cluster. Kawkareik in Kayin, the second busiest township, is not significant, because six of its eight nearest neighbours are quiet Mon townships.
+:::
+
+### The Moran scatterplot behind the map
+
+The LISA map is built from a Moran scatterplot, as in chapter 10 of the course text (Kam, 2026). Each point is a township. The horizontal axis is its own count, standardised, and the vertical axis is the average of that standardised value over its 8 neighbours, its spatial lag from `st_lag()`. The four quarters around the averages are the four LISA classes, and only the coloured points are significant.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| label: fig-moran-scatter
+#| fig-cap: "Standardised Moran scatterplot of total armed conflict events. Coloured points are significant in local Moran's I (p < 0.05). Data from ACLED and MIMU"
+#| fig-width: 8
+#| fig-height: 6
+#| echo: false
+ms <- lisa %>% st_drop_geometry() %>%
+  mutate(z_total = as.vector(scale(total)),
+         z_lag = st_lag(z_total, nb, wt))   # lag of the standardised value, so the slope equals Moran's I
+ms_lab <- ms %>% filter(TS %in% c("Monywa", "Kawkareik", "Nyaung-U", "Pathein", "Hpakant"))
+
+ggplot(ms, aes(z_total, z_lag)) +
+  geom_hline(yintercept = 0, colour = "grey55", linetype = 2) +
+  geom_vline(xintercept = 0, colour = "grey55", linetype = 2) +
+  geom_point(data = filter(ms, quadrant == "Not significant"), colour = "grey75", size = 2) +
+  geom_point(data = filter(ms, quadrant != "Not significant"), aes(colour = quadrant), size = 2.4) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", linewidth = 0.7) +
+  geom_text(data = ms_lab, aes(label = TS, hjust = if_else(z_total > 2, 1.15, -0.15)), size = 4, vjust = -0.6) +
+  scale_colour_manual(values = lisa_cols, name = "LISA class, p < 0.05") +
+  labs(title = "Busy townships mostly have busy neighbours",
+       x = "Township's own events, standardised", y = "Average of its 8 neighbours") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "right", panel.grid.minor = element_blank())
+```
+
+## The Code
+
+```{r}
+#| eval: false
+#| ref.label: "fig-moran-scatter"
+```
+:::
+
+::: {.read}
+**The slope is Moran's I, and the outliers sit where the map says they do.** The black line rises with a slope of `r sprintf('%.2f', coef(lm(z_lag ~ z_total, data = ms))[2])`, which is exactly the global Moran's I in Step 2, as the lecture shows. Most significant points fall in the High-High and Low-Low quarters. Monywa, the busiest township, sits far to the right among busy neighbours. Kawkareik is busy too, but its neighbours average close to zero, so it is not significant. Nyaung-U, a Low-High outlier, sits on the left with busy neighbours. No significant point falls in the High-Low quarter.
 :::
 
 ## Step 4. Hot and cold spots, Getis-Ord Gi\*
@@ -858,7 +927,7 @@ Assumptions
 :   As for local Moran's I. Gi\* finds hot and cold spots but not outliers.
 
 Settings
-:   Total events, 8 nearest neighbours plus the township itself, row-standardised weights, two-sided p-value `p_sim` as in the course, p < 0.05.
+:   Total events, 8 nearest neighbours plus the township itself, row-standardised weights, two-sided permutation p-value (`p_sim`) as in the course, p < 0.05. A significant township is a hot spot when its Gi\* is positive and a cold spot when negative, as the lecture defines them. The hands-on code labels them from the `cluster` column instead, but that column only says whether the township itself is above the average. For a few significant townships it disagrees with the sign of Gi\*, which would turn hot neighbourhoods into cold spots, so the lecture rule is used.
 :::
 
 ```{r}
@@ -882,6 +951,7 @@ hcsa %>% st_drop_geometry() %>% count(spot, .drop = FALSE) %>% kable(col.names =
 #| echo: false
 hq <- hcsa %>% st_drop_geometry() %>% mutate(hot = str_detect(spot, "Hot"), cold = str_detect(spot, "Cold"))
 hot_share <- sum(hq$total[hq$hot]) / sum(hq$total)
+n_disagree <- sum(hq$p_sim < 0.05 & ((hq$gi_star > 0) != (hq$cluster == "High")))
 ```
 
 ::: panel-tabset
@@ -916,7 +986,7 @@ tm_shape(hcsa) +
 :::
 
 ::: {.read}
-**A few hot neighbourhoods hold nearly a third of all events.** `r sum(hq$hot)` townships are hot spots, `r sum(hq$spot == "Hot spot, p < 0.01")` of them at p < 0.01, and together they hold `r f_pct(hot_share)` of all events. `r sum(hq$hot & hq$ST %in% dz)` of them are in the Dry Zone, and the Sagaing part alone holds `r f_pct(sum(hq$total[hq$hot & hq$ST == "Sagaing"]) / sum(hq$total))` of all events. The rest are small groups around Dawei in Tanintharyi (`r sum(hq$hot & hq$ST == "Tanintharyi")`), Hakha in Chin (`r sum(hq$hot & hq$ST == "Chin")`), and single townships in Kayin and northern Shan. The two statistics agree closely, since the hot spots are nearly the same townships as the High-High cluster. `r sum(hq$cold)` townships are cold spots, mostly Yangon (`r sum(hq$cold & hq$ST == "Yangon")`), the Ayeyarwady delta (`r sum(hq$cold & hq$ST == "Ayeyarwady")`) and Shan (East) and (South) (`r sum(hq$cold & hq$ST %in% c("Shan (East)", "Shan (South)"))`). Busy townships elsewhere, such as Kawkareik, Hpakant and Kyaukkyi, are not hot spots, because their neighbours are quieter. They are local flashpoints rather than parts of a wider hot zone.
+**A few hot neighbourhoods hold nearly a third of all events.** `r sum(hq$hot)` townships are hot spots, `r sum(hq$spot == "Hot spot, p < 0.01")` of them at p < 0.01, and together they hold `r f_pct(hot_share)` of all events. `r sum(hq$hot & hq$ST %in% dz)` of them are in the Dry Zone, and the Sagaing part alone holds `r f_pct(sum(hq$total[hq$hot & hq$ST == "Sagaing"]) / sum(hq$total))` of all events. The rest are small groups around Dawei in Tanintharyi (`r sum(hq$hot & hq$ST == "Tanintharyi")`), Hakha in Chin (`r sum(hq$hot & hq$ST == "Chin")`), and single townships in Kayin and northern Shan. The two statistics agree closely, since the hot spots are nearly the same townships as the High-High cluster. `r sum(hq$cold)` townships are cold spots, mostly Yangon (`r sum(hq$cold & hq$ST == "Yangon")`), the Ayeyarwady delta (`r sum(hq$cold & hq$ST == "Ayeyarwady")`) and Shan (East) and (South) (`r sum(hq$cold & hq$ST %in% c("Shan (East)", "Shan (South)"))`). Busy townships elsewhere, such as Kawkareik, Hpakant and Kyaukkyi, are not hot spots, because their neighbours are quieter. They are local flashpoints rather than parts of a wider hot zone. Labelling by the hands-on `cluster` column instead would have called `r n_disagree` of these significant townships the wrong kind of spot, all of them hot neighbourhoods around a quieter township.
 :::
 
 ## Step 5. Clusters by type of conflict
@@ -997,14 +1067,14 @@ ntp <- function(t, col, v, s = NULL) sum(lt$type == var_names[[t]] & lt[[col]] =
 ```
 
 ::: {.read}
-**The core is the same for every type, but each has its own second cluster.** All three types form a High-High cluster and a block of Gi\* hot spots in the Dry Zone. Battles have the widest spread, with `r ntp("battles", "spot", "Hot spot")` hot spots including groups around Myitkyina and Mohnyin in Kachin, in Kayah, and down Tanintharyi, where ethnic armed groups fight the military for territory. Explosions and remote violence have the fewest hot spots, `r ntp("remote", "spot", "Hot spot")`, with a second group where Bago (East) meets Kayin, around Shwegyin, Nyaunglebin and Hpa-An. Violence against civilians has `r ntp("civilians", "spot", "Hot spot")` hot spots, almost all in the Dry Zone and Tanintharyi, and the only High-Low outlier in the study, Pathein in the Ayeyarwady delta, with more attacks on civilians than its quiet neighbours. The cold areas are the same for all three. Totals find the core well, but the second clusters differ by type, which is why the bonus looks at the mix of types directly.
+**The core is the same for every type, but each has its own second cluster.** All three types form a High-High cluster and a block of Gi\* hot spots in the Dry Zone. Battles have the widest spread, with `r ntp("battles", "spot", "Hot spot")` hot spots including groups around Myitkyina and Mohnyin in Kachin, in Kayah, and down Tanintharyi, where ethnic armed groups fight the military for territory. Explosions and remote violence have the fewest hot spots, `r ntp("remote", "spot", "Hot spot")`, with a second group where Bago (East) meets Kayin, around Shwegyin, Nyaunglebin and Hpa-An. Violence against civilians has `r ntp("civilians", "spot", "Hot spot")` hot spots, almost all in the Dry Zone and Tanintharyi, and the only High-Low outlier under the mean split, Pathein in the Ayeyarwady delta, with more attacks on civilians than its quiet neighbours. The cold areas are the same for all three. Totals find the core well, but the second clusters differ by type, which is why Bonus 1 looks at the mix of types directly.
 :::
 
 ## Step 6. How much to trust these maps
 
 Three checks test whether the maps depend on choices made along the way.
 
-- **Many tests.** Testing 330 townships at p < 0.05 would flag about 16 by chance alone. `p.adjust()` with the false discovery rate (FDR) method counts how many results survive.
+- **Many tests.** Testing 330 townships at p < 0.05 would flag about 16 by chance alone. `p.adjust()` with the false discovery rate (FDR) method (Benjamini and Hochberg, 1995) counts how many results survive.
 - **Neighbour rule.** Local Moran's I is rerun with queen contiguity, with each island linked to its nearest township so that none is left out.
 - **Mean or median.** Counts are skewed, so "high" and "low" are re-cut at the median instead of the mean.
 
@@ -1041,7 +1111,7 @@ lisa %>% st_drop_geometry() %>% filter(quad_med == "High-Low") %>% select(TS, ST
 ```
 
 ::: {.read}
-**The main pattern is robust, and the outliers depend on the cut-off.** After the FDR correction, `r fdr_tab$still_after_fdr[1]` of `r fdr_tab$p_below_05[1]` local Moran's I results and `r fdr_tab$still_after_fdr[2]` of `r fdr_tab$p_below_05[2]` Gi\* results remain, so most of the pattern is not a by-product of running many tests. Under queen contiguity, `r sum(quad_q == "High-High" & lisa$quadrant == "High-High")` of the `r nq("High-High")` High-High townships keep their class, and no township swaps from high to low or the reverse. The Dry Zone cluster is the same under both rules. The median split matters mostly for outliers. The mean is pulled up by a few very busy townships, so the mean split calls Pathein and Thaketa "low", while against the median they are a little busier than typical and become High-Low outliers. Because their label flips with the cut-off, they are borderline outliers, busier spots inside quiet areas rather than clear flashpoints.
+**The main pattern is robust, and the outliers depend on the cut-off.** After the FDR correction, `r fdr_tab$still_after_fdr[1]` of `r fdr_tab$p_below_05[1]` local Moran's I results and `r fdr_tab$still_after_fdr[2]` of `r fdr_tab$p_below_05[2]` Gi\* results remain, so most of the pattern is not a by-product of running many tests. Under queen contiguity, `r sum(quad_q == "High-High" & lisa$quadrant == "High-High")` of the `r nq("High-High")` High-High townships keep their class, and no township swaps from high to low or the reverse. The Dry Zone cluster is the same under both rules. The rest is less stable. Low-Low townships fall from `r nq("Low-Low")` to `r sum(quad_q == "Low-Low")`, and only `r sum(quad_q == "Low-High" & lisa$quadrant == "Low-High")` of the `r nq("Low-High")` Low-High outliers keep their class. An outlier is defined by who its neighbours are, so it is the result most sensitive to that choice. The median split matters mostly for outliers. The mean is pulled up by a few very busy townships, so the mean split calls Pathein and Thaketa "low", while against the median they are a little busier than typical and become High-Low outliers. Because their label flips with the cut-off, they are borderline outliers, busier spots inside quiet areas rather than clear flashpoints.
 :::
 
 ```{r}
@@ -1056,12 +1126,12 @@ Task 3 answers Q3 and the brief's second objective. Task 2 showed where conflict
 
 ::: {.callout-note icon=false}
 ## Short answer
-The hot core did not move. It spread. The Sagaing core was a hot spot in most quarters with no steady trend, so it drops out of the trend map. The new and growing hot spots ring it instead. Five townships became hot late and stayed hot, in the hills of Bago (East) and on the road from Mandalay to northern Shan. Thirty more turned from cold to hot, across Tanintharyi, Mon, central Rakhine, Bago (East) and the southern Dry Zone. Yangon cooled steadily, and northern Shan cooled sharply after its 2023 offensive. Each type of violence spread in its own direction, and the military's air strikes grew most in the Dry Zone and on the new fronts.
+The hot core did not move. It spread. The Sagaing core was a hot spot in most quarters with no steady trend, so it drops out of the trend map. The new and growing hot spots ring it instead. Five townships became hot late and stayed hot, in the hills of Bago (East) and on the road from Mandalay to northern Shan. Thirty more turned from cold to hot, across Tanintharyi, Mon, central Rakhine, Bago (East) and the southern Dry Zone. Yangon cooled steadily, and northern Shan cooled sharply after the early 2024 ceasefire. Each type of violence spread in its own direction, and the military's air strikes grew most in the Dry Zone and on the new fronts.
 :::
 
 ## Step 1. Neighbours and weights in the cube
 
-The 8 nearest neighbours from Task 2, plus the township itself, are attached to the cube. `set_nbs()` and `set_wts()` copy them to every quarter, so each quarter is compared in the same way.
+The 8 nearest neighbours from Task 2, plus the township itself, are attached to the cube. `set_nbs()` and `set_wts()` copy them to every quarter, so each quarter is compared in the same way. The course example in chapter 11 uses queen contiguity with inverse distance weights instead (Kam, 2026). That choice is not used here. Keeping the same neighbours as Task 2 means a hot spot in Task 3 is the same kind of neighbourhood as a hot spot in Task 2, so the two tasks can be read together. Contiguity would also leave three islands with no neighbour unless they were patched by hand. Chapter 10 of the course text builds Gi\* weights from nearest neighbours in the same way.
 
 ```{r}
 #| filename: "neighbours and weights in the cube"
@@ -1076,7 +1146,7 @@ conflict_nb <- conflict_st %>%
 
 ## Step 2. Gi\* for every quarter, and the Mann-Kendall test
 
-Following the course method, Gi\* is computed for total events in each quarter with `local_gstar_perm()`. Each township then has a series of 19 Gi\* values. The Mann-Kendall test, `MannKendall()` from **Kendall**, asks whether a series keeps rising or keeps falling more often than chance. Its tau runs from −1, always falling, to +1, always rising. The null hypothesis is no monotonic trend.
+Following the course method, Gi\* is computed for total events in each quarter with `local_gstar_perm()`. Each township then has a series of 19 Gi\* values. Task 3 uses 199 permutations instead of 999, because Gi\* is computed for every one of 19 quarters here and again for five variables in Step 3. The course text uses 99. 199 gives a smallest p-value of 0.005, well below the 0.05 cut-off. The Mann-Kendall test, `MannKendall()` from **Kendall**, asks whether a series keeps rising or keeps falling more often than chance. Its tau runs from −1, always falling, to +1, always rising. The null hypothesis is no monotonic trend.
 
 ```{r}
 #| filename: "Gi* by quarter and the Mann-Kendall test for each township"
@@ -1138,12 +1208,12 @@ ggplot(pair_series, aes(time, gi_star, colour = label)) +
 :::
 
 ::: {.read}
-**A trend is about direction, not level.** `r pair$TS[1]` in `r pair$ST[1]` has the strongest rise of all 330 townships. Its Gi\* started below −1.5, a cold neighbourhood, and climbed in most quarters until it crossed the hot spot line in early 2025. `r pair$TS[2]`, across the river from Yangon city, shows the opposite, a slow slide from slightly warm to near −2. Neither was a strong hot or cold spot for most of the period, yet both trends are clear, with p well below 0.001. Across the country, `r sum(mk$sl < 0.05 & mk$tau > 0)` townships have a significant rise and `r sum(mk$sl < 0.05 & mk$tau < 0)` a significant fall. Most rising townships are in Bago, where Okpho sits, while Yangon leads the falls. Gi\* is worked out against the national pattern each quarter, so a falling Gi\* means a neighbourhood holds a smaller share of the conflict, not that it is at peace.
+**A trend is about direction, not level.** `r pair$TS[1]` in `r pair$ST[1]` has the strongest rise of all 330 townships. Its Gi\* started below −1.5, a cold neighbourhood, and climbed in most quarters until it crossed the hot spot line in early 2025. `r pair$TS[2]`, across the river from Yangon city, shows the opposite, a slow slide from slightly warm to near −2. Neither was a strong hot or cold spot for most of the period, yet both trends are clear, with p well below 0.001. Across the country, `r sum(mk$sl < 0.05 & mk$tau > 0)` townships have a significant rise and `r sum(mk$sl < 0.05 & mk$tau < 0)` a significant fall. The largest group of rising townships is in Bago (West) and Bago (East), where Okpho sits, while Yangon leads the falls. Gi\* is worked out against the national pattern each quarter, so a falling Gi\* means a neighbourhood holds a smaller share of the conflict, not that it is at peace.
 :::
 
 ## Step 3. Emerging hot spot classes
 
-`emerging_hotspot_analysis()` from **sfdep** repeats the Gi\* step with a time lag, so each township's neighbours in the previous quarter count too. It runs the Mann-Kendall test on that series and gives each township one of the patterns in the Lesson 5 notes. It is run five times, once for each conflict variable and once for the military's air strikes. `include_gi = TRUE` keeps the quarterly Gi\* values so they can be checked.
+`emerging_hotspot_analysis()` from **sfdep** (Parry, 2023) repeats the Gi\* step with a time lag, so each township's neighbours in the previous quarter count too. It runs the Mann-Kendall test on that series and gives each township one of the patterns in the Lesson 5 notes. It is run five times, once for each conflict variable and once for the military's air strikes. `include_gi = TRUE` keeps the quarterly Gi\* values so they can be checked.
 
 ```{r}
 #| filename: "EHSA for every conflict variable"
@@ -1187,7 +1257,7 @@ Reading sfdep's source code shows two rules that differ from the definitions in 
 |---|---|---|---|
 | Sporadic hot or cold spot | Must be significant in the **final** quarter | Does not check the final quarter | Fading townships are labelled sporadic |
 | Intensifying hot spot | Hot in at least 90 percent of quarters | Significant in 90 percent of quarters, hot **or cold** | A cold spot that is warming can be labelled an intensifying hot spot |
-| Consecutive and oscillating hot spot | A township that was cold, then hot to the end, fits both definitions | Treats it as oscillating, since a consecutive hot spot may have no significant quarter of either kind before its final run | The lecture gives no order, so sfdep's choice is kept and applied to every township |
+| Consecutive and oscillating hot spot | A township that was cold, then hot to the end, fits both definitions | Calls it oscillating. It only calls a township consecutive if it was never significant, hot or cold, before its final hot run | The lecture gives no order, so sfdep's choice is kept and applied to every township |
 
 : {tbl-colwidths="[18,26,30,26]"}
 
@@ -1266,6 +1336,56 @@ ehsa_map <- mmr_ts %>% select(TS_PCODE, TS, ST) %>%
          variable = factor(variable, levels = ehsa_vars))
 ```
 
+First, the course text plots how many townships fall in each class (Kam, 2026, chapter 11). The bar chart below counts only townships with a significant trend, for each conflict variable.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| label: fig-ehsa-bar
+#| fig-cap: "Number of townships in each emerging hot spot pattern, townships with a significant trend only (Mann-Kendall p < 0.05). Data from ACLED and MIMU"
+#| fig-width: 10
+#| fig-height: 5
+#| echo: false
+ehsa_bar <- ehsa_tab %>% filter(p_value < 0.05) %>%
+  mutate(pattern = factor(pattern, levels = rev(ehsa_levels)),
+         variable = factor(variable, levels = ehsa_vars,
+                           labels = c("All conflict", "Battles", "Explosions", "Attacks on civilians", "Air strikes"))) %>%
+  count(variable, pattern)
+
+ggplot(ehsa_bar, aes(n, pattern, fill = pattern)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = n), hjust = -0.2, size = 3.6) +
+  scale_fill_manual(values = ehsa_cols, guide = "none") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.25))) +
+  facet_wrap(~ variable, nrow = 1) +
+  labs(title = "Most trending townships fit no named pattern or flip between hot and cold",
+       x = "Townships", y = NULL) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"), strip.text = element_text(face = "bold"),
+        panel.grid.major.y = element_blank(), panel.grid.minor = element_blank())
+```
+
+## The Code
+
+```{r}
+#| eval: false
+#| ref.label: "fig-ehsa-bar"
+```
+:::
+
+```{r}
+#| echo: false
+nb_cls <- function(p, v = "All conflict") sum(ehsa_bar$n[ehsa_bar$variable == v & ehsa_bar$pattern == p])
+n_sig_tot <- sum(ehsa_bar$n[ehsa_bar$variable == "All conflict"])
+n_moved <- sum(ehsa_tab$variable == "All armed conflict" & ehsa_tab$p_value < 0.05 &
+               ehsa_tab$pattern == "No pattern detected" & ehsa_tab$sfdep_class != "No pattern detected")
+```
+
+::: {.read}
+**Most change is on and off rather than steady.** Of the `r n_sig_tot` townships with a significant trend in all conflict, `r nb_cls("No pattern detected")` fit none of the named patterns. Most were not significant in the final quarter, which nearly every named pattern requires. `r n_moved` of them were moved here from sfdep's sporadic class by the lecture-rule check in Step 3. Among the rest, oscillating hot spots (`r nb_cls("Oscillating hotspot")`) and oscillating cold spots (`r nb_cls("Oscillating coldspot")`) lead, townships that flipped from cold to hot or from hot to cold. Only `r nb_cls("Consecutive hotspot")` townships turned hot and stayed hot, and none is a new, intensifying or persistent hot spot. A war of shifting fronts produces exactly this, because Gi\* compares each township with the rest of the country in the same quarter, and the rest of the country keeps changing. The other variables look similar, with one difference. For explosions (`r nb_cls("Sporadic coldspot", "Explosions")`) and air strikes (`r nb_cls("Sporadic coldspot", "Air strikes")`), sporadic cold spots are a large group, townships that were cold now and then and never hot. Across all five variables there is a single new hot spot, Hpakant for explosions. The maps below show where each class sits.
+:::
+
 ::: panel-tabset
 ## The Plot
 
@@ -1316,7 +1436,7 @@ core_q <- range(tot$hot_q[tot$TS_PCODE %in% core])
 ```
 
 ::: {.read}
-**The core stayed hot, and the conflict spread around it.** `r nrow(sig_tot)` of 330 townships have a significant trend. The right map shows why the Sagaing core is mostly blank on the left. Its High-High townships were significant hot spots in `r core_q[1]` to `r core_q[2]` of the 19 quarters, a steady heat with no clear rise or fall. The growing hot spots form a ring around that core. `r np("Consecutive hotspot")` consecutive hot spots, which turned hot late and stayed hot, sit in the hills of Bago (East) and on the road from Mandalay to northern Shan. `r np("Oscillating hotspot")` oscillating hot spots, cold earlier and hot by the end, run through Tanintharyi, Mon, central Rakhine, Bago (East) and the south of the Dry Zone. On the cold side, Yangon has `r sum(sig_tot$ST == "Yangon" & str_detect(sig_tot$pattern, "coldspot"))` of its `r sum(tot$ST == "Yangon")` townships in a cold pattern. Six townships on the northern Shan border were the hottest anywhere in late 2023 and turned cold after it. The readings below take each pattern in turn.
+**The core stayed hot, and the conflict spread around it.** `r nrow(sig_tot)` of 330 townships have a significant trend, a few more than the `r sum(mk$sl < 0.05)` in Step 2, because EHSA's Gi\* also counts each neighbour's previous quarter. The right map shows why the Sagaing core is mostly blank on the left. Its High-High townships were significant hot spots in `r core_q[1]` to `r core_q[2]` of the 19 quarters. Their heat rose to a peak in 2023 and then eased, so the series has no single direction and no significant trend. The growing hot spots form a ring around that core. `r np("Consecutive hotspot")` consecutive hot spots, which turned hot late and stayed hot, sit in the hills of Bago (East) and on the road from Mandalay to northern Shan. `r np("Oscillating hotspot")` oscillating hot spots, cold earlier and hot by the end, run through Tanintharyi, Mon, central Rakhine, Bago (East) and the south of the Dry Zone. On the cold side, Yangon has `r sum(sig_tot$ST == "Yangon" & str_detect(sig_tot$pattern, "coldspot"))` of its `r sum(tot$ST == "Yangon")` townships in a cold pattern. Six townships on the northern Shan border were the hottest anywhere in late 2023 and turned cold after it. The readings below take each pattern in turn.
 :::
 
 ### What each pattern looks like over time
@@ -1366,11 +1486,11 @@ ggplot(series, aes(time, gi_star)) +
 
 ### Reading each pattern
 
-**Consecutive hot spots, `r np("Consecutive hotspot")` townships.** These are the clearest new hot spots. `r paste(sig_tot$TS[sig_tot$pattern == "Consecutive hotspot"], collapse = ", ")` were not hot in 2021 but became hot and stayed hot to the end, with their median Gi\* rising from about zero to between 3 and 7. They mark two new fronts. One is the hills of Bago (East) next to Kayin, around Kyaukkyi and Shwegyin. The other is the road from Mandalay to northern Shan, through Mogoke, Nawnghkio and Kyaukme, where fighting moved in the second phase of Operation 1027 in 2024. Both lead from the edge of the country towards its centre, so they are where the conflict is still advancing.
+**Consecutive hot spots, `r np("Consecutive hotspot")` townships.** These are the clearest new hot spots. `r paste(sig_tot$TS[sig_tot$pattern == "Consecutive hotspot"], collapse = ", ")` were not hot in 2021 but became hot and stayed hot to the end, with their Gi\* rising from about zero to between 3 and 7. They mark two new fronts. One is the hills of Bago (East) next to Kayin, around Kyaukkyi and Shwegyin. The other is the road from Mandalay to northern Shan, through Mogoke, Nawnghkio and Kyaukme, where fighting moved in the second phase of Operation 1027 in 2024. Both lead from the edge of the country towards its centre, so they are where the conflict is still advancing.
 
 **Oscillating hot spots, `r np("Oscillating hotspot")` townships.** This is the largest hot pattern. Each township was a significant cold spot at least once, usually in 2021, and is hot in the final quarter. They fall in four groups. `r np("Oscillating hotspot", "Tanintharyi")` cover most of Tanintharyi, from Dawei to Kawthoung. `r np("Oscillating hotspot", "Rakhine")` are in central Rakhine, around Kyaukpyu and Ramree, which were cold in 2021 and turned hot in 2024 as fighting moved south through the state. `r np("Oscillating hotspot", "Mon")` are in Mon and `r np("Oscillating hotspot", "Bago (East)")` in Bago (East). The rest are in the Dry Zone, mostly in its south around Myingyan, Taungtha, Chauk and Salin, plus Singu on the road to northern Shan. These are the places where conflict arrived during the study period.
 
-**Sporadic hot spots, `r np("Sporadic hotspot")` townships.** These are hot in the final quarter and were hot on and off before, but never cold. `r np("Sporadic hotspot", "Kayin")` of them are in Kayin, including Kawkareik, Myawaddy and Hpa-An on the Thai border. They were strongest in 2025, so the south-east border is warming again after a quieter 2023.
+**Sporadic hot spots, `r np("Sporadic hotspot")` townships.** These are hot in the final quarter and were hot on and off before, but never cold. `r np("Sporadic hotspot", "Kayin")` of them are in Kayin, including Kawkareik, Myawaddy and Hpa-An on the Thai border. They were strongest in 2025, so the south-east border is warming again.
 
 **Oscillating cold spots, `r np("Oscillating coldspot")` townships.** These were hot at least once and are cold now. `r np("Oscillating coldspot", "Shan (North)")` are on the Chinese border in northern Shan, including Laukkaing, Hseni and Kunlong. They were the hottest places in Myanmar in late 2023, the spike in @fig-ehsa-series, when Operation 1027 began, and turned cold after the ceasefire brokered by China in early 2024. The other `r np("Oscillating coldspot") - np("Oscillating coldspot", "Shan (North)")` are in Yangon and around Mandalay city, slightly warm during the urban resistance of 2021 and cold since.
 
@@ -1419,11 +1539,11 @@ nsig <- function(v) sum(et$variable == v & et$p_value < 0.05)
 tsn <- function(v, p, s = NULL) paste(et$TS[et$variable == v & et$p_value < 0.05 & et$pattern == p & (is.null(s) | et$ST %in% s)], collapse = ", ")
 ```
 
-**Battles, `r nsig("Battles")` townships with a significant trend.** Ground fighting moved to the coast and the far south. `r npt("Battles", "Oscillating hotspot")` townships turned from cold to hot, led by Tanintharyi (`r npt("Battles", "Oscillating hotspot", "Tanintharyi")`) and central Rakhine (`r npt("Battles", "Oscillating hotspot", "Rakhine")`), where the Arakan Army pushed south in 2024. The clearest cooling is in northern Shan, where `r npt("Battles", "Oscillating coldspot", "Shan (North)")` townships, from Lashio to Laukkaing, were hot during Operation 1027 and cold after the 2024 ceasefire. Battles also have the weakest trends. Only about half survive the checks in Step 7, possibly because ground fighting jumps from place to place rather than building steadily.
+**Battles, `r nsig("Battles")` townships with a significant trend.** Ground fighting moved to the coast and the far south. `r npt("Battles", "Oscillating hotspot")` townships turned from cold to hot, led by Tanintharyi (`r npt("Battles", "Oscillating hotspot", "Tanintharyi")`) and central Rakhine (`r npt("Battles", "Oscillating hotspot", "Rakhine")`). `r npt("Battles", "Oscillating coldspot", "Shan (North)")` northern Shan townships were hot during Operation 1027 and cold after the 2024 ceasefire. Only about half of the battle trends survive the false discovery rate check in Step 7, so this map is a guide.
 
-**Explosions and remote violence, `r nsig("Explosions and remote violence")` townships.** Explosions spread into the hills between the Dry Zone and Kayin, and down the south. `r npt("Explosions and remote violence", "Oscillating hotspot")` townships turned from cold to hot, led by Tanintharyi (`r npt("Explosions and remote violence", "Oscillating hotspot", "Tanintharyi")`) and Bago (East) (`r npt("Explosions and remote violence", "Oscillating hotspot", "Bago (East)")`). Hpakant in Kachin is a new hot spot, and Shwegyin in Bago (East) and Hpapun in Kayin are consecutive ones. Yangon and the delta grew colder, as the bombings of 2021 and 2022 faded. Three townships in southern and eastern Shan are diminishing cold spots, cold throughout but slowly warming.
+**Explosions and remote violence, `r nsig("Explosions and remote violence")` townships.** Explosions spread into the hills between the Dry Zone and Kayin, and down the south. `r npt("Explosions and remote violence", "Oscillating hotspot")` townships turned from cold to hot, led by Tanintharyi (`r npt("Explosions and remote violence", "Oscillating hotspot", "Tanintharyi")`) and Bago (East) (`r npt("Explosions and remote violence", "Oscillating hotspot", "Bago (East)")`). Hpakant is a new hot spot. Yangon and the delta grew colder as the bombings of 2021 and 2022 faded.
 
-**Violence against civilians, `r nsig("Violence against civilians")` townships.** This type moved most clearly. `r npt("Violence against civilians", "Oscillating hotspot", "Bago (West)")` of its `r npt("Violence against civilians", "Oscillating hotspot")` oscillating hot spots are in Bago (West), including Letpadan, Thayarwady, Minhla and Okpho, an area of little fighting that became a hot spot for attacks on civilians. The rest are in the south of the Dry Zone. Meanwhile the far north-west, Kale, Kalewa and Ye-U in Sagaing and Falam and Tedim in Chin, and Kayah turned from hot to cold. Attacks on civilians are moving south towards the lowlands, into areas that see little fighting.
+**Violence against civilians, `r nsig("Violence against civilians")` townships.** This type moved most clearly. `r npt("Violence against civilians", "Oscillating hotspot", "Bago (West)")` of its `r npt("Violence against civilians", "Oscillating hotspot")` oscillating hot spots are in Bago (West), including Letpadan and Okpho, an area of little fighting. The far north-west, around Kale and Tedim, turned from hot to cold. Attacks on civilians are moving south towards the lowlands.
 
 ## Step 6. The military's air strikes
 
@@ -1457,12 +1577,12 @@ tm_shape(ehsa_map %>% filter(variable == "Military air strikes")) +
 :::
 
 ::: {.read}
-**The air campaign grew most in the ground war's core and on most of its new fronts.** `r nsig("Military air strikes")` townships have a significant trend in military air strikes. `r npt("Military air strikes", "Oscillating hotspot")` are oscillating hot spots, cold in 2021 when strikes were rare and hot by the end. They cover the Sagaing core (`r npt("Military air strikes", "Oscillating hotspot", "Sagaing")`), Magway (`r npt("Military air strikes", "Oscillating hotspot", "Magway")`), the road to northern Shan, the hills of Bago (East) and Dawei in Tanintharyi, many of the same places as the new ground fronts in @fig-ehsa. Central Rakhine is the exception, with only Myebon among them. This changes how the Sagaing core reads. Ground events there drifted down, but air strikes on it kept growing. Hpakant in Kachin is a consecutive hot spot, and nearby Myitkyina, Mohnyin and Mogaung are sporadic ones. Most cold patterns, in Yangon, the delta and Shan (East), simply mean these places were rarely bombed while strikes grew elsewhere. For civilians this means the threat from the air grew most where ground fighting was also growing.
+**The air campaign grew most in the ground war's core and on most of its new fronts.** `r nsig("Military air strikes")` townships have a significant trend in military air strikes. `r npt("Military air strikes", "Oscillating hotspot")` are oscillating hot spots, cold in 2021 when strikes were rare and hot by the end. They cover the Sagaing core (`r npt("Military air strikes", "Oscillating hotspot", "Sagaing")`), Magway (`r npt("Military air strikes", "Oscillating hotspot", "Magway")`), the road to northern Shan, the hills of Bago (East) and Dawei in Tanintharyi, many of the same places as the new ground fronts in @fig-ehsa. Central Rakhine is the exception, with only Myebon among them. This changes how the Sagaing core reads. Ground events there eased after 2023, but air strikes on it kept growing. Hpakant in Kachin is a consecutive hot spot, and nearby Myitkyina, Mohnyin and Mogaung are sporadic ones. Most cold patterns, in Yangon, the delta and Shan (East), simply mean these places were rarely bombed while strikes grew elsewhere. For civilians this means the threat from the air grew most where ground fighting was also growing.
 :::
 
 ## Step 7. How much to trust the trends
 
-The Lesson 5 notes warn that the Mann-Kendall test assumes no serial correlation, that is, each quarter's value should not depend on the last. Conflict breaks this rule, because a busy quarter is usually followed by another. The table measures how strong this is, and re-tests every trend two ways. The Hamed and Rao modified Mann-Kendall test, `mmkh()` from **modifiedmk**, widens the test to allow for serial correlation. The false discovery rate correction allows for running 330 tests at once.
+The Lesson 5 notes warn that the Mann-Kendall test assumes no serial correlation, that is, each quarter's value should not depend on the last. Conflict breaks this rule, because a busy quarter is usually followed by another. The table measures how strong this is, and re-tests every trend two ways. The Hamed and Rao (1998) modified Mann-Kendall test, `mmkh()` from **modifiedmk**, widens the test to allow for serial correlation. The false discovery rate correction allows for running 330 tests at once.
 
 ```{r}
 #| filename: "serial correlation, corrected trend test and FDR"
@@ -1492,7 +1612,7 @@ write_rds(list(ehsa_tab = ehsa_tab, mk = mk, gi_total = ehsa_all$total$gi, trend
           "data/rds/results_ehsa.rds")
 ```
 
-# Bonus. The Kind of Violence, Multivariate Local Geary's c
+# Bonus 1. The Kind of Violence, Multivariate Local Geary's c
 
 ::: {.callout-note icon=false}
 ## Short answer
@@ -1503,7 +1623,7 @@ Neighbouring townships mostly face the same kind of violence, but not everywhere
 
 The first objective asks where violence clusters or "behaves unusually compared to surrounding townships". Task 2 answered that for the *amount* of violence, one type at a time. But the same total can hide very different wars. A township of ground battles needs front-line medical care and safe routes out. A township of bombings and killings in a city needs protection and monitoring. Task 2 cannot see this difference, because it never looks at the three types together.
 
-The Lesson 5 notes list local Geary's c under "Other forms of LISA" but it was not covered in class. Its multivariate form (Anselin, 2019) compares a township's whole profile of several variables with its neighbours' profiles. A small value means the township and its neighbours share the same mix, a cluster in the kind of violence. A large value means the township's mix is unlike its neighbours', an outlier in kind. Both answer the first objective, extended from how much violence to what kind.
+The Lesson 5 notes list local Geary's c under "Other forms of LISA". Its multivariate form (Anselin, 2019) compares a township's whole profile of several variables with its neighbours' profiles. A small value means the township and its neighbours share the same mix, a cluster in the kind of violence. A large value means the township's mix is unlike its neighbours', an outlier in kind. Both answer the first objective, extended from how much violence to what kind.
 
 ::: {.qcard}
 Question
@@ -1513,7 +1633,7 @@ Method
 :   Multivariate local Geary's c, `local_c_perm()` from **sfdep**, on the three conflict variables.
 
 Null model
-:   Conditional permutation of whole township profiles, 999 shuffles. A positive result means neighbours are more alike than chance, a negative one less alike.
+:   Conditional permutation of whole township profiles, 999 shuffles. A significant low value of c means the township and its neighbours are more alike than chance, a cluster. A significant high value means they are less alike, an outlier.
 
 Assumptions
 :   The three types are put on one scale first. Counts are log-transformed, log(1 + count), to calm the skew, then standardised. Each type weighs the same.
@@ -1613,7 +1733,7 @@ tm_shape(geary) +
 :::
 
 ::: {.read}
-**Two big groups are expected, and one is new.** `r sum(gq$p_ci_sim < 0.05)` townships share their mix with their neighbours more than chance allows. `r sum(gq$profile == "All three high")` have all three types high, led by Sagaing (`r sum(gq$profile == "All three high" & gq$ST == "Sagaing")`), Magway and Mandalay, with Rakhine and Tanintharyi. `r sum(gq$profile == "All three low")` have all three low, in the delta and eastern and southern Shan. The third group is the new finding. `r nrow(urban)` townships, `r sum(urban$ST == "Yangon")` in Yangon and `r sum(urban$ST == "Mandalay")` in Mandalay, mostly in and around the two cities, have few battles but above-average bombs or attacks on civilians. Insein in Yangon, for example, had `r urban$battles[urban$TS == "Insein"]` battles but `r urban$remote[urban$TS == "Insein"]` explosions and `r urban$civilians[urban$TS == "Insein"]` attacks on civilians. This fits urban bombings and targeted killings rather than front-line war. Only `r sum(gq$profile == "Mix unlike its neighbours")` townships have a mix unlike their neighbours'. Kalewa in Sagaing recorded no attacks on civilians at all, unlike the townships around it, and Laukkaing on the Chinese border had a battle-heavy mix its neighbours did not share.
+**Two big groups are expected, and one is new.** `r sum(gq$p_ci_sim < 0.05 & gq$profile != "Mix unlike its neighbours")` townships share their mix with their neighbours more than chance allows. `r sum(gq$profile == "All three high")` have all three types high, led by Sagaing (`r sum(gq$profile == "All three high" & gq$ST == "Sagaing")`), Magway and Mandalay, with Rakhine and Tanintharyi. `r sum(gq$profile == "All three low")` have all three low, in the delta and eastern and southern Shan. The third group is the new finding. `r nrow(urban)` townships, `r sum(urban$ST == "Yangon")` in Yangon and `r sum(urban$ST == "Mandalay")` in Mandalay, mostly in and around the two cities, have few battles but above-average bombs or attacks on civilians. Insein in Yangon, for example, had `r urban$battles[urban$TS == "Insein"]` battles but `r urban$remote[urban$TS == "Insein"]` explosions and `r urban$civilians[urban$TS == "Insein"]` attacks on civilians. This fits urban bombings and targeted killings rather than front-line war. Only `r sum(gq$profile == "Mix unlike its neighbours")` townships have a mix unlike their neighbours'. Kalewa in Sagaing recorded no attacks on civilians at all, unlike the townships around it, and Laukkaing on the Chinese border had a battle-heavy mix its neighbours did not share.
 :::
 
 ## Step 3. What this adds to Task 2
@@ -1753,29 +1873,259 @@ write_rds(list(geary = geary %>% st_drop_geometry() %>%
           "data/rds/results_bonus.rds")
 ```
 
+# Bonus 2. Conflict Regions, Spatially Constrained Clustering
+
+```{r}
+#| echo: false
+n_regions <- 8   # chosen from the table in Step 1
+```
+
+::: {.callout-note icon=false}
+## Short answer
+EHSA labels say which way each township's trend runs, but not when its conflict rose or fell. Spatially constrained clustering, taught in Lesson 6, groups neighbouring townships whose conflict rose and fell at the same times. It splits Myanmar into `r n_regions` regions with clearly different timelines. The Sagaing core heated up within months of the coup and peaked in early 2023. The northern Shan border had one sharp spike with Operation 1027 and then went quiet. The south-east frontier and the Rakhine to Bago belt warmed later, and the south-east was still rising in 2025. Yangon and the delta cooled the whole time. These timelines cannot be read from the EHSA labels alone.
+:::
+
+## Why this question, and why this method
+
+The second objective asks *in what pattern* violence evolves. Task 3 answered this one township at a time. Each township got a label from its own Gi\* series, such as oscillating hot spot. Two townships can share a label but have very different histories. One may have been hot in 2021 and again in 2025, and the other only in 2023. EHSA cannot tell them apart, because the Mann-Kendall test only asks about direction, not timing. Aid agencies and ceasefire monitors also work with areas, not lists of townships, so they need to know which neighbouring townships have gone through the same war at the same time.
+
+Lesson 6 and chapter 12 of the course text cover geographic segmentation with spatially constrained clustering (Kam, 2026). SKATER, `skater()` from **spdep** (Assunção et al., 2006), joins neighbouring townships into regions so that townships within a region are as alike as possible. Here the input is each township's whole timeline, the 19 quarterly Gi\* values that EHSA classified in Task 3. A region is therefore a block of touching townships whose conflict rose and fell together.
+
+::: {.qcard}
+Question
+:   Which neighbouring townships went through the same timeline of conflict, and how do the resulting regions differ?
+
+Method
+:   SKATER spatially constrained clustering, `nbcosts()`, `mstree()` and `skater()` from **spdep**, following chapter 12 of the course text.
+
+Input
+:   The 19 quarterly Gi\* values of total events for each township, the same values EHSA classified in Task 3 Step 3. Gi\* is already on one common scale in every quarter, so no further standardisation is needed.
+
+Assumptions
+:   Regions must be contiguous, so a township can only join a region it touches. Euclidean distance between timelines treats every quarter as equally important.
+
+Settings
+:   Queen contiguity, as in the course text, with each island linked to its nearest township as in Task 2 Step 6. Regions are meant to be blocks of townships that touch, and nearest neighbours can link townships that do not share a border. The number of regions is chosen from the share of variation explained, below.
+:::
+
+## Step 1. Building the regions
+
+SKATER works in three steps, as in the course text. `nbcosts()` gives every pair of neighbouring townships a cost, the distance between their two timelines. `mstree()` then keeps only the cheapest links that still connect every township, a minimum spanning tree. Finally, `skater()` cuts the tree into separate regions, choosing each cut so that the regions are as uniform inside as possible.
+
+```{r}
+#| filename: "timelines, costs and the minimum spanning tree"
+gi_wide <- ehsa_all$total$gi %>%
+  select(TS_PCODE, time, gi_star) %>%
+  pivot_wider(names_from = time, values_from = gi_star, names_prefix = "q")
+gi_wide <- mmr_conflict %>% st_drop_geometry() %>% select(TS_PCODE) %>%
+  left_join(gi_wide, by = "TS_PCODE")                  # same row order as the neighbour list
+stopifnot(identical(gi_wide$TS_PCODE, mmr_conflict$TS_PCODE))
+timeline <- as.matrix(select(gi_wide, -TS_PCODE))
+
+costs  <- nbcosts(nb_queen_fix, timeline)
+w_cost <- nb2listw(nb_queen_fix, costs, style = "B")
+mst    <- mstree(w_cost)
+```
+
+There is no single correct number of regions, so the choice is based on the data. For each number of regions, the table gives the share of the variation in timelines that the regions explain. For comparison it also gives the same share for ordinary Ward clustering, `hclust()`, which ignores geography. The gap between the two is the price of forcing regions to be contiguous.
+
+```{r}
+#| filename: "how many regions?"
+within_ss <- function(groups) sum(sapply(split(seq_len(nrow(timeline)), groups),
+                                         function(i) sum(scale(timeline[i, , drop = FALSE], scale = FALSE)^2)))
+total_ss  <- sum(scale(timeline, scale = FALSE)^2)
+ward      <- hclust(dist(timeline), method = "ward.D2")
+
+k_tab <- map_dfr(3:12, function(k) {
+  sk <- skater(mst[, 1:2], timeline, ncuts = k - 1)
+  tibble(regions = k,
+         skater = 1 - within_ss(sk$groups) / total_ss,
+         ward = 1 - within_ss(cutree(ward, k)) / total_ss,
+         smallest = min(table(sk$groups)))
+}) %>% mutate(gain = skater - lag(skater))
+
+k_tab %>%
+  mutate(across(c(skater, ward, gain), ~ scales::percent(.x, 0.1))) %>%
+  kable(col.names = c("Regions", "Explained, SKATER", "Explained, Ward (no geography)",
+                      "Smallest region", "Gain from one more region"), na = "")
+```
+
+Up to 7 regions, each extra region explains about 4 percent more of the variation, and the eighth adds `r scales::percent(k_tab$gain[k_tab$regions == n_regions], 0.1)`. After that the gain falls to about 2 percent per region, so further cuts add little. So `r n_regions` regions are used. They explain `r scales::percent(k_tab$skater[k_tab$regions == n_regions])` of the variation, against `r scales::percent(k_tab$ward[k_tab$regions == n_regions])` for Ward clustering without geography. Contiguity costs some fit, as expected, but it gives regions that can be planned for as areas.
+
+```{r}
+#| filename: "cut the tree into regions and name them"
+sk <- skater(mst[, 1:2], timeline, ncuts = n_regions - 1)
+
+# each region is named after the township that anchors it, so the names do not depend on the group numbers
+region_names <- c("Monywa" = "Sagaing core", "Pakokku" = "Southern Dry Zone",
+                  "Muse" = "Northern Shan and Kachin border", "Kawkareik" = "South-east frontier",
+                  "Maungdaw" = "Rakhine to Bago belt", "Kale" = "Northern uplands, mixed",
+                  "Hlaingtharya" = "Yangon and the delta", "Tachileik" = "Eastern Shan")
+anchor <- tibble(TS = names(region_names), name = region_names) %>%
+  left_join(tibble(TS = mmr_conflict$TS, group = sk$groups), by = "TS")
+stopifnot(n_distinct(anchor$group) == n_regions)
+
+regions <- mmr_conflict %>%
+  mutate(group = sk$groups) %>%
+  left_join(select(anchor, group, region = name), by = "group") %>%
+  mutate(region = factor(region, levels = region_names))
+```
+
+## Step 2. Where the regions are, and what their timelines look like
+
+```{r}
+#| echo: false
+region_cols <- c("Sagaing core" = "#D55E00", "Southern Dry Zone" = "#E69F00",
+                 "Northern Shan and Kachin border" = "#7B3294", "South-east frontier" = "#CC79A7",
+                 "Rakhine to Bago belt" = "#F0E442", "Northern uplands, mixed" = "#BDBDBD",
+                 "Yangon and the delta" = "#0072B2", "Eastern Shan" = "#56B4E9")
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| label: fig-regions
+#| fig-cap: "Eight conflict regions from SKATER spatially constrained clustering of each township's 19 quarterly Gi* values of total armed conflict events. Data from ACLED and MIMU"
+#| fig-width: 8
+#| fig-height: 8.5
+#| echo: false
+tm_shape(regions) +
+  tm_polygons(fill = "region",
+              fill.scale = tm_scale_categorical(values = region_cols),
+              fill.legend = tm_legend(title = "Conflict region", position = tm_pos_out("right", "center"),
+                                      frame = FALSE),
+              col = "white", lwd = 0.2) +
+  state_borders +
+  tm_layout(frame = FALSE) +
+  tm_title("Eight regions that went through\nthe same war at the same time", size = 1.1, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+#| ref.label: "fig-regions"
+```
+:::
+
+::: {.read}
+**Eight regions, from a hot centre to a cold south.** The hot regions run through the centre and down the eastern border, the Sagaing core with the Southern Dry Zone beside it, the Northern Shan and Kachin border, and the South-east frontier from Kayin to Tanintharyi. The large Rakhine to Bago belt lies between them and Yangon and the delta in the south. Eastern Shan forms a quiet block of its own, and the Northern uplands fill the rest. Every region is one connected block, so each can be planned for as an area.
+:::
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| label: fig-region-series
+#| fig-cap: "Quarterly Gi* of total armed conflict events in each conflict region. Grey lines are townships, the coloured line is the region's median, and the shaded bands mark significant hot (above 1.96) and cold (below -1.96) values. Data from ACLED and MIMU"
+#| fig-width: 10
+#| fig-height: 6.5
+#| echo: false
+reg_long <- ehsa_all$total$gi %>% select(TS_PCODE, time, gi_star) %>%
+  left_join(st_drop_geometry(regions) %>% select(TS_PCODE, region), by = "TS_PCODE")
+reg_med <- reg_long %>% group_by(region, time) %>% summarise(gi_star = median(gi_star), .groups = "drop")
+
+ggplot(reg_long, aes(time, gi_star)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 1.96, ymax = Inf, fill = "#FBE7DA", alpha = 0.6) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = -1.96, fill = "#DDE9F4", alpha = 0.6) +
+  geom_hline(yintercept = 0, colour = "grey60") +
+  geom_line(aes(group = TS_PCODE), colour = "grey80", linewidth = 0.3) +
+  geom_line(data = reg_med, aes(colour = region), linewidth = 1.4) +
+  # darker line colours where the map fill would be too pale on a white panel
+  scale_colour_manual(values = replace(region_cols, c("Rakhine to Bago belt", "Northern uplands, mixed"),
+                                       c("#B39B00", "#5E5E5E")), guide = "none") +
+  scale_x_continuous(breaks = c(1, 9, 17), labels = c("2021", "2023", "2025")) +
+  coord_cartesian(ylim = c(-4, 10)) +
+  facet_wrap(~ region, ncol = 4, labeller = label_wrap_gen(width = 22)) +
+  labs(title = "Each region had its own war: an early core, a single spike, late risers and steady coolers",
+       x = NULL, y = "Gi*") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"), strip.text = element_text(face = "bold", size = 11.5),
+        panel.grid.minor = element_blank())
+```
+
+## The Code
+
+```{r}
+#| eval: false
+#| ref.label: "fig-region-series"
+```
+:::
+
+```{r}
+#| echo: false
+reg_tab <- regions %>% st_drop_geometry() %>%
+  left_join(ehsa_tab %>% filter(variable == "All armed conflict") %>% select(TS_PCODE, p_value, pattern),
+            by = "TS_PCODE") %>%
+  group_by(region) %>%
+  summarise(townships = n(), events = sum(total),
+            hot_trend = sum(p_value < 0.05 & str_detect(pattern, "hotspot")),
+            cold_trend = sum(p_value < 0.05 & str_detect(pattern, "coldspot")),
+            .groups = "drop")
+rs <- function(r, v) reg_tab[[v]][reg_tab$region == r]
+med_at <- function(r, q) round(reg_med$gi_star[reg_med$region == r & reg_med$time == q], 1)
+peak_q <- function(r) quarters[reg_med$time[reg_med$region == r][which.max(reg_med$gi_star[reg_med$region == r])]]
+```
+
+::: {.read}
+**Each region had its own war.** The **Sagaing core** was a hot spot by the third quarter of 2021, peaked in `r peak_q("Sagaing core")` at a median Gi\* of `r med_at("Sagaing core", which(quarters == peak_q("Sagaing core")))`, and has eased since but is still hot. Because it rose and then fell, most of it has no significant trend in EHSA. The **Southern Dry Zone** rose at the same time and stayed steadily hot. The **Northern Shan and Kachin border** was hot in 2021, went quiet, then spiked to `r med_at("Northern Shan and Kachin border", 12)` and `r med_at("Northern Shan and Kachin border", 13)` in the two quarters of Operation 1027 before falling back. The **South-east frontier** was not hot in 2021 but rose from 2022 and in the last quarter, at `r med_at("South-east frontier", 19)`, was close to its 2023 peak. The **Rakhine to Bago belt** stayed cold until the end of 2023 and then warmed to about zero, a large region where the war arrived late. **Yangon and the delta** cooled steadily, and **Eastern Shan** stayed cold. The **Northern uplands** are mixed, with a flat median that hides busy townships such as Hpakant.
+:::
+
+### What the regions add to Task 3
+
+The regions add to Task 3 in two ways. First, they show *when*. The Sagaing core, the Northern Shan and Kachin border and the South-east frontier all hold oscillating or no-pattern townships in EHSA, but their timelines are completely different. Second, they agree with EHSA where they should. `r rs("Yangon and the delta", "cold_trend")` of the `r sum(reg_tab$cold_trend)` cold-trending townships are in Yangon and the delta, and `r rs("South-east frontier", "hot_trend") + rs("Rakhine to Bago belt", "hot_trend")` of the `r sum(reg_tab$hot_trend)` hot-trending townships are in the South-east frontier and the Rakhine to Bago belt.
+
+```{r}
+#| echo: false
+reg_tab %>%
+  mutate(events = format(events, big.mark = ",")) %>%
+  kable(col.names = c("Region", "Townships", "Events", "Hot trend in EHSA", "Cold trend in EHSA"),
+        align = c("l", "r", "r", "r", "r"))
+```
+
+## Assumptions and limitations of the regions
+
+| Assumption or limit | Effect | How it was handled |
+|---|---|---|
+| Regions must be contiguous | A township that behaves like a distant area is kept with its neighbours | Compared with Ward clustering without geography in Step 1 |
+| The number of regions is a choice | More regions would split the larger ones, such as the Northern uplands | Chosen where the gain from one more region levels off |
+| Gi\* is relative to each quarter | A falling timeline means a smaller share of the conflict, not peace | Read together with the counts in Task 1 |
+| Every quarter counts equally | A short spike, such as Operation 1027, weighs as much as a long trend | Shown in the timelines, so the reader can see the shape |
+| The Northern uplands region is mixed | Its median is flat and hides busy townships | Named as mixed, and those townships are read from Task 2 and Task 3 |
+
+: {tbl-colwidths="[28,36,36]"}
+
+```{r}
+#| echo: false
+write_rds(list(regions = regions %>% st_drop_geometry() %>% select(TS_PCODE, TS, ST, region),
+               reg_med = reg_med, region_cols = region_cols, k_tab = k_tab, reg_tab = reg_tab),
+          "data/rds/results_regions.rds")
+```
+
 # Integrated Findings and Discussion
 
 Each method answers a different question, so the strongest findings are the ones they agree on.
 
-| Finding | Task 1, maps | Task 2, clusters | Task 3, trends | Bonus, mix | How sure |
+| Finding | Task 1, maps | Task 2, clusters | Task 3, trends | Bonuses, mix and regions | How sure |
 |---|---|---|---|---|---|
-| The Dry Zone is the core of the war | `r f_pct(sum(by_state$total[by_state$ST %in% dz]) / sum(by_state$total))` of events, `r sum(top10$ST %in% dz)` of the 10 busiest townships | `r nqs("High-High", dz)` of `r nq("High-High")` High-High, `r sum(hq$hot & hq$ST %in% dz)` of `r sum(hq$hot)` hot spots | Hot in `r core_q[1]` to `r core_q[2]` of 19 quarters, with no steady trend | `r sum(gq$profile == "All three high" & gq$ST %in% dz)` of `r sum(gq$profile == "All three high")` all-high townships | Very sure, every method agrees |
-| Conflict spread outward from the core | Rakhine and Bago grew year after year | Second clusters differ by type | `r np("Consecutive hotspot")` consecutive and `r np("Oscillating hotspot")` oscillating hot spots ring the core | Rakhine and Tanintharyi join the all-high group | Sure for all conflict, weaker for battles alone |
-| Yangon emptied of fighting but not of violence | Events fell sharply after 2022 | `r nqs("Low-Low", "Yangon")` Low-Low, `r sum(hq$cold & hq$ST == "Yangon")` cold spots | `r sum(sig_tot$ST == "Yangon" & str_detect(sig_tot$pattern, "coldspot"))` of `r sum(tot$ST == "Yangon")` townships in a cold pattern | `r sum(urban$ST == "Yangon")` townships share a bombs-and-civilians mix | Sure |
-| Northern Shan flared and cooled | Peak in late 2023 | Not a cluster over the whole period | 6 border townships turned from hot to cold | | Sure, the spike is very large |
-| Air strikes follow the ground war | Military air strikes rose about 23-fold | Explosions cluster in the core and on the Bago and Kayin edge | `r npt("Military air strikes", "Oscillating hotspot")` oscillating air hot spots, in the core and on the new fronts | | Sure, these trends survive every check |
+| The Dry Zone is the core of the war | `r f_pct(sum(by_state$total[by_state$ST %in% dz]) / sum(by_state$total))` of events, `r sum(top10$ST %in% dz)` of the 10 busiest townships | `r nqs("High-High", dz)` of `r nq("High-High")` High-High, `r sum(hq$hot & hq$ST %in% dz)` of `r sum(hq$hot)` hot spots | Hot in `r core_q[1]` to `r core_q[2]` of 19 quarters, with no steady trend | `r sum(gq$profile == "All three high" & gq$ST %in% dz)` of `r sum(gq$profile == "All three high")` all-high townships. The Sagaing core region was hot from late 2021 and peaked in early 2023 | Very sure, every method agrees |
+| Conflict spread outward from the core | Rakhine and Bago grew year after year | Second clusters differ by type | `r np("Consecutive hotspot")` consecutive and `r np("Oscillating hotspot")` oscillating hot spots ring the core | Rakhine and Tanintharyi join the all-high group. The South-east frontier and Rakhine to Bago belt regions warmed later | Sure for all conflict, weaker for battles alone |
+| Yangon emptied of fighting but not of violence | Events fell sharply after 2022 | `r nqs("Low-Low", "Yangon")` Low-Low, `r sum(hq$cold & hq$ST == "Yangon")` cold spots | `r sum(sig_tot$ST == "Yangon" & str_detect(sig_tot$pattern, "coldspot"))` of `r sum(tot$ST == "Yangon")` townships in a cold pattern | `r sum(urban$ST == "Yangon")` townships share a bombs-and-civilians mix. The Yangon and delta region cooled in every quarter | Sure |
+| Northern Shan flared and cooled | Peak in late 2023 | Not a cluster over the whole period | 6 border townships turned from hot to cold | Its border region spiked in the two quarters of Operation 1027, then fell back | Sure, the spike is very large |
+| Air strikes follow the ground war | Military air strikes rose about 23-fold | Not tested on air strikes alone. All explosions cluster in the core and on the Bago and Kayin edge | `r npt("Military air strikes", "Oscillating hotspot")` oscillating air hot spots, in the core and on the new fronts | Not tested | Sure, these trends survive every check |
 
 : {tbl-colwidths="[17,17,17,19,15,15]"}
 
 Three lessons come from reading the methods together.
 
-1. **Where conflict is, where it clusters and where it is growing are three different maps.** Kawkareik is the second busiest township but sits in no cluster. The Sagaing core is the hottest neighbourhood but is blank on the trend map, because its heat never changed. A planner using only one of these maps would miss something important.
-2. **The war widened rather than moved.** The core stayed hot while new hot spots opened around it, from the hills of Bago (East) and the road to northern Shan to central Rakhine and the far south. Townships in Bago (West) are warming but are not yet hot spots, which makes them the likeliest next ones.
+1. **Where conflict is, where it clusters and where it is growing are three different maps.** Kawkareik is the second busiest township but sits in no cluster. The Sagaing core is the hottest neighbourhood but is blank on the trend map, because it stayed hot in almost every quarter, rising to a peak in 2023 and then easing, with no single direction. A planner using only one of these maps would miss something important.
+2. **The war widened rather than moved.** The core stayed hot while new hot spots opened around it, from the hills of Bago (East) and the road to northern Shan to central Rakhine and the far south. Townships in Bago (West) are warming but are not yet hot spots, which makes them the likeliest next ones. The conflict regions show the order. The Sagaing core and the southern Dry Zone heated first, in 2021, the south-east frontier rose from 2022, the northern Shan border flared with Operation 1027 at the end of 2023, and the Rakhine to Bago belt warmed from 2024.
 3. **When fighting leaves, the violence changes kind.** Around Mandalay, battles moved away after 2022 but bombs and attacks on civilians stayed. Yangon has had this mix all along, though it moved from downtown to the outskirts. Count-based maps call these places quiet. The mix says they are not.
 
 # Geovisualisation and Geocommunication
 
-Four design choices shape every figure.
+Five design choices shape every figure.
 
 | Design choice | Why |
 |---|---|
@@ -1783,6 +2133,7 @@ Four design choices shape every figure.
 | Warm colours for hot and high, blue for cold and low, pale beige for not significant | The eye goes straight to significant results, and no map depends on telling red from green |
 | Counts use one orange scale with fixed breaks, and types and years are small multiples | Darker always means more, and panels can be compared directly |
 | The EHSA trend map sits beside a map of how often each township was hot | The brief's p < 0.05 trend filter hides steady hot spots, and the second map shows them |
+| Region timelines show every township in grey behind the region's median | The reader sees both the typical path and how much townships differ around it |
 
 : {tbl-colwidths="[45,55]"}
 
@@ -1797,6 +2148,7 @@ The brief hopes the results can help peace-building and prevent further conflict
 | Bago (West) is warming but not yet hot, and several of its townships turned into hot spots for attacks on civilians | Watch it closely for protection risks to civilians | Local reports, since events there may be under-reported |
 | The military's air strikes keep returning to the core and the new fronts | Support early warning, shelters and trauma care in these townships | Casualty records, because strike counts do not show harm |
 | Yangon and Mandalay city share a mix of bombs and attacks on civilians | Treat them as settings for civilian protection and monitoring, not front-line aid | Under-reporting in cities under tight control |
+| The eight conflict regions went through the war at different times | Use them as planning areas, each with its own stance: long-term support in the Sagaing core, early warning in the late-rising south-east and Rakhine to Bago belt, and relapse watch on the northern Shan border | Whether the regions match how agencies already divide their work |
 | Northern Shan turned from the hottest area to a cold spot after the early 2024 ceasefire | Monitor the ceasefire townships for relapse, and study what made the ceasefire hold | Whether the ceasefire still holds, and what it meant for the people living there |
 
 : {tbl-colwidths="[30,40,30]"}
@@ -1808,7 +2160,7 @@ The brief hopes the results can help peace-building and prevent further conflict
 | ACLED records reported events | Places with less media or internet access, such as Rakhine during blackouts, may look calmer than they are | Low-High outliers are flagged as possibly under-reported |
 | Counts, not rates | A busy town may look high because more happens there | No reliable population for 2021 to 2025 was available. Stated wherever it matters |
 | Events, not harm | An air strike and a small clash count the same | Air strikes are given their own cube |
-| Location precision | `r round(100 * mean(acled_raw$geo_precision == 2))` percent of events are placed at a nearby town | Township counts are coarse enough, and the region-level events were checked |
+| Location precision | `r round(100 * mean(conflict_sf$geo_precision == 2))` percent of events are placed at a nearby town | Township counts are coarse enough, and the region-level events were checked |
 | Township boundaries | ACLED splits some townships, such as Dagon Myothit, that the boundary file keeps whole | Events are joined by location, so none are lost, but the splits are not shown |
 | Neighbour reach | Remote islands such as Cocokyun have neighbours hundreds of kilometres away | Queen contiguity was tested as a check |
 | The trend filter | Steady hot spots have no trend and never pass p < 0.05 | @fig-ehsa shows persistence beside the trend map |
@@ -1820,7 +2172,7 @@ The brief hopes the results can help peace-building and prevent further conflict
 
 # Conclusion
 
-**Q1.** Armed conflict was heaviest in the central Dry Zone, which holds `r f_pct(sum(by_state$total[by_state$ST %in% dz]) / sum(by_state$total))` of all events, and along the borders. It peaked in late 2023, and the military's air strikes grew about 23-fold. **Q2.** Local Moran's I and Gi\* find one large hot cluster in the Dry Zone, a smaller one around Dawei, and cold clusters in Yangon, the delta and eastern Shan. The few outliers are quieter townships beside hot areas, plus Pathein and Thaketa as busy places in quiet areas. **Q3.** The core stayed hot, while new hot spots opened around it and Yangon and northern Shan cooled. Each type of violence spread in its own direction, and attacks on civilians moved towards the lowlands. **Q4.** Neighbours mostly share the same mix of violence, but Yangon and Mandalay city share a different one, of bombs and attacks on civilians, which spread as the fighting moved on.
+**Q1.** Armed conflict was heaviest in the central Dry Zone, which holds `r f_pct(sum(by_state$total[by_state$ST %in% dz]) / sum(by_state$total))` of all events, and along the borders. It peaked in late 2023, and the military's air strikes grew about 23-fold. **Q2.** Local Moran's I and Gi\* find one large hot cluster in the Dry Zone, a smaller one around Dawei, and cold clusters in Yangon, the delta and eastern Shan. The few outliers are quieter townships beside hot areas, plus Pathein and Thaketa as busy places in quiet areas. **Q3.** The core stayed hot, while new hot spots opened around it and Yangon and northern Shan cooled. Each type of violence spread in its own direction, and attacks on civilians moved towards the lowlands. **Q4.** Neighbours mostly share the same mix of violence, but Yangon and Mandalay city share a different one, of bombs and attacks on civilians, which spread as the fighting moved on. **Q5.** Myanmar splits into eight regions with their own timelines. The Sagaing core and southern Dry Zone heated first, the south-east frontier rose from 2022, the northern Shan border spiked once in late 2023, the Rakhine to Bago belt warmed from 2024, and Yangon and the delta cooled throughout.
 
 The main lesson is that the war has not shifted from one place to another. It has widened from a core that never cooled, and where the fighting leaves, a different kind of violence often stays.
 
@@ -1829,6 +2181,7 @@ The main lesson is that the war has not shifted from one place to another. It ha
 - **Rates.** Divide counts by township population once reliable estimates for 2021 to 2025 exist, so that busy towns are compared fairly.
 - **Harm.** Weight events by fatalities, or build a cube of civilian deaths, to map harm rather than activity.
 - **A monthly cube for 2023 and 2024.** Operation 1027 and the Rakhine offensive moved within months, which a quarterly cube smooths out.
+- **A boundary-free check.** Spatio-temporal kernel density estimation on the event points, taught in Lesson 3, would test whether the township patterns depend on where the boundaries are drawn.
 - **Displacement.** Join township displacement figures to test whether people flee from emerging hot spots.
 
 # References
@@ -1836,16 +2189,18 @@ The main lesson is that the war has not shifted from one place to another. It ha
 1. ACLED (2024). *Between cooperation and competition: The struggle of resistance groups in Myanmar*. <https://acleddata.com/report/between-cooperation-and-competition-struggle-resistance-groups-myanmar>
 2. Anselin, L. (1995). Local indicators of spatial association, LISA. *Geographical Analysis*, 27(2), 93 to 115.
 3. Anselin, L. (2019). A local indicator of multivariate spatial association, extending Geary's c. *Geographical Analysis*, 51(2), 133 to 150.
-4. Benjamini, Y. and Hochberg, Y. (1995). Controlling the false discovery rate. *Journal of the Royal Statistical Society, Series B*, 57(1), 289 to 300.
-5. CFR (2025). *Civil War in Myanmar*. Global Conflict Tracker, Council on Foreign Relations. <https://www.cfr.org/global-conflict-tracker/conflict/rohingya-crisis-myanmar>
-6. Getis, A. and Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. *Geographical Analysis*, 24(3), 189 to 206.
-7. Hamed, K. H. and Rao, A. R. (1998). A modified Mann-Kendall trend test for autocorrelated data. *Journal of Hydrology*, 204, 182 to 196.
-8. Kam, T. S. (2026). *R for Geospatial Data Science and Analytics*. <https://r4gdsa.netlify.app/>
+4. Assunção, R. M., Neves, M. C., Câmara, G. and da Costa Freitas, C. (2006). Efficient regionalization techniques for socio-economic geographical units using minimum spanning trees. *International Journal of Geographical Information Science*, 20(7), 797 to 810.
+5. Benjamini, Y. and Hochberg, Y. (1995). Controlling the false discovery rate. *Journal of the Royal Statistical Society, Series B*, 57(1), 289 to 300.
+6. CFR (2025). *Civil War in Myanmar*. Global Conflict Tracker, Council on Foreign Relations. <https://www.cfr.org/global-conflict-tracker/conflict/rohingya-crisis-myanmar>
+7. Getis, A. and Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. *Geographical Analysis*, 24(3), 189 to 206.
+8. Hamed, K. H. and Rao, A. R. (1998). A modified Mann-Kendall trend test for autocorrelated data. *Journal of Hydrology*, 204, 182 to 196.
 9. Kam, T. S. (2026). *ISSS626 Lesson 5, Global and Local Measures of Spatial Association*. Singapore Management University.
-10. Mack, Z. W. V. and Kam, T. S. (2018). Is there space for violence? A data-driven approach to the exploration of spatial-temporal dimensions of conflict. *Proceedings of the 2nd ACM SIGSPATIAL Workshop on Geospatial Humanities*, 1 to 10.
-11. Ord, J. K. and Getis, A. (1995). Local spatial autocorrelation statistics, distributional issues and an application. *Geographical Analysis*, 27(4), 286 to 306.
-12. Parry, J. (2023). *Emerging hot spot analysis*. sfdep package documentation. <https://sfdep.josiahparry.com/articles/understanding-emerging-hotspots>
-13. Raleigh, C., Linke, A., Hegre, H. and Karlsen, J. (2010). Introducing ACLED, an armed conflict location and event dataset. *Journal of Peace Research*, 47(5), 651 to 660.
+10. Kam, T. S. (2026). *ISSS626 Lesson 6, Geographic Segmentation with Spatial Clustering*. Singapore Management University.
+11. Kam, T. S. (2026). *R for Geospatial Data Science and Analytics*. <https://r4gdsa.netlify.app/>
+12. Mack, Z. W. V. and Kam, T. S. (2018). Is there space for violence? A data-driven approach to the exploration of spatial-temporal dimensions of conflict. *Proceedings of the 2nd ACM SIGSPATIAL Workshop on Geospatial Humanities*, 1 to 10.
+13. Ord, J. K. and Getis, A. (1995). Local spatial autocorrelation statistics, distributional issues and an application. *Geographical Analysis*, 27(4), 286 to 306.
+14. Parry, J. (2023). *Emerging hot spot analysis*. sfdep package documentation. <https://sfdep.josiahparry.com/articles/understanding-emerging-hotspots>
+15. Raleigh, C., Linke, A., Hegre, H. and Karlsen, J. (2010). Introducing ACLED, an armed conflict location and event dataset. *Journal of Peace Research*, 47(5), 651 to 660.
 
 ::: {.callout-note}
 ## AI use declaration
