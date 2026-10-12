@@ -20,12 +20,16 @@ website:
             href: "Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.html"
           - text: "Hands-on Exercise 6"
             href: "Hands-on_Ex/Hands-on_Ex06/Hands-on_Ex06.html"
+          - text: "Hands-on Exercise 7"
+            href: "Hands-on_Ex/Hands-on_Ex07/Hands-on_Ex07.html"
       - text: "In-class Exercise"
         menu:
           - text: "In-class Exercise 1"
             href: "In-class_Ex/In-class_Ex01/In-class_Ex01.html"
           - text: "In-class Exercise 4"
             href: "In-class_Ex/In-class_Ex04/In-class_Ex04.html"
+          - text: "In-class Exercise 5"
+            href: "In-class_Ex/In-class_Ex05/In-class_Ex05.html"
           - text: "In-class Exercise 6"
             href: "In-class_Ex/In-class_Ex06/In-class_Ex06.html"
       - text: "Take-home Exercise 1"
@@ -34,6 +38,12 @@ website:
             href: "Take-home_Ex/Take-home_Ex01/Take-home_Ex01_slides.html"
           - text: "Technical Report"
             href: "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html"
+      - text: "Take-home Exercise 2"
+        menu:
+          - text: "Executive Summary"
+            href: "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_slides.html"
+          - text: "Technical Report"
+            href: "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html"
     right:
       - icon: github
         href: https://github.com/CZXTOM/ISSS626-GAA

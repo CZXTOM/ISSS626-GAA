@@ -1,0 +1,1092 @@
+---
+title: "Hands-on Exercise 7"
+subtitle: "Calibrating Hedonic Pricing Model for Private Highrise Property with GWR Method"
+author: "ZeXin Chen"
+format:
+  html:
+    toc: true
+    number-sections: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
+date: "October 11, 2026"
+date-modified: today
+execute:
+  echo: true
+  eval: true
+  warning: false
+  freeze: true
+  message: false
+---
+
+::: {.pagefacts}
+[1,436 condominium resale transactions in Singapore, 2015]{.fact}
+[MP14_SUBZONE_WEB_PL shapefile, Condo_resale_2015.csv]{.fact .data}
+[`sf` `sfdep` `GWmodel` `tmap` `performance` `gtsummary` `corrplot` `tidyverse`]{.fact .pkg}
+:::
+
+# Overview
+
+This exercise follows chapter 13 of the book. It builds a hedonic pricing model for condominium resale prices in 2015. A hedonic model explains a price by the features of what is sold. Here the features are structural, such as floor area and age, and locational, such as the distance to the CBD, an MRT station or a park.
+
+I first fit an ordinary least squares (OLS) model, which gives one coefficient per variable for the whole island. Then I fit a geographically weighted regression (GWR). GWR fits a separate regression at every condo, using nearby sales with more weight on closer ones. So each variable gets its own coefficient at each location, and I can map how the effect of a feature changes across Singapore.
+
+# Loading the Packages
+
+**GWmodel** is the new package. It finds the bandwidth and calibrates the GWR models. **performance** and **see** run and plot the regression diagnostics, and **gtsummary** formats the regression table. **sfdep** builds the distance weights for the Moran's I test. **sf**, **tmap**, **corrplot**, **ggpubr**, **RColorBrewer** and **tidyverse** do the same jobs as before. The book also loads **olsrr**, but the current version of the chapter uses **performance** for every diagnostic, so I left it out. I add **knitr** for tables and **lmtest** for one extra test in the last section.
+
+```{r}
+#| output: false
+pacman::p_load(corrplot, ggpubr, sf, sfdep, GWmodel, tmap,
+               tidyverse, gtsummary, performance, see,
+               RColorBrewer, knitr, lmtest)
+```
+
+# Geospatial Data Wrangling
+
+## Importing the Geospatial Data
+
+`st_read()` of **sf** reads the URA Master Plan 2014 subzone boundaries.
+
+```{r}
+mpsz <- st_read(dsn = "data/geospatial",
+                layer = "MP14_SUBZONE_WEB_PL")
+```
+
+## Updating the CRS Information
+
+The shapefile is in SVY21, but it has no EPSG code attached. `st_transform()` sets it to EPSG 3414, and `st_crs()` checks the result.
+
+```{r}
+mpsz_svy21 <- st_transform(mpsz, 3414)
+st_crs(mpsz_svy21)$epsg
+st_bbox(mpsz_svy21)
+```
+
+The EPSG code is now 3414, and the extent is in metres.
+
+# Aspatial Data Wrangling
+
+## Importing the Aspatial Data
+
+`read_csv()` of **readr** reads the resale records.
+
+```{r}
+condo_resale <- read_csv("data/aspatial/Condo_resale_2015.csv")
+glimpse(condo_resale)
+```
+
+There are `r nrow(condo_resale)` sales and `r ncol(condo_resale)` columns. `LONGITUDE` and `LATITUDE` are in decimal degrees, so the coordinates are in WGS 84.
+
+```{r}
+summary(condo_resale$SELLING_PRICE)
+```
+
+## Converting to an sf Object
+
+`st_as_sf()` turns the table into points using the WGS 84 coordinates (EPSG 4326), and `st_transform()` projects them to SVY21 (EPSG 3414) to match the subzones.
+
+```{r}
+condo_resale.sf <- st_as_sf(condo_resale,
+                            coords = c("LONGITUDE", "LATITUDE"),
+                            crs = 4326) %>%
+  st_transform(crs = 3414)
+head(condo_resale.sf, 3)
+```
+
+::: {.callout-note}
+## Learning diary
+`r sum(duplicated(st_coordinates(condo_resale.sf)))` points share their exact location with another sale. These are different units sold in the same block, since the data gives one coordinate per postcode. GWR handles this fine, but it means some neighbourhoods are weighted by several sales from one building.
+:::
+
+# Exploratory Data Analysis
+
+## Distribution of the Selling Price
+
+`mutate()` adds a log of the selling price, and `geom_histogram()` of **ggplot2** draws both versions.
+
+```{r}
+condo_resale.sf <- condo_resale.sf %>%
+  mutate(LOG_SELLING_PRICE = log(SELLING_PRICE))
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 4.5
+price_hist <- function(var, title, xlab) {
+  ggplot(condo_resale.sf, aes(x = .data[[var]])) +
+    geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+    labs(x = xlab, y = "Sales", title = title) +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(size = 14, face = "bold"))
+}
+
+ggarrange(price_hist("SELLING_PRICE", "Selling price is strongly right skewed",
+                     "Selling price (S$)"),
+          price_hist("LOG_SELLING_PRICE", "The log of price is much closer to symmetric",
+                     "log(selling price)"),
+          ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+price_hist <- function(var, title, xlab) {
+  ggplot(condo_resale.sf, aes(x = .data[[var]])) +
+    geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+    labs(x = xlab, y = "Sales", title = title) +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(size = 14, face = "bold"))
+}
+
+ggarrange(price_hist("SELLING_PRICE", "Selling price is strongly right skewed",
+                     "Selling price (S$)"),
+          price_hist("LOG_SELLING_PRICE", "The log of price is much closer to symmetric",
+                     "log(selling price)"),
+          ncol = 2)
+```
+:::
+
+The middle half of the units sold for between S$`r round(quantile(condo_resale$SELLING_PRICE, 0.25) / 1e6, 2)` million and S$`r round(quantile(condo_resale$SELLING_PRICE, 0.75) / 1e6, 2)` million, but a few sold for over S$10 million, up to S$`r format(max(condo_resale$SELLING_PRICE) / 1e6)` million. These stretch the right tail. The log brings the skewness down from `r round(mean(scale(condo_resale$SELLING_PRICE)^3), 2)` to `r round(mean(scale(log(condo_resale$SELLING_PRICE))^3), 2)`. The book creates the log variable but never uses it in a model. I come back to it in [Log Price Instead of Price].
+
+## Distribution of the Independent Variables
+
+The book builds twelve histograms and joins them with `ggarrange()`. `pivot_longer()` and `facet_wrap()` give the same panels from one call.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 8
+condo_resale.sf %>%
+  st_drop_geometry() %>%
+  select(AREA_SQM, AGE, PROX_CBD, PROX_CHILDCARE, PROX_ELDERLYCARE,
+         PROX_URA_GROWTH_AREA, PROX_HAWKER_MARKET, PROX_KINDERGARTEN,
+         PROX_MRT, PROX_PARK, PROX_PRIMARY_SCH, PROX_TOP_PRIMARY_SCH) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  mutate(variable = fct_inorder(variable)) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 20, fill = "#56B4E9", colour = "white") +
+  facet_wrap(~ variable, ncol = 4, scales = "free") +
+  labs(x = NULL, y = "Sales",
+       title = "Floor area and most distances are right skewed") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(size = 15, face = "bold"),
+        strip.text = element_text(size = 10, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+condo_resale.sf %>%
+  st_drop_geometry() %>%
+  select(AREA_SQM, AGE, PROX_CBD, PROX_CHILDCARE, PROX_ELDERLYCARE,
+         PROX_URA_GROWTH_AREA, PROX_HAWKER_MARKET, PROX_KINDERGARTEN,
+         PROX_MRT, PROX_PARK, PROX_PRIMARY_SCH, PROX_TOP_PRIMARY_SCH) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+  mutate(variable = fct_inorder(variable)) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 20, fill = "#56B4E9", colour = "white") +
+  facet_wrap(~ variable, ncol = 4, scales = "free") +
+  labs(x = NULL, y = "Sales",
+       title = "Floor area and most distances are right skewed") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(size = 15, face = "bold"),
+        strip.text = element_text(size = 10, face = "bold"))
+```
+:::
+
+The distances are in kilometres. Most are right skewed, with many condos close to each facility and a few far away. `PROX_CBD` is the exception, with a wide spread from the city centre out to the edges of the island.
+
+## Statistical Point Map
+
+`tm_shape()` and `tm_dots()` of **tmap** map the selling price of each sale over the subzone boundaries, using quantile classes.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 6
+tmap_mode("plot")
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf) +
+  tm_dots(fill = "SELLING_PRICE",
+          size = 0.25,
+          fill.scale = tm_scale_intervals(style = "quantile",
+                                          values = "brewer.blues"),
+          fill.legend = tm_legend(title = "Selling price (S$)",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("The most expensive condos cluster in the central region",
+           size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tmap_mode("plot")
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf) +
+  tm_dots(fill = "SELLING_PRICE",
+          size = 0.25,
+          fill.scale = tm_scale_intervals(style = "quantile",
+                                          values = "brewer.blues"),
+          fill.legend = tm_legend(title = "Selling price (S$)",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("The most expensive condos cluster in the central region",
+           size = 1.5, fontface = "bold")
+```
+:::
+
+The darkest points, the top fifth of prices, are packed into the central area near the CBD. The cheaper sales are spread across the east, north and west. So price already looks spatially clustered before any model is fitted.
+
+::: {.callout-caution}
+## Where I differ from the book
+The book draws this map and the later point maps in `tmap_mode("view")`, as interactive web maps. I use static plot mode with the legend outside the map. A static map shows in the rendered page without loading web map tiles, and it keeps the same look as my other exercises. The book's view-mode code for the local R² and coefficient maps also uses tmap v3 arguments such as `col` and `border.col`, which I rewrote in v4 syntax.
+:::
+
+# Hedonic Pricing Modelling with OLS
+
+## Simple Linear Regression
+
+`lm()` of base R fits selling price on floor area alone.
+
+```{r}
+condo.slr <- lm(formula = SELLING_PRICE ~ AREA_SQM,
+                data = condo_resale.sf)
+summary(condo.slr)
+```
+
+The fitted line is price = `r format(round(coef(condo.slr)[1], 1), big.mark = ",")` + `r format(round(coef(condo.slr)[2]), big.mark = ",")` × area. Each extra square metre adds about S$`r format(round(coef(condo.slr)[2]), big.mark = ",")`. The R² is `r round(summary(condo.slr)$r.squared, 4)`, so floor area alone explains about `r round(summary(condo.slr)$r.squared * 100)` percent of the variation in price. Both coefficients have p-values far below 0.001.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.5
+ggplot(condo_resale.sf, aes(x = AREA_SQM, y = SELLING_PRICE / 1e6)) +
+  geom_point(colour = "#0072B2", alpha = 0.4) +
+  geom_smooth(method = lm, colour = "#D55E00", fill = "grey80") +
+  labs(x = "Floor area (sq m)", y = "Selling price (S$ million)",
+       title = "Bigger units sell for more, with a few very expensive outliers") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+ggplot(condo_resale.sf, aes(x = AREA_SQM, y = SELLING_PRICE / 1e6)) +
+  geom_point(colour = "#0072B2", alpha = 0.4) +
+  geom_smooth(method = lm, colour = "#D55E00", fill = "grey80") +
+  labs(x = "Floor area (sq m)", y = "Selling price (S$ million)",
+       title = "Bigger units sell for more, with a few very expensive outliers") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+The points fan out as area grows. Large units vary much more in price than small ones, and a handful of sales sit far above the line.
+
+## Checking the Independent Variables for Multicollinearity
+
+`corrplot()` of **corrplot** shows the correlations between the 19 candidate independent variables. AOE ordering puts variables that behave alike next to each other.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 10
+corrplot(cor(select(condo_resale, AREA_SQM:LEASEHOLD_99YR)),
+         diag = FALSE,
+         order = "AOE",
+         tl.pos = "td",
+         tl.cex = 0.7,
+         tl.col = "black",
+         method = "number",
+         type = "upper",
+         mar = c(0, 0, 3, 0))
+mtext("FREEHOLD and LEASEHOLD_99YR are almost mirror images", side = 3,
+      line = 1, cex = 1.4, font = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+corrplot(cor(select(condo_resale, AREA_SQM:LEASEHOLD_99YR)),
+         diag = FALSE,
+         order = "AOE",
+         tl.pos = "td",
+         tl.cex = 0.7,
+         tl.col = "black",
+         method = "number",
+         type = "upper",
+         mar = c(0, 0, 3, 0))
+mtext("FREEHOLD and LEASEHOLD_99YR are almost mirror images", side = 3,
+      line = 1, cex = 1.4, font = 2)
+```
+:::
+
+`FREEHOLD` and `LEASEHOLD_99YR` have a correlation of `r round(cor(condo_resale$FREEHOLD, condo_resale$LEASEHOLD_99YR), 2)`. Most condos are one or the other, so the two columns carry nearly the same information. Like the book, I keep `FREEHOLD` and leave `LEASEHOLD_99YR` out.
+
+::: {.callout-caution}
+## Where I differ from the book
+The book selects the columns with `condo_resale[, 5:23]`. I select them by name with `AREA_SQM:LEASEHOLD_99YR`, so the code still works if the csv gains a column.
+:::
+
+## Multiple Linear Regression
+
+`lm()` fits price on all 18 remaining variables.
+
+```{r}
+condo.mlr <- lm(
+  formula = SELLING_PRICE ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+    PROX_URA_GROWTH_AREA + PROX_HAWKER_MARKET +
+    PROX_KINDERGARTEN + PROX_MRT + PROX_PARK +
+    PROX_PRIMARY_SCH + PROX_TOP_PRIMARY_SCH +
+    PROX_SHOPPING_MALL + PROX_SUPERMARKET +
+    PROX_BUS_STOP + NO_Of_UNITS +
+    FAMILY_FRIENDLY + FREEHOLD,
+  data = condo_resale.sf)
+summary(condo.mlr)
+```
+
+The R² rises to `r round(summary(condo.mlr)$r.squared, 4)` and the adjusted R² to `r round(summary(condo.mlr)$adj.r.squared, 4)`. Four variables are not significant at 0.05, `PROX_HAWKER_MARKET`, `PROX_KINDERGARTEN`, `PROX_TOP_PRIMARY_SCH` and `PROX_SUPERMARKET`.
+
+## Revising the Model
+
+The revised model drops those four variables.
+
+```{r}
+condo.mlr1 <- lm(
+  formula = SELLING_PRICE ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_MRT +
+    PROX_ELDERLYCARE + PROX_URA_GROWTH_AREA +
+    PROX_PARK + PROX_PRIMARY_SCH +
+    PROX_SHOPPING_MALL + PROX_BUS_STOP +
+    NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD,
+  data = condo_resale.sf)
+```
+
+`tbl_regression()` of **gtsummary** formats the coefficients, and `add_glance_source_note()` adds the model statistics underneath.
+
+```{r}
+tbl_regression(condo.mlr1,
+               intercept = TRUE) %>%
+  add_glance_source_note(
+    label = list(sigma ~ "\U03C3"),
+    include = c(r.squared, adj.r.squared,
+                AIC, statistic,
+                p.value, sigma))
+```
+
+All 14 variables are now significant at 0.05, and the adjusted R² is `r round(summary(condo.mlr1)$adj.r.squared, 4)`, almost unchanged. Dropping the four weak variables cost almost no fit.
+
+::: {.callout-note}
+## Learning diary
+Some signs look odd at first. `PROX_CHILDCARE`, `PROX_MRT` and `PROX_SHOPPING_MALL` are negative, which makes sense, since being further from these lowers the price. But `PROX_PARK`, `PROX_ELDERLYCARE` and `PROX_BUS_STOP` are positive, so being further from a park or a bus stop goes with a higher price. I think these pick up other things. Expensive condos in the central area are often not right next to a big park, and bus stops are densest in the HDB towns. A global model cannot separate these, which is one reason to try GWR.
+:::
+
+## Regression Diagnostics
+
+### Multicollinearity
+
+`check_collinearity()` of **performance** computes the variance inflation factor (VIF) for each variable.
+
+```{r}
+mlr.vif <- check_collinearity(condo.mlr1)
+mlr.vif
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5.5
+plot(mlr.vif) +
+  labs(title = "Every VIF is well below 5") +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+plot(mlr.vif) +
+  labs(title = "Every VIF is well below 5") +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+The highest VIF is `r round(max(mlr.vif$VIF), 2)`, for `r mlr.vif$Term[which.max(mlr.vif$VIF)]`. All are far below the usual cut-off of 10, so multicollinearity is not a problem.
+
+### Linearity
+
+`check_model()` with `check = "linearity"` plots the residuals against the fitted values.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.5
+check_model(condo.mlr1, check = "linearity")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+check_model(condo.mlr1, check = "linearity")
+```
+:::
+
+Most residuals scatter around zero and the reference line is roughly flat, so the linear form is acceptable. The spread widens for the higher fitted prices, which is a sign of unequal variance.
+
+### Normality
+
+`check_normality()` runs a Shapiro-Wilk test on the standardised residuals.
+
+```{r}
+check_normality(condo.mlr1)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.5
+plot(check_normality(condo.mlr1), type = "qq") +
+  labs(title = "The residuals leave the line at both ends") +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+plot(check_normality(condo.mlr1), type = "qq") +
+  labs(title = "The residuals leave the line at both ends") +
+  theme(plot.title = element_text(size = 15, face = "bold"))
+```
+:::
+
+::: {.callout-important}
+## Check that caught something
+The book says the Q-Q plot shows most points along the line and that the residuals resemble a normal distribution. The test disagrees strongly. The Shapiro-Wilk W is `r round(shapiro.test(residuals(condo.mlr1))$statistic, 3)`, and the skewness of the residuals is `r round(mean(scale(residuals(condo.mlr1))^3), 2)`. A normal distribution has W close to 1 and skewness 0. The points do follow the line in the middle, but the top end bends far away because of the very expensive sales. This matters because the p-values in the table assume normal errors. The book's note that formal tests reject too easily in large samples is true, but here the plot shows the same problem. I test a log-price model in [Log Price Instead of Price].
+:::
+
+The book also draws the same check through `check_model()`. It shows the same pattern as the Q-Q plot above, so I leave it out.
+
+### Spatial Autocorrelation in the Residuals
+
+The model uses located data, so the residuals may be spatially autocorrelated. If nearby condos have similar residuals, the model is missing something about location. `cbind()` adds the residuals to the sf data frame.
+
+```{r}
+condo_resale.sf <- cbind(condo_resale.sf,
+                         condo.mlr1$residuals) %>%
+  rename(MLR_RES = condo.mlr1.residuals)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 6
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf) +
+  tm_dots(fill = "MLR_RES",
+          size = 0.25,
+          fill.scale = tm_scale_intervals(n = 10,
+                                          style = "quantile",
+                                          values = "-brewer.rd_bu",
+                                          midpoint = NA),
+          fill.legend = tm_legend(title = "OLS residual (S$)",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("OLS residuals of the same sign sit together",
+           size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf) +
+  tm_dots(fill = "MLR_RES",
+          size = 0.25,
+          fill.scale = tm_scale_intervals(n = 10,
+                                          style = "quantile",
+                                          values = "-brewer.rd_bu",
+                                          midpoint = NA),
+          fill.legend = tm_legend(title = "OLS residual (S$)",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("OLS residuals of the same sign sit together",
+           size = 1.5, fontface = "bold")
+```
+:::
+
+Red points are under-predicted, where the model guesses too low, and blue points are over-predicted. Both colours come in groups rather than being mixed at random.
+
+To test this, `st_dist_band()` of **sfdep** links every pair of condos within 1,500 m, and `st_weights()` row-standardises the links.
+
+```{r}
+condo_resale.sf <- condo_resale.sf %>%
+  mutate(nb = st_dist_band(st_geometry(geometry),
+                           upper = 1500),
+         wt = st_weights(nb, style = "W"),
+         .before = 1)
+```
+
+Each condo has between `r min(lengths(condo_resale.sf$nb))` and `r max(lengths(condo_resale.sf$nb))` neighbours within 1,500 m, with a median of `r median(lengths(condo_resale.sf$nb))`. `global_moran_perm()` then runs the permutation test, as in the book.
+
+```{r}
+set.seed(1234)
+global_moran_perm(condo_resale.sf$MLR_RES,
+                  nb = condo_resale.sf$nb,
+                  wt = condo_resale.sf$wt,
+                  alternative = "two.sided",
+                  nsim = 499)
+```
+
+Moran's I is 0.144, above 0, so the residuals are clustered. Nearby condos tend to be over- or under-predicted together.
+
+::: {.callout-important}
+## Check that caught something
+The report gives a p-value below 2.2e-16. With 499 shuffles, that is impossible. The real map is compared with 499 shuffled maps, so the smallest possible one-sided p-value is 1/500 = 0.002. For the two-sided test, spdep's formula returns exactly 0 when the real map beats every shuffle, which R then prints as below 2.2e-16. `alternative = "greater"` gives the honest value.
+
+```{r}
+set.seed(1234)
+mlr_moran <- global_moran_perm(condo_resale.sf$MLR_RES,
+                               nb = condo_resale.sf$nb,
+                               wt = condo_resale.sf$wt,
+                               alternative = "greater",
+                               nsim = 499)
+mlr_moran
+```
+
+The p-value is `r mlr_moran$p.value`, the smallest the test can give. The conclusion is the same, but the true strength of the evidence is "beats all 499 shuffles", not "p below 2.2e-16".
+:::
+
+# Hedonic Pricing Models with GWmodel
+
+GWR fits one weighted regression at each condo. The bandwidth decides how many nearby sales count and how fast their weight falls off. With a Gaussian kernel the weight never drops to zero, so the bandwidth works like a standard deviation. A fixed bandwidth uses the same distance everywhere. An adaptive bandwidth uses the same number of nearest neighbours everywhere, so it covers a small area where condos are dense and a large area where they are sparse.
+
+## Fixed Bandwidth GWR
+
+`bw.gwr()` of **GWmodel** searches for the bandwidth with the lowest cross-validation (CV) score. `adaptive = FALSE` asks for a fixed distance.
+
+```{r}
+#| output: false
+bw.fixed <- bw.gwr(
+  formula = SELLING_PRICE ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+    PROX_URA_GROWTH_AREA + PROX_MRT + PROX_PARK +
+    PROX_PRIMARY_SCH + PROX_SHOPPING_MALL +
+    PROX_BUS_STOP + NO_Of_UNITS + FAMILY_FRIENDLY +
+    FREEHOLD,
+  data = condo_resale.sf,
+  approach = "CV",
+  kernel = "gaussian",
+  adaptive = FALSE,
+  longlat = FALSE)
+```
+
+```{r}
+bw.fixed
+```
+
+The best fixed bandwidth is `r round(bw.fixed, 1)`. It is in metres because the data is in SVY21, a projected system measured in metres, and `longlat = FALSE` tells GWmodel not to use great circle distances.
+
+`gwr.basic()` calibrates the model with that bandwidth.
+
+```{r}
+gwr.fixed <- gwr.basic(
+  formula = SELLING_PRICE ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+    PROX_URA_GROWTH_AREA + PROX_MRT + PROX_PARK +
+    PROX_PRIMARY_SCH + PROX_SHOPPING_MALL +
+    PROX_BUS_STOP + NO_Of_UNITS + FAMILY_FRIENDLY +
+    FREEHOLD,
+  data = condo_resale.sf,
+  bw = bw.fixed,
+  kernel = "gaussian",
+  longlat = FALSE)
+gwr.fixed
+```
+
+## Adaptive Bandwidth GWR
+
+The same two steps with `adaptive = TRUE` give the adaptive model.
+
+```{r}
+#| output: false
+bw.adaptive <- bw.gwr(
+  formula = SELLING_PRICE ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+    PROX_URA_GROWTH_AREA + PROX_MRT + PROX_PARK +
+    PROX_PRIMARY_SCH + PROX_SHOPPING_MALL +
+    PROX_BUS_STOP + NO_Of_UNITS +
+    FAMILY_FRIENDLY + FREEHOLD,
+  data = condo_resale.sf,
+  approach = "CV",
+  kernel = "gaussian",
+  adaptive = TRUE,
+  longlat = FALSE)
+```
+
+```{r}
+bw.adaptive
+```
+
+```{r}
+gwr.adaptive <- gwr.basic(
+  formula = SELLING_PRICE ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+    PROX_URA_GROWTH_AREA + PROX_MRT + PROX_PARK +
+    PROX_PRIMARY_SCH + PROX_SHOPPING_MALL + PROX_BUS_STOP +
+    NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD,
+  data = condo_resale.sf,
+  bw = bw.adaptive,
+  kernel = "gaussian",
+  adaptive = TRUE,
+  longlat = FALSE)
+gwr.adaptive
+```
+
+The best adaptive bandwidth is `r bw.adaptive` nearest neighbours.
+
+## Comparing the Three Models
+
+The two GWR reports each include the global OLS model at the top. I put the main numbers side by side. AICc rewards fit but penalises extra parameters, and lower is better.
+
+```{r}
+aicc_lm <- function(m) {
+  k <- length(coef(m)) + 1
+  n <- nobs(m)
+  AIC(m) + 2 * k * (k + 1) / (n - k - 1)
+}
+
+model_compare <- tibble(
+  model = c("OLS", "GWR, fixed bandwidth", "GWR, adaptive bandwidth"),
+  bandwidth = c("none",
+                paste0(round(bw.fixed), " m"),
+                paste0(bw.adaptive, " neighbours")),
+  r2 = c(summary(condo.mlr1)$r.squared,
+         gwr.fixed$GW.diagnostic$gw.R2,
+         gwr.adaptive$GW.diagnostic$gw.R2),
+  adj_r2 = c(summary(condo.mlr1)$adj.r.squared,
+             gwr.fixed$GW.diagnostic$gwR2.adj,
+             gwr.adaptive$GW.diagnostic$gwR2.adj),
+  AICc = c(aicc_lm(condo.mlr1),
+           gwr.fixed$GW.diagnostic$AICc,
+           gwr.adaptive$GW.diagnostic$AICc),
+  effective_parameters = c(length(coef(condo.mlr1)),
+                           gwr.fixed$GW.diagnostic$enp,
+                           gwr.adaptive$GW.diagnostic$enp))
+kable(model_compare, digits = c(0, 0, 3, 3, 1, 1))
+```
+
+Both GWR models fit much better than OLS. The adjusted R² rises from `r round(model_compare$adj_r2[1], 3)` to `r round(model_compare$adj_r2[3], 3)`, and AICc falls by about `r format(round(model_compare$AICc[1] - model_compare$AICc[3]), big.mark = ",")`. The adaptive model has the lowest AICc, so it is the best of the three, as in the book.
+
+::: {.callout-note}
+## Learning diary
+The last column was new to me. OLS uses 15 parameters. The adaptive GWR behaves like a model with about `r round(gwr.adaptive$GW.diagnostic$enp)` parameters, because every condo has its own set of 15 coefficients, smoothed by the kernel. That is a lot for `r nrow(condo_resale.sf)` sales. AICc already penalises it, and GWR still wins, but it means some of the local coefficients are fitted from very little data. I look at how reliable they are in [Which Local Effects Can Be Trusted].
+:::
+
+## Converting the SDF into an sf Data Frame
+
+The model output is in `gwr.adaptive$SDF`. For each condo it holds the local coefficients, their standard errors (`_SE`) and t-values (`_TV`), the fitted price (`yhat`), the residual and the local R². `st_as_sf()` makes sure it is an sf object, and `st_transform()` confirms EPSG 3414.
+
+```{r}
+condo_resale.sf.adaptive <- st_as_sf(gwr.adaptive$SDF) %>%
+  st_transform(crs = 3414)
+glimpse(condo_resale.sf.adaptive[, c("AREA_SQM", "AREA_SQM_SE", "AREA_SQM_TV",
+                                     "yhat", "residual", "Local_R2")])
+```
+
+```{r}
+summary(gwr.adaptive$SDF$yhat)
+```
+
+::: {.callout-caution}
+## Where I differ from the book
+The book's list of output fields includes a condition number for local collinearity, with a warning that values above 30 are unreliable. `gwr.basic()` does not return that field, as the `glimpse()` above shows. GWmodel computes local condition numbers in a separate function, `gwr.collin.diagno()`. I did not add it, because its condition numbers are not scaled, so with variables in such different units almost every condo goes above 30. That would not say anything useful about collinearity here.
+:::
+
+## Visualising Local R²
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 6
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf.adaptive) +
+  tm_dots(fill = "Local_R2",
+          size = 0.25,
+          fill.scale = tm_scale_intervals(style = "quantile",
+                                          values = "brewer.purples"),
+          fill.legend = tm_legend(title = "Local R²",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("The local models fit best away from the city centre",
+           size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf.adaptive) +
+  tm_dots(fill = "Local_R2",
+          size = 0.25,
+          fill.scale = tm_scale_intervals(style = "quantile",
+                                          values = "brewer.purples"),
+          fill.legend = tm_legend(title = "Local R²",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("The local models fit best away from the city centre",
+           size = 1.5, fontface = "bold")
+```
+:::
+
+Local R² ranges from `r round(min(condo_resale.sf.adaptive$Local_R2), 2)` to `r round(max(condo_resale.sf.adaptive$Local_R2), 2)`, with a median of `r round(median(condo_resale.sf.adaptive$Local_R2), 2)`. Even the weakest local model explains about two thirds of the variation. The fit is weakest near the city centre. For condos within 3 km of the CBD the median local R² is `r round(median(condo_resale.sf.adaptive$Local_R2[condo_resale.sf$PROX_CBD <= 3]), 2)`, against `r round(median(condo_resale.sf.adaptive$Local_R2[condo_resale.sf$PROX_CBD > 10]), 2)` for those more than 10 km away. Central prices probably depend more on things the 14 variables do not record, such as the view, the floor level or the prestige of the development.
+
+## Visualising the Coefficient Estimates
+
+The book maps the standard error and the t-value of the `AREA_SQM` coefficient side by side. `tmap_arrange()` puts the two maps next to each other.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5
+coef_map <- function(var, title, legend_title, palette) {
+  tm_shape(mpsz_svy21) +
+    tm_polygons(fill = "grey95", col = "grey75") +
+  tm_shape(condo_resale.sf.adaptive) +
+    tm_dots(fill = var,
+            size = 0.2,
+            fill.scale = tm_scale_intervals(style = "quantile",
+                                            values = palette),
+            fill.legend = tm_legend(title = legend_title,
+                                    position = tm_pos_out("right", "center"))) +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(coef_map("AREA_SQM_SE", "Standard error of AREA_SQM",
+                      "Std. error", "brewer.oranges"),
+             coef_map("AREA_SQM_TV", "t-value of AREA_SQM",
+                      "t-value", "brewer.blues"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+coef_map <- function(var, title, legend_title, palette) {
+  tm_shape(mpsz_svy21) +
+    tm_polygons(fill = "grey95", col = "grey75") +
+  tm_shape(condo_resale.sf.adaptive) +
+    tm_dots(fill = var,
+            size = 0.2,
+            fill.scale = tm_scale_intervals(style = "quantile",
+                                            values = palette),
+            fill.legend = tm_legend(title = legend_title,
+                                    position = tm_pos_out("right", "center"))) +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(coef_map("AREA_SQM_SE", "Standard error of AREA_SQM",
+                      "Std. error", "brewer.oranges"),
+             coef_map("AREA_SQM_TV", "t-value of AREA_SQM",
+                      "t-value", "brewer.blues"),
+             ncol = 2)
+```
+:::
+
+The t-value is above 1.96 at `r sum(condo_resale.sf.adaptive$AREA_SQM_TV > 1.96)` of the `r nrow(condo_resale.sf.adaptive)` condos, so floor area matters almost everywhere. The t-values are highest in the central area and much lower in the north, east and west, where the remaining `r sum(condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96)` condos that are not significant all sit, between `r round(min(condo_resale.sf$PROX_CBD[condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96]))` and `r round(max(condo_resale.sf$PROX_CBD[condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96]))` km from the CBD. The standard error map is almost the reverse. It is largest in the outer areas.
+
+The reason shows up in the coefficient itself. The local value of an extra square metre ranges from S$`r format(round(min(condo_resale.sf.adaptive$AREA_SQM)), big.mark = ",")` to S$`r format(round(max(condo_resale.sf.adaptive$AREA_SQM)), big.mark = ",")`, against a single S$`r format(round(coef(condo.mlr1)["AREA_SQM"]), big.mark = ",")` in the OLS model. Within 3 km of the CBD the median is S$`r format(round(median(condo_resale.sf.adaptive$AREA_SQM[condo_resale.sf$PROX_CBD <= 3])), big.mark = ",")` per square metre, and beyond 10 km it is S$`r format(round(median(condo_resale.sf.adaptive$AREA_SQM[condo_resale.sf$PROX_CBD > 10])), big.mark = ",")`. A square metre costs much more in the centre, so the effect there is large relative to its error. In the suburbs the effect is smaller, and the same amount of noise makes it less certain. This is the kind of local difference a single OLS coefficient hides.
+
+# Beyond the Exercise
+
+## Log Price Instead of Price
+
+The book makes `LOG_SELLING_PRICE` in the EDA but then models the raw price. I refit the revised OLS model with the log of price and compare the two on the problems found in the diagnostics.
+
+```{r}
+condo.mlr1.log <- lm(
+  formula = log(SELLING_PRICE) ~ AREA_SQM + AGE +
+    PROX_CBD + PROX_CHILDCARE + PROX_MRT +
+    PROX_ELDERLYCARE + PROX_URA_GROWTH_AREA +
+    PROX_PARK + PROX_PRIMARY_SCH +
+    PROX_SHOPPING_MALL + PROX_BUS_STOP +
+    NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD,
+  data = condo_resale.sf)
+
+set.seed(1234)
+log_moran <- global_moran_perm(residuals(condo.mlr1.log),
+                               nb = condo_resale.sf$nb,
+                               wt = condo_resale.sf$wt,
+                               alternative = "greater",
+                               nsim = 499)
+
+skew <- function(x) mean(scale(x)^3)
+
+log_compare <- tibble(
+  check = c("Adjusted R²", "Shapiro-Wilk W of residuals",
+            "Skewness of residuals", "Breusch-Pagan statistic",
+            "Moran's I of residuals", "Variables significant at 0.05"),
+  price = c(summary(condo.mlr1)$adj.r.squared,
+            shapiro.test(residuals(condo.mlr1))$statistic,
+            skew(residuals(condo.mlr1)),
+            bptest(condo.mlr1)$statistic,
+            mlr_moran$statistic,
+            sum(coef(summary(condo.mlr1))[-1, 4] < 0.05)),
+  log_price = c(summary(condo.mlr1.log)$adj.r.squared,
+                shapiro.test(residuals(condo.mlr1.log))$statistic,
+                skew(residuals(condo.mlr1.log)),
+                bptest(condo.mlr1.log)$statistic,
+                log_moran$statistic,
+                sum(coef(summary(condo.mlr1.log))[-1, 4] < 0.05)))
+kable(log_compare, digits = 3)
+```
+
+::: {.callout-tip}
+## Alternative explored
+The log model fixes most of the normality problem. The residual skewness drops from `r round(log_compare$price[3], 2)` to `r round(log_compare$log_price[3], 2)` and W rises from `r round(log_compare$price[2], 3)` to `r round(log_compare$log_price[2], 3)`. The fit also improves, with the adjusted R² going from `r round(log_compare$price[1], 3)` to `r round(log_compare$log_price[1], 3)`. This makes sense for prices. Features tend to add a percentage to the price rather than a fixed amount, so an extra square metre is worth more in an expensive area. The log model reads that way. For example, freehold tenure adds about `r round((exp(coef(condo.mlr1.log)["FREEHOLD"]) - 1) * 100)` percent to the price.
+
+Two problems remain. The Breusch-Pagan test still finds unequal variance, and the residuals are even more clustered, with Moran's I at `r sprintf("%.3f", log_compare$log_price[5])` against `r sprintf("%.3f", log_compare$price[5])` for the price model. The log also changes which variables matter. Only `r log_compare$log_price[6]` of the 14 stay significant. `r paste(names(which(coef(summary(condo.mlr1.log))[-1, 4] >= 0.05)), collapse = ", ")` drop out, so their effect in the price model came mostly from the expensive end. So the log model is better behaved, but it still needs a spatial model. The book's GWR on raw price is a fair choice for teaching, but a log-price GWR would be the next thing I would try.
+:::
+
+## Does GWR Remove the Spatial Autocorrelation?
+
+The OLS residuals were clustered, which was the reason to try GWR. I run the same Moran's I test on the residuals of both GWR models, with the same 1,500 m weights.
+
+```{r}
+moran_res <- function(res) {
+  set.seed(1234)
+  global_moran_perm(res,
+                    nb = condo_resale.sf$nb,
+                    wt = condo_resale.sf$wt,
+                    alternative = "greater",
+                    nsim = 499)
+}
+
+gwr_fixed_moran <- moran_res(gwr.fixed$SDF$residual)
+gwr_adaptive_moran <- moran_res(gwr.adaptive$SDF$residual)
+
+tibble(model = c("OLS", "GWR, fixed bandwidth", "GWR, adaptive bandwidth"),
+       morans_I = c(mlr_moran$statistic,
+                    gwr_fixed_moran$statistic,
+                    gwr_adaptive_moran$statistic),
+       p_value = c(mlr_moran$p.value,
+                   gwr_fixed_moran$p.value,
+                   gwr_adaptive_moran$p.value)) %>%
+  kable(digits = 3)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5
+res_map <- function(data, var, title) {
+  tm_shape(mpsz_svy21) +
+    tm_polygons(fill = "grey95", col = "grey75") +
+  tm_shape(data) +
+    tm_dots(fill = var,
+            size = 0.2,
+            fill.scale = tm_scale_intervals(
+              breaks = c(-Inf, -5e5, -1e5, 1e5, 5e5, Inf),
+              labels = c("below -500k", "-500k to -100k", "-100k to 100k",
+                         "100k to 500k", "above 500k"),
+              values = c("#0072B2", "#56B4E9", "grey80", "#E69F00", "#D55E00")),
+            fill.legend = tm_legend(title = "Residual (S$)",
+                                    position = tm_pos_out("right", "center"))) +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(res_map(condo_resale.sf, "MLR_RES", "OLS residuals"),
+             res_map(condo_resale.sf.adaptive, "residual", "Adaptive GWR residuals"),
+             ncol = 2)
+```
+
+## The Code
+
+```{r}
+#| eval: false
+res_map <- function(data, var, title) {
+  tm_shape(mpsz_svy21) +
+    tm_polygons(fill = "grey95", col = "grey75") +
+  tm_shape(data) +
+    tm_dots(fill = var,
+            size = 0.2,
+            fill.scale = tm_scale_intervals(
+              breaks = c(-Inf, -5e5, -1e5, 1e5, 5e5, Inf),
+              labels = c("below -500k", "-500k to -100k", "-100k to 100k",
+                         "100k to 500k", "above 500k"),
+              values = c("#0072B2", "#56B4E9", "grey80", "#E69F00", "#D55E00")),
+            fill.legend = tm_legend(title = "Residual (S$)",
+                                    position = tm_pos_out("right", "center"))) +
+    tm_title(title, size = 1.3, fontface = "bold")
+}
+
+tmap_arrange(res_map(condo_resale.sf, "MLR_RES", "OLS residuals"),
+             res_map(condo_resale.sf.adaptive, "residual", "Adaptive GWR residuals"),
+             ncol = 2)
+```
+:::
+
+::: {.callout-tip}
+## Alternative explored
+GWR removes the clustering. Moran's I falls from `r round(mlr_moran$statistic, 3)` for OLS to `r round(gwr_adaptive_moran$statistic, 3)` for the adaptive GWR, with a p-value of `r gwr_adaptive_moran$p.value`. The fixed model gives `r round(gwr_fixed_moran$statistic, 3)`. Both are slightly below zero and nowhere near significant. On the maps I used the same fixed classes for both models so they can be compared. The GWR map has far more grey points within S$100,000 of the actual price, and the large errors no longer come in groups.
+
+The book shows that GWR fits better, but it does not check whether GWR fixed the problem that motivated it. Here it did. The caution is that a model with about `r round(gwr.adaptive$GW.diagnostic$enp)` effective parameters can absorb almost any spatial pattern, so this result shows the residuals are clean, not that every local coefficient is meaningful. The next section looks at that.
+:::
+
+## Which Local Effects Can Be Trusted
+
+A local coefficient is only useful where it is significant. For each variable I count the condos where the local t-value is beyond ±1.96, and where the local coefficient has the same sign as in OLS.
+
+```{r}
+vars <- c("AREA_SQM", "AGE", "PROX_CBD", "PROX_CHILDCARE",
+          "PROX_ELDERLYCARE", "PROX_URA_GROWTH_AREA", "PROX_MRT",
+          "PROX_PARK", "PROX_PRIMARY_SCH", "PROX_SHOPPING_MALL",
+          "PROX_BUS_STOP", "NO_Of_UNITS", "FAMILY_FRIENDLY", "FREEHOLD")
+gwr_df <- st_drop_geometry(condo_resale.sf.adaptive)
+
+local_check <- tibble(
+  variable = vars,
+  ols_coefficient = coef(condo.mlr1)[vars],
+  pct_significant = map_dbl(vars, ~ mean(abs(gwr_df[[paste0(.x, "_TV")]]) > 1.96) * 100),
+  pct_same_sign_as_ols = map_dbl(vars, ~ mean(sign(gwr_df[[.x]]) ==
+                                                 sign(coef(condo.mlr1)[.x])) * 100)) %>%
+  arrange(desc(pct_significant))
+kable(local_check, digits = c(0, 0, 1, 1))
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 6
+condo_resale.sf.adaptive <- condo_resale.sf.adaptive %>%
+  mutate(CBD_EFFECT = case_when(
+    PROX_CBD_TV < -1.96 ~ "Significant, further is cheaper",
+    PROX_CBD_TV > 1.96 ~ "Significant, further is dearer",
+    TRUE ~ "Not significant"),
+    CBD_EFFECT = factor(CBD_EFFECT,
+                        levels = c("Significant, further is cheaper",
+                                   "Not significant",
+                                   "Significant, further is dearer")))
+
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf.adaptive) +
+  tm_dots(fill = "CBD_EFFECT",
+          size = 0.25,
+          fill.scale = tm_scale_categorical(
+            values = c("#0072B2", "grey80", "#D55E00")),
+          fill.legend = tm_legend(title = "Local effect of PROX_CBD",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("Distance to the CBD only matters in parts of the island",
+           size = 1.5, fontface = "bold")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+condo_resale.sf.adaptive <- condo_resale.sf.adaptive %>%
+  mutate(CBD_EFFECT = case_when(
+    PROX_CBD_TV < -1.96 ~ "Significant, further is cheaper",
+    PROX_CBD_TV > 1.96 ~ "Significant, further is dearer",
+    TRUE ~ "Not significant"),
+    CBD_EFFECT = factor(CBD_EFFECT,
+                        levels = c("Significant, further is cheaper",
+                                   "Not significant",
+                                   "Significant, further is dearer")))
+
+tm_shape(mpsz_svy21) +
+  tm_polygons(fill = "grey95", col = "grey75") +
+tm_shape(condo_resale.sf.adaptive) +
+  tm_dots(fill = "CBD_EFFECT",
+          size = 0.25,
+          fill.scale = tm_scale_categorical(
+            values = c("#0072B2", "grey80", "#D55E00")),
+          fill.legend = tm_legend(title = "Local effect of PROX_CBD",
+                                  position = tm_pos_out("right", "center"))) +
+  tm_title("Distance to the CBD only matters in parts of the island",
+           size = 1.5, fontface = "bold")
+```
+:::
+
+::: {.callout-tip}
+## Alternative explored
+Floor area is the only variable that is significant almost everywhere, at `r round(local_check$pct_significant[local_check$variable == "AREA_SQM"], 1)` percent of condos, and it is positive at every one. Every other variable is significant at less than half of the condos, from `r round(max(local_check$pct_significant[local_check$variable != "AREA_SQM"]), 1)` percent for `r local_check$variable[local_check$variable != "AREA_SQM"][1]` down to `r round(min(local_check$pct_significant), 1)` percent for `r local_check$variable[which.min(local_check$pct_significant)]`. Several also change sign across the island. `PROX_CHILDCARE`, `PROX_PRIMARY_SCH`, `PROX_SHOPPING_MALL` and `NO_Of_UNITS` have the OLS sign at only about half of the condos.
+
+The map shows this for distance to the CBD. In OLS it is strongly significant and negative. Locally it is significant and negative at `r sum(condo_resale.sf.adaptive$CBD_EFFECT == "Significant, further is cheaper")` condos, significant and positive at `r sum(condo_resale.sf.adaptive$CBD_EFFECT == "Significant, further is dearer")`, and not significant at the other `r sum(condo_resale.sf.adaptive$CBD_EFFECT == "Not significant")`. So "further from the CBD is cheaper" holds in some parts of Singapore, not everywhere.
+
+These counts are 1,436 separate tests, so some of the significant ones will be chance. That makes the small percentages even weaker. The safe reading is that floor area has a strong local effect everywhere, a few location variables matter in some areas, and the rest are too noisy to map with 30 neighbours.
+:::
+
+# Limitations
+
+- The data covers one year, 2015. Prices and the value of each feature change with the market, so these coefficients describe 2015.
+- The model uses straight-line distances to each facility. Walking distance or travel time would be closer to how buyers see access.
+- Several units in the same block share one coordinate. The model treats them as separate observations, which gives large developments more weight in their neighbourhood.
+- GWR with 30 neighbours fits about 350 effective parameters to 1,436 sales. It removes the residual clustering, but most local coefficients are not significant, and the local t-tests are not adjusted for being run 1,436 times.
+- The model is on raw price, and the residuals are far from normal. The log-price model behaves better but still has clustered residuals, so a log-price GWR would be the next step.
+
+# Reflections
+
+Here are four things I learned from this exercise.
+
+**A global coefficient can hide very different local ones.** OLS says an extra square metre adds about S$12,800. GWR says it is about S$14,000 near the CBD and about S$5,500 in the suburbs. Neither number is wrong, but the OLS one describes no actual place.
+
+**GWR fixed the problem that motivated it.** The OLS residuals were clearly clustered. After GWR, Moran's I on the residuals was slightly below zero and not significant. I had to run this check myself, since the book only compares fit statistics.
+
+**Better fit does not mean every local estimate is real.** GWR raised the adjusted R² from about 0.65 to 0.86, but most of its local coefficients were not significant, and several changed sign. Effective parameters and local t-values told me more about reliability than R² did.
+
+**Printed output can overstate the evidence.** The permutation test printed a p-value below 2.2e-16 when 0.002 was the smallest possible value. Knowing how a test works let me catch that, and the normality claim in the book, which the test itself did not support.

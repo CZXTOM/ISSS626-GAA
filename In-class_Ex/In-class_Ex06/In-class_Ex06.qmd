@@ -42,12 +42,12 @@ pacman::p_load(sf, sfdep, tmap, plotly, tidyverse, Kendall, knitr)
 ::: panel-tabset
 ## Importing the Hunan shapefile
 
-`st_read()` of **sf** reads the county boundaries, and `st_transform()` projects them to UTM zone 49 north.
+`st_read()` of **sf** reads the county boundaries, and `st_transform()` projects them to EPSG 32650.
 
 ```{r}
 hunan <- st_read(dsn = "data/geospatial",
                  layer = "Hunan") %>%
-  st_transform(crs = 32649)
+  st_transform(crs = 32650)
 ```
 
 ## Importing the GDPPC table
@@ -62,10 +62,6 @@ glimpse(GDPPC)
 
 The table has `r nrow(GDPPC)` rows, `r n_distinct(GDPPC$County)` counties over `r n_distinct(GDPPC$Year)` years from `r min(GDPPC$Year)` to `r max(GDPPC$Year)`.
 
-::: {.callout-caution}
-## Where I differ from the book
-The book projects Hunan to EPSG 32650, UTM zone 50 north. Hunan runs from about 108.8 to 114.3 degrees east, and zone 50 only starts at 114. So I use EPSG 32649, as in Hands-on Exercises 4 and 5. The distances between counties change a little with the projection, so my Gi* values may differ slightly from the book's.
-:::
 
 # Creating a Time Series Cube
 
@@ -126,10 +122,6 @@ gi_stars <- GDPPC_nb %>%
   tidyr::unnest(gi_star)
 ```
 
-::: {.callout-caution}
-## Where I differ from the book
-`local_gstar_perm()` uses random permutations for its p-values, so I added `set.seed()`. The Gi* values do not depend on the seed, but the simulated p-values do.
-:::
 
 # Mann-Kendall Test
 
@@ -155,16 +147,11 @@ cbg <- gi_stars %>%
 
 ```{r}
 #| echo: false
-#| fig-width: 8
-#| fig-height: 5
-p <- ggplot(data = cbg,
-            aes(x = Year, y = gi_star)) +
-  geom_line(colour = "#0072B2", linewidth = 1) +
-  geom_point(colour = "#0072B2", size = 2) +
-  labs(x = "Year", y = "Gi*",
-       title = "Changsha's Gi* by year, 2005 to 2021") +
-  theme_minimal(base_size = 13) +
-  theme(plot.title = element_text(size = 15, face = "bold"))
+p <- ggplot(data = cbg, 
+       aes(x = Year, 
+           y = gi_star)) +
+  geom_line() +
+  theme_light()
 
 ggplotly(p)
 ```
@@ -173,14 +160,11 @@ ggplotly(p)
 
 ```{r}
 #| eval: false
-p <- ggplot(data = cbg,
-            aes(x = Year, y = gi_star)) +
-  geom_line(colour = "#0072B2", linewidth = 1) +
-  geom_point(colour = "#0072B2", size = 2) +
-  labs(x = "Year", y = "Gi*",
-       title = "Changsha's Gi* by year, 2005 to 2021") +
-  theme_minimal(base_size = 13) +
-  theme(plot.title = element_text(size = 15, face = "bold"))
+p <- ggplot(data = cbg, 
+       aes(x = Year, 
+           y = gi_star)) +
+  geom_line() +
+  theme_light()
 
 ggplotly(p)
 ```
@@ -191,12 +175,20 @@ ggplotly(p)
 `MannKendall()` of **Kendall** runs the test. `unclass()` and `unnest_wider()` turn the result into a one-row table.
 
 ```{r}
+cbg %>%
+  summarise(mk = list(
+    unclass(
+      Kendall::MannKendall(gi_star)))) %>% 
+  tidyr::unnest_wider(mk)
+```
+
+```{r}
+#| echo: false
 cbg_mk <- cbg %>%
   summarise(mk = list(
     unclass(
       Kendall::MannKendall(gi_star)))) %>%
   tidyr::unnest_wider(mk)
-kable(cbg_mk, digits = 4)
 ```
 
 For Changsha, tau is `r round(cbg_mk$tau, 3)` and the p-value (`sl`) is `r signif(cbg_mk$sl, 3)`. `r if (cbg_mk$sl < 0.05) "This is below 0.05, so I reject the null hypothesis of no trend." else "This is above 0.05, so I cannot reject the null hypothesis of no trend."` `r if (cbg_mk$tau > 0) "A positive tau means the trend is upward. Changsha's Gi* has risen over the period." else "A negative tau means the trend is downward. Changsha's Gi* has fallen over the period."`
@@ -217,25 +209,20 @@ ehsa <- gi_stars %>%
     unclass(
       Kendall::MannKendall(gi_star)))) %>%
   tidyr::unnest_wider(mk)
+head(ehsa)
 ```
 
-`arrange()` sorts by p-value and `slice()` keeps the ten strongest trends.
+`arrange()` sorts by p-value and `slice()` keeps the ten strongest trends. `head()` shows the first six.
 
 ```{r}
-emerging <- ehsa %>%
-  arrange(sl, abs(tau)) %>%
+emerging <- ehsa %>% 
+  arrange(sl, abs(tau)) %>% 
   slice(1:10)
-emerging %>%
-  mutate(sl = format.pval(sl, digits = 3)) %>%
-  kable(digits = 4)
+head(emerging)
 ```
 
 `r sum(ehsa$sl < 0.05)` of the 88 counties have a significant trend at 0.05. `r sum(ehsa$sl < 0.05 & ehsa$tau > 0)` of them are trending up and `r sum(ehsa$sl < 0.05 & ehsa$tau < 0)` are trending down.
 
-::: {.callout-caution}
-## Where I differ from the book
-The book sorts with `arrange(sl, abs(tau))`, so ties in p-value put the weaker tau first. I kept it to match the book, but `arrange(sl, desc(abs(tau)))` would list the stronger trend first.
-:::
 
 # Performing Emerging Hot Spot Analysis
 
@@ -252,75 +239,29 @@ ehsa <- emerging_hotspot_analysis(
 
 ## Visualising the Distribution of EHSA Classes
 
-I colour hot spot classes in reds, oranges and pink, cold spot classes in blues, and "no pattern detected" in grey. The same colours are used on the map below. The names must match sfdep's output exactly, and sfdep spells oscillating with one l.
-
-```{r}
-class_cols <- c(
-  "persistent hotspot"    = "#67001F",
-  "intensifying hotspot"  = "#B2182B",
-  "consecutive hotspot"   = "#D6604D",
-  "new hotspot"           = "#F4A582",
-  "sporadic hotspot"      = "#E69F00",
-  "oscilating hotspot"    = "#CC79A7",
-  "diminishing hotspot"   = "#FDDBC7",
-  "historical hotspot"    = "#8C510A",
-  "persistent coldspot"   = "#053061",
-  "intensifying coldspot" = "#2166AC",
-  "consecutive coldspot"  = "#4393C3",
-  "new coldspot"          = "#92C5DE",
-  "sporadic coldspot"     = "#56B4E9",
-  "oscilating coldspot"   = "#0072B2",
-  "diminishing coldspot"  = "#D1E5F0",
-  "historical coldspot"   = "#5E4FA2",
-  "no pattern detected"   = "grey80")
-```
+`ggplot()` with `geom_bar()` counts the counties in each EHSA class.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-#| fig-width: 8
-#| fig-height: 5
-class_count <- count(ehsa, classification, sort = TRUE)
-
-ggplot(class_count,
-       aes(x = n, y = reorder(classification, n), fill = classification)) +
-  geom_col(show.legend = FALSE) +
-  geom_text(aes(label = n), hjust = -0.3, size = 4.5) +
-  scale_fill_manual(values = class_cols) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.1))) +
-  labs(x = "Number of counties", y = NULL,
-       title = paste0(str_to_sentence(class_count$classification[1]),
-                      " is the most common class")) +
-  theme_minimal(base_size = 13) +
-  theme(plot.title = element_text(size = 15, face = "bold"))
+ggplot(data = ehsa,
+       aes(x = classification)) +
+  geom_bar()
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-class_count <- count(ehsa, classification, sort = TRUE)
-
-ggplot(class_count,
-       aes(x = n, y = reorder(classification, n), fill = classification)) +
-  geom_col(show.legend = FALSE) +
-  geom_text(aes(label = n), hjust = -0.3, size = 4.5) +
-  scale_fill_manual(values = class_cols) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.1))) +
-  labs(x = "Number of counties", y = NULL,
-       title = paste0(str_to_sentence(class_count$classification[1]),
-                      " is the most common class")) +
-  theme_minimal(base_size = 13) +
-  theme(plot.title = element_text(size = 15, face = "bold"))
+ggplot(data = ehsa,
+       aes(x = classification)) +
+  geom_bar()
 ```
 :::
 
-::: {.callout-caution}
-## Where I differ from the book
-The book uses `geom_bar()` with the classes on the x axis, where the long names overlap. I count the classes first and draw horizontal bars sorted by size, with the count printed on each bar.
-:::
+Sporadic cold spot is the most common class, with `r sum(ehsa$classification == "sporadic coldspot")` counties.
 
 ## Visualising EHSA
 
@@ -332,56 +273,49 @@ hunan_ehsa <- hunan %>%
             by = join_by(County == location))
 ```
 
-`filter()` keeps the counties whose class is significant at 0.05. The map shows them on top of a grey base map of all counties.
+`filter()` keeps the counties whose class is significant at 0.05, and they are drawn on top of a map of all counties.
 
 ::: panel-tabset
 ## The Plot
 
 ```{r}
 #| echo: false
-ehsa_sig <- hunan_ehsa %>%
-  filter(p_value < 0.05) %>%
-  mutate(classification = factor(classification,
-                                 levels = intersect(names(class_cols),
-                                                    classification)))
-
+ehsa_sig <- hunan_ehsa  %>%
+  filter(p_value < 0.05)
 tmap_mode("plot")
 tm_shape(hunan_ehsa) +
-  tm_polygons(fill = "grey95", col = "grey60") +
+  tm_polygons() +
+  tm_borders(fill_alpha = 0.5) +
 tm_shape(ehsa_sig) +
-  tm_polygons(fill = "classification",
-              fill.scale = tm_scale_categorical(
-                values = unname(class_cols[levels(ehsa_sig$classification)])),
-              fill.legend = tm_legend(title = "EHSA class",
-                                      position = tm_pos_out("right", "center")),
-              col = "grey40") +
-  tm_title("Significant emerging hot and cold spots (p < 0.05)",
-           size = 1.5, fontface = "bold")
+  tm_fill("classification",
+          fill.scale = tm_scale_categorical(
+            values = c("#D6604D", "grey80", "#0072B2",
+                       "#CC79A7", "#56B4E9", "#E69F00"))) +
+  tm_borders(fill_alpha = 0.4)
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-ehsa_sig <- hunan_ehsa %>%
-  filter(p_value < 0.05) %>%
-  mutate(classification = factor(classification,
-                                 levels = intersect(names(class_cols),
-                                                    classification)))
-
+ehsa_sig <- hunan_ehsa  %>%
+  filter(p_value < 0.05)
 tmap_mode("plot")
 tm_shape(hunan_ehsa) +
-  tm_polygons(fill = "grey95", col = "grey60") +
+  tm_polygons() +
+  tm_borders(fill_alpha = 0.5) +
 tm_shape(ehsa_sig) +
-  tm_polygons(fill = "classification",
-              fill.scale = tm_scale_categorical(
-                values = unname(class_cols[levels(ehsa_sig$classification)])),
-              fill.legend = tm_legend(title = "EHSA class",
-                                      position = tm_pos_out("right", "center")),
-              col = "grey40") +
-  tm_title("Significant emerging hot and cold spots (p < 0.05)",
-           size = 1.5, fontface = "bold")
+  tm_fill("classification",
+          fill.scale = tm_scale_categorical(
+            values = c("#D6604D", "grey80", "#0072B2",
+                       "#CC79A7", "#56B4E9", "#E69F00"))) +
+  tm_borders(fill_alpha = 0.4)
 ```
+:::
+
+::: {.callout-note}
+## Learning diary
+The classes are coloured in alphabetical order, consecutive hotspot, no pattern detected, oscilating coldspot, oscilating hotspot, sporadic coldspot and sporadic hotspot. I set hot spots in warm colours and cold spots in blues, without green. sfdep spells oscillating with one l.
 :::
 
 `r nrow(ehsa_sig)` of the 88 counties have a significant class.
@@ -395,12 +329,4 @@ ehsa_sig %>%
 
 `r sum(ehsa_sig$classification %in% c("sporadic hotspot", "sporadic coldspot"))` of the `r nrow(ehsa_sig)` significant counties are sporadic hot or cold spots. A sporadic hot spot switches on and off. It is a significant hot spot in some years but not in others, and is never a cold spot. A sporadic cold spot is the same the other way round. So for most of Hunan the pattern of GDP per capita has not settled into lasting hot or cold spots over these 17 years. Only `r sum(ehsa_sig$classification == "consecutive hotspot")` county is a consecutive hot spot, and there are no persistent or intensifying ones.
 
-::: {.callout-important}
-## Check that caught something
-My first render showed `r sum(grepl("oscilating", ehsa_sig$classification))` significant counties as "Missing" on the map. My colour list used "oscillating hotspot", but sfdep spells it "oscilating", with one l. The names did not match, so those classes got no colour. I changed the names in `class_cols` to sfdep's spelling. When colouring categories by name, it is worth checking `unique()` of the column first.
-:::
 
-::: {.callout-caution}
-## Where I differ from the book
-The book draws the significant counties with `tm_fill("classification")` and tmap's default colours, which include green. I use the colour list above so hot spots are always warm and cold spots always blue. The legend sits outside the map, and the factor keeps only the classes that appear, so the legend has no empty entries.
-:::
