@@ -135,7 +135,7 @@ head(mpsz, n = 5)
 
 # Plotting the Geospatial Data
 
-By default `plot()` draws each attribute of an sf object as a small map, up to the first nine. This is the book's demo. I only changed the palette, because the default `sf.colors` ramp runs through green. I pass `hcl.colors()` with "Plasma" instead.
+By default `plot()` draws each attribute of an sf object as a small map, up to the first nine. This is the book's demo. I only changed the palette. The default `sf.colors` ramp runs through green and several other hues, and Prof. Kam's practical guides for using colour (ISSS608 Lesson 2) say a range of values should stay in one hue, pale for low and dark for high. I pass `hcl.colors()` with the single-hue "Blues 3" ramp instead.
 
 ::: panel-tabset
 ## The Plot
@@ -145,7 +145,7 @@ By default `plot()` draws each attribute of an sf object as a small map, up to t
 #| fig-width: 8
 #| fig-height: 6
 par(oma = c(0, 0, 3, 0))
-plot(mpsz, pal = function(n) hcl.colors(n, "Plasma"))
+plot(mpsz, pal = function(n) hcl.colors(n, "Blues 3", rev = TRUE))
 mtext("The first nine attributes of the 2014 subzone layer",
       outer = TRUE, line = 1, cex = 1.3, font = 2)
 ```
@@ -155,7 +155,7 @@ mtext("The first nine attributes of the 2014 subzone layer",
 ```{r}
 #| eval: false
 par(oma = c(0, 0, 3, 0))
-plot(mpsz, pal = function(n) hcl.colors(n, "Plasma"))
+plot(mpsz, pal = function(n) hcl.colors(n, "Blues 3", rev = TRUE))
 mtext("The first nine attributes of the 2014 subzone layer",
       outer = TRUE, line = 1, cex = 1.3, font = 2)
 ```
@@ -187,7 +187,7 @@ plot(st_geometry(mpsz),
 ```
 :::
 
-I can also plot one named attribute. With 55 planning areas, no palette can keep every one distinct. So this map is only good for a quick look at how the subzones group.
+I can also plot one named attribute. With 55 planning areas, no palette can keep every one distinct. Here the colours only separate the areas and carry no order, so I use the soft "Pastel 1" colours, since the colour guides keep bright colours for highlights. This map is only good for a quick look at how the subzones group.
 
 ::: panel-tabset
 ## The Plot
@@ -199,7 +199,7 @@ I can also plot one named attribute. With 55 planning areas, no palette can keep
 par(mar = c(0.5, 0.5, 2, 0.5), cex.main = 1.3)
 plot(mpsz["PLN_AREA_N"],
      key.pos = NULL, border = "grey80", lwd = 0.3,
-     pal = function(n) hcl.colors(n, "Plasma"),
+     pal = function(n) hcl.colors(n, "Pastel 1"),
      main = "Subzones coloured by planning area")
 ```
 
@@ -210,7 +210,7 @@ plot(mpsz["PLN_AREA_N"],
 par(mar = c(0.5, 0.5, 2, 0.5), cex.main = 1.3)
 plot(mpsz["PLN_AREA_N"],
      key.pos = NULL, border = "grey80", lwd = 0.3,
-     pal = function(n) hcl.colors(n, "Plasma"),
+     pal = function(n) hcl.colors(n, "Pastel 1"),
      main = "Subzones coloured by planning area")
 ```
 :::
@@ -1398,6 +1398,11 @@ tm_shape(mpsz_pop2024) +
   tm_style("natural") +
   tm_title("The natural style", size = 1.5, fontface = "bold")
 ```
+:::
+
+::: {.callout-note}
+## Learning diary
+The natural style puts the map on a light blue background with a strong red ramp. Prof. Kam's Lesson 2 on designing graphs lists colourful backgrounds as chart junk and says to use soft colours for most of a graph. So I show this style only as the book's example and keep the plain white style for every other map. The reversed ramp above also breaks one of his colour guides on purpose, since pale should mean low.
 :::
 
 `tm_style()` only styles the map it is added to, so nothing carries over. The book calls `tmap_style()` instead, which changes the style for every later map, and then resets it. I keep the reset with `tmap_style("white")` as a safeguard, and set the legend sizes again in case the style change reset them.

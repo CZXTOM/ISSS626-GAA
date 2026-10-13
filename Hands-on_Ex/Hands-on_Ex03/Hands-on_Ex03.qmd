@@ -46,6 +46,16 @@ pacman::p_load(sf, spatstat, sparr, stpp, tmap, tidyverse)
 I fixed it by installing XQuartz, then logging out and back in so the display variable gets set. After that it loads with a warning about display `:0`, which I can ignore. X11 is only there so `rpanel` can draw sliders, and this exercise never uses them.
 :::
 
+::: {.callout-caution}
+## Where I differ from the book
+spatstat draws pixel images with a ramp that runs from dark blue through magenta to yellow. Prof. Kam's practical guides for using colour (ISSS608 Lesson 2) say a sequential range of values should stay in one hue, pale for low and dark for high. `spatstat.options()` sets one blue ramp as the default for every density map below, including the sparr slices, so the plotting code itself does not change.
+:::
+
+```{r}
+spatstat.options(image.colfun = function(n)
+  colorRampPalette(c("#DEEBF7", "#08306B"))(n))
+```
+
 # Preparing the Data
 
 ## Importing and Preparing Study Area
@@ -756,7 +766,7 @@ par(mfcol = c(1, 1), oma = c(0, 0, 0, 0))
 ## Alternative explored
 Eighty is FIRMS's own cut-off for high confidence, and it is strict. Half the detections are below 67 and only 164 of 897 reach 80. So the bottom row uses under a fifth of the data.
 
-Even with four fifths of the points gone, the hotspots are in the same places and move the same way through the season. Both surfaces are densities that integrate to one over space and time, so the smaller subset does not just come out dimmer. The thing to look for is the bright patches moving, and they do not.
+Even with four fifths of the points gone, the hotspots are in the same places and move the same way through the season. Both surfaces are densities that integrate to one over space and time, so the smaller subset does not just come out dimmer. The thing to look for is the dark patches moving, and they do not.
 
 This is a useful sanity check. A very different pattern in the high confidence subset would have meant the full-data maps were driven by noise. The pattern held, so they are not. The chapter skips the choice of threshold, which is a data quality decision. For the take-home I have to state and justify it.
 :::

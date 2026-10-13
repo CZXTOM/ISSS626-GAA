@@ -1081,9 +1081,9 @@ The book profiles the non-spatial ClustGeo clusters here. I profile the spatiall
 #| echo: false
 #| fig-width: 8
 #| fig-height: 5
-ggplot(shan_sf_Gcluster, aes(x = CLUSTER, y = RADIO_PR, fill = CLUSTER)) +
+ggplot(shan_sf_Gcluster, aes(x = CLUSTER, y = RADIO_PR, fill = CLUSTER == "6")) +
   geom_boxplot(show.legend = FALSE, outlier.size = 2.5) +
-  scale_fill_manual(values = okabe6) +
+  scale_fill_manual(values = c("FALSE" = "grey85", "TRUE" = okabe6[6])) +
   labs(x = "Cluster", y = "Radios per 1,000 households",
        title = "Radio ownership is lowest in cluster 6") +
   theme_minimal(base_size = 13) +
@@ -1094,9 +1094,9 @@ ggplot(shan_sf_Gcluster, aes(x = CLUSTER, y = RADIO_PR, fill = CLUSTER)) +
 
 ```{r}
 #| eval: false
-ggplot(shan_sf_Gcluster, aes(x = CLUSTER, y = RADIO_PR, fill = CLUSTER)) +
+ggplot(shan_sf_Gcluster, aes(x = CLUSTER, y = RADIO_PR, fill = CLUSTER == "6")) +
   geom_boxplot(show.legend = FALSE, outlier.size = 2.5) +
-  scale_fill_manual(values = okabe6) +
+  scale_fill_manual(values = c("FALSE" = "grey85", "TRUE" = okabe6[6])) +
   labs(x = "Cluster", y = "Radios per 1,000 households",
        title = "Radio ownership is lowest in cluster 6") +
   theme_minimal(base_size = 13) +
