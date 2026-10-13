@@ -1,5 +1,5 @@
 ---
-title: "Hands-on Exercise 7"
+title: "Hands-on Exercise 9"
 subtitle: "Calibrating Hedonic Pricing Model for Private Highrise Property with GWR Method"
 author: "ZeXin Chen"
 format:
@@ -9,7 +9,7 @@ format:
     fig-width: 8
     fig-height: 6
     fig-align: center
-date: "October 11, 2026"
+date: "October 12, 2026"
 date-modified: today
 execute:
   echo: true
