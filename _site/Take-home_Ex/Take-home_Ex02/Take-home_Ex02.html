@@ -82,7 +82,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-3c1b04faf9670bb9a1a27b28c1b74490.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-9d96f532d65220ca877c0304385df42f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -163,14 +163,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li>
     <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex06/Hands-on_Ex06.html">
  <span class="dropdown-text">Hands-on Exercise 6</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex07/Hands-on_Ex07.html">
- <span class="dropdown-text">Hands-on Exercise 7</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.html">
- <span class="dropdown-text">Hands-on Exercise 9</span></a>
   </li>  
     </ul>
   </li>
@@ -386,7 +378,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
   <div class="th-stat"><div class="k">Conflict events</div><div class="n">54,000</div><div class="c">battles, explosions and attacks on civilians in 330 townships</div></div>
   <div class="th-stat"><div class="k">Hot spot townships</div><div class="n">40</div><div class="c">hold 31 percent of all events, 31 of them in the Dry Zone</div></div>
   <div class="th-stat"><div class="k">Military air strikes</div><div class="n">23×</div><div class="c">more in 2024 than in 2021, and 2025 passed 2024 within nine months</div></div>
-  <div class="th-stat"><div class="k">Townships with a trend</div><div class="n">151</div><div class="c">with a significant rise or fall in hot spot strength</div></div>
+  <div class="th-stat"><div class="k">Townships with a trend</div><div class="n">155</div><div class="c">with a significant rise or fall in hot spot strength</div></div>
 </div>
 <p><strong>In short.</strong> Myanmar’s war since the 2021 coup is not spread across the country. It is anchored in the central Dry Zone, where one block of Sagaing, Magway and Mandalay townships stayed a hot spot through almost every quarter. Over five years the conflict did not move away from this core. It spread outward from it, into Bago, the road to northern Shan, central Rakhine and the far south, while Yangon and the Ayeyarwady delta grew steadily colder. The military’s air strikes grew about 23-fold and grew fastest in the Dry Zone and on most of the new fronts. Two bonus analyses add what the core methods cannot see. The first finds a quieter but distinct pattern in Yangon and Mandalay city, where battles are rare but bombs and attacks on civilians are common, a pattern that maps of total counts miss. The second groups neighbouring townships into eight conflict regions that went through the same war at the same time, from the early Sagaing core to the late-rising south-east and Rakhine.</p>
 <p>The task is set out in the <a href="https://isss626-ay2026-27aug.netlify.app/take-home_ex02">Take-home Exercise 2 brief</a>. The Executive Summary is <a href="Take-home_Ex02_slides.html">here</a>.</p>
@@ -567,8 +559,8 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 <td>One row per event, with date, type, actors, coordinates and precision codes</td>
 </tr>
 <tr class="even">
-<td>Myanmar Township Boundaries</td>
-<td>Myanmar Information Management Unit (MIMU) GeoNode, geonode.themimu.info</td>
+<td>Myanmar Township Boundaries MIMU v9.4</td>
+<td>Myanmar Information Management Unit (MIMU) GeoNode, geonode.themimu.info, layer <code>mmr_polbnda_adm3_250k_mimu_1</code></td>
 <td>330 townships</td>
 <td>Polygons with MIMU place codes (<code>TS_PCODE</code>) for state, district and township</td>
 </tr>
@@ -717,10 +709,10 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 </tr>
 <tr class="even">
 <td>4</td>
-<td>14 events fall just outside every township</td>
+<td>8 events fall just outside every township</td>
 <td>They sit on the coastline, where the boundary is simplified</td>
 <td>Snap them to the nearest township if within 5 km</td>
-<td>All 14 snapped</td>
+<td>All 8 snapped</td>
 </tr>
 <tr class="odd">
 <td>5</td>
@@ -745,7 +737,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 </tr>
 <tr class="even">
 <td>8</td>
-<td>10 townships have no event, and a third of township-quarters are empty</td>
+<td>8 townships have no event, and a third of township-quarters are empty</td>
 <td>Dropping them would bias every statistic</td>
 <td>Keep them as real zeros and fill every quarter</td>
 <td>A complete space-time cube</td>
@@ -779,7 +771,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 33%">
+<col style="width: 34%">
 <col style="width: 10%">
 <col style="width: 19%">
 <col style="width: 19%">
@@ -796,7 +788,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">myanmar_township_boundaries.shp</td>
+<td style="text-align: left;">mmr_polbnda_adm3_250k_mimu_1.shp</td>
 <td style="text-align: right;">330</td>
 <td style="text-align: right;">18</td>
 <td style="text-align: right;">0</td>
@@ -1098,7 +1090,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 <span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>conflict_sf <span class="ot">&lt;-</span> <span class="fu">filter</span>(conflict_sf, <span class="sc">!</span><span class="fu">is.na</span>(TS_PCODE))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
-<p>14 events fell just outside every township, the furthest 0.6 km from land, and 14 of them were snapped. None had to be dropped. All 54,000 events now have a township.</p>
+<p>8 events fell just outside every township, the furthest 0.5 km from land, and 8 of them were snapped. None had to be dropped. All 54,000 events now have a township.</p>
 <p>The join is then compared with ACLED’s own township names.</p>
 <div class="cell">
 <div class="code-with-filename">
@@ -1125,12 +1117,12 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Hlaingtharya-East</td>
-<td style="text-align: left;">Hlaingtharya</td>
+<td style="text-align: left;">Hlaingtharya (East)</td>
 <td style="text-align: right;">182</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dagon Myothit-South</td>
-<td style="text-align: left;">Dagon Myothit (East)</td>
+<td style="text-align: left;">Dagon Myothit (South)</td>
 <td style="text-align: right;">128</td>
 </tr>
 <tr class="odd">
@@ -1149,15 +1141,15 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 <td style="text-align: right;">39</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Muse</td>
-<td style="text-align: left;">Namhkan</td>
-<td style="text-align: right;">32</td>
+<td style="text-align: left;">Hlaingtharya-West</td>
+<td style="text-align: left;">Hlaingtharya (West)</td>
+<td style="text-align: right;">12</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>569 events (1.1 percent) carry an ACLED name that differs from the township their point falls in. Most are parts of townships that ACLED splits but the boundary file does not, such as Dagon Myothit and Hlaingtharya in Yangon. A name join would have lost these events.</p>
+<p>530 events (1 percent) carry an ACLED name that differs from the township their point falls in. Most are parts of townships that ACLED splits but the boundary file does not, such as Dagon Myothit and Hlaingtharya in Yangon. A name join would have lost these events.</p>
 </section>
 <section id="checking-place-and-date-precision-land-mines-5-and-6" class="level3">
 <h3 class="anchored" data-anchor-id="checking-place-and-date-precision-land-mines-5-and-6">Checking place and date precision (land mines 5 and 6)</h3>
@@ -1233,10 +1225,10 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-   0.00   23.25   79.00  163.64  214.75 1048.00 </code></pre>
+    0.0    24.0    79.0   163.6   214.8  1048.0 </code></pre>
 </div>
 </div>
-<p>10 townships recorded no armed conflict at all, and they stay in as zeros. The counts are very skewed. The median township had 79 events and the mean 164, because a few townships had hundreds. Skew like this affects the choice of neighbours in Task 2.</p>
+<p>8 townships recorded no armed conflict at all, and they stay in as zeros. The counts are very skewed. The median township had 79 events and the mean 164, because a few townships had hundreds. Skew like this affects the choice of neighbours in Task 2.</p>
 </section>
 <section id="building-the-space-time-cube" class="level3">
 <h3 class="anchored" data-anchor-id="building-the-space-time-cube">Building the space-time cube</h3>
@@ -1271,7 +1263,7 @@ main .cell-output-display table.table{margin:.4rem 0 1.6rem}
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<p>The cube has 330 townships by 19 quarters, 6,270 bins, each holding five counts. 32 percent of bins have no event at all.</p>
+<p>The cube has 330 townships by 19 quarters, 6,270 bins, each holding five counts. 31 percent of bins have no event at all.</p>
 </section>
 </section>
 <section id="where-and-when-conflict-happened" class="level2">
@@ -1631,7 +1623,7 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Conflict is strongly clustered. One block of 28 townships in the Dry Zone forms the main High-High cluster, with a smaller one around Dawei in Tanintharyi. Low-Low clusters cover Yangon, the Ayeyarwady delta and eastern Shan. Gi* finds 40 hot spots that hold 31 percent of all events. No township is a lone hot point among quiet neighbours. The 8 outliers are quieter townships on the edge of hot areas, and a median split adds two borderline busy spots in quiet areas, Pathein and Thaketa. Each type of violence shares the Dry Zone core but has its own second cluster. The High-High core holds under a false discovery rate correction and a different neighbour rule. The Low-Low areas shrink and most outliers do not hold, so the outliers are the least certain result.</p>
+<p>Conflict is strongly clustered. One block of 28 townships in the Dry Zone forms the main High-High cluster, with a smaller one around Dawei in Tanintharyi. Low-Low clusters cover Yangon, the Ayeyarwady delta and eastern Shan. Gi* finds 40 hot spots that hold 31 percent of all events. No township is a lone hot point among quiet neighbours. The 8 outliers are quieter townships on the edge of hot areas, and a median split adds one borderline busy spot in a quiet area, Thaketa in Yangon. Each type of violence shares the Dry Zone core but has its own second cluster. The High-High core holds under a false discovery rate correction and a different neighbour rule. The Low-Low areas shrink and most outliers do not hold, so the outliers are the least certain result.</p>
 </div>
 </div>
 <section id="step-1.-choosing-the-neighbours" class="level2">
@@ -1679,7 +1671,7 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 <td style="text-align: left;">Queen contiguity</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">5</td>
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">11</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">4</td>
 </tr>
@@ -1757,7 +1749,7 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 <td style="text-align: left;">Total</td>
 <td style="text-align: right;">0.43</td>
 <td style="text-align: left;">0.001</td>
-<td style="text-align: right;">0.58</td>
+<td style="text-align: right;">0.59</td>
 <td style="text-align: left;">0.001</td>
 <td style="text-align: right;">15.6</td>
 <td style="text-align: left;">&lt;0.001</td>
@@ -1766,14 +1758,14 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 <td style="text-align: left;">Battles</td>
 <td style="text-align: right;">0.40</td>
 <td style="text-align: left;">0.001</td>
-<td style="text-align: right;">0.59</td>
+<td style="text-align: right;">0.60</td>
 <td style="text-align: left;">0.001</td>
 <td style="text-align: right;">14.4</td>
 <td style="text-align: left;">&lt;0.001</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Explosions and remote violence</td>
-<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">0.40</td>
 <td style="text-align: left;">0.001</td>
 <td style="text-align: right;">0.61</td>
 <td style="text-align: left;">0.001</td>
@@ -1786,7 +1778,7 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 <td style="text-align: left;">0.001</td>
 <td style="text-align: right;">0.60</td>
 <td style="text-align: left;">0.001</td>
-<td style="text-align: right;">16.0</td>
+<td style="text-align: right;">15.9</td>
 <td style="text-align: left;">&lt;0.001</td>
 </tr>
 </tbody>
@@ -1794,7 +1786,7 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 </div>
 </div>
 <div class="read">
-<p><strong>All four variables are clearly clustered.</strong> Moran’s I is between 0.40 and 0.43, and none of the 999 random shuffles came close, so the null hypothesis of random placement is rejected for every variable (one-sided test for clustering as in chapter 9 of the course text, p = 0.001, the smallest value 999 shuffles can give). Geary’s c, between 0.58 and 0.61, is well below 1, so neighbouring townships are also alike when compared directly with each other. The two measures agree, as the lecture expects, since a high Moran’s I goes with a low Geary’s c.&nbsp;Global G is strongly positive too, with z-scores of 14 to 16, which says the clustering is driven by high counts sitting together. The four results are almost the same size, so no single type drives the pattern.</p>
+<p><strong>All four variables are clearly clustered.</strong> Moran’s I is between 0.40 and 0.43, and none of the 999 random shuffles came close, so the null hypothesis of random placement is rejected for every variable (one-sided test for clustering as in chapter 9 of the course text, p = 0.001, the smallest value 999 shuffles can give). Geary’s c, between 0.59 and 0.61, is well below 1, so neighbouring townships are also alike when compared directly with each other. The two measures agree, as the lecture expects, since a high Moran’s I goes with a low Geary’s c.&nbsp;Global G is strongly positive too, with z-scores of 14 to 16, which says the clustering is driven by high counts sitting together. The four results are almost the same size, so no single type drives the pattern.</p>
 </div>
 <section id="how-far-does-the-clustering-reach" class="level3">
 <h3 class="anchored" data-anchor-id="how-far-does-the-clustering-reach">How far does the clustering reach?</h3>
@@ -1835,18 +1827,18 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 <tr class="even">
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">101</td>
-<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.32</td>
 <td style="text-align: left;">&lt;0.001</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">152</td>
+<td style="text-align: right;">153</td>
 <td style="text-align: right;">0.21</td>
 <td style="text-align: left;">&lt;0.001</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">4</td>
-<td style="text-align: right;">205</td>
+<td style="text-align: right;">206</td>
 <td style="text-align: right;">0.09</td>
 <td style="text-align: left;">&lt;0.001</td>
 </tr>
@@ -1854,20 +1846,20 @@ Figure&nbsp;5. Average armed conflict events per quarter by township and year. G
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">259</td>
 <td style="text-align: right;">-0.02</td>
-<td style="text-align: left;">0.2618</td>
+<td style="text-align: left;">0.28</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">6</td>
-<td style="text-align: right;">313</td>
-<td style="text-align: right;">-0.05</td>
-<td style="text-align: left;">0.0012</td>
+<td style="text-align: right;">315</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: left;">&lt;0.001</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="read">
-<p><strong>Clustering reaches about 200 km and then fades.</strong> Moran’s I is strongest among the nearest townships (0.43) and weakens with each ring, staying significant up to order 4, about 200 km away. By order 5 it is close to zero, and at order 6 it turns slightly negative, the quiet country on the far side of the clusters. The 8 nearest neighbours, a median of 51 km away, sit well inside this range, so the local statistics compare each township with places that genuinely share its level of conflict. A much wider neighbourhood would blur separate clusters together. The next step finds where these clusters are.</p>
+<p><strong>Clustering reaches about 210 km and then fades.</strong> Moran’s I is strongest among the nearest townships (0.43) and weakens with each ring, staying significant up to order 4, about 210 km away. By order 5 it is close to zero, and at order 6 it turns slightly negative, the quiet country on the far side of the clusters. The 8 nearest neighbours, a median of 51 km away, sit well inside this range, so the local statistics compare each township with places that genuinely share its level of conflict. A much wider neighbourhood would blur separate clusters together. The next step finds where these clusters are.</p>
 </div>
 </section>
 </section>
@@ -1923,11 +1915,11 @@ Total events, row-standardised weights, 999 permutations, p &lt; 0.05 from the p
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">High-High</td>
-<td style="text-align: right;">34</td>
+<td style="text-align: right;">35</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Low-Low</td>
-<td style="text-align: right;">78</td>
+<td style="text-align: right;">72</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">High-Low</td>
@@ -1939,7 +1931,7 @@ Total events, row-standardised weights, 999 permutations, p &lt; 0.05 from the p
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Not significant</td>
-<td style="text-align: right;">210</td>
+<td style="text-align: right;">215</td>
 </tr>
 </tbody>
 </table>
@@ -1984,7 +1976,7 @@ Figure&nbsp;6. Local Moran’s I of total armed conflict events, significant tow
 </div>
 </div>
 <div class="read">
-<p><strong>The Dry Zone is one solid cluster, and there are no lone hot points.</strong> For 120 townships the null hypothesis of random placement is rejected at p &lt; 0.05. 34 are High-High, busy townships with busy neighbours, and 28 of them form one block across Sagaing, Magway and Mandalay, around Monywa, Shwebo, Myaing and Pakokku. A smaller High-High group of 4 sits around Dawei in Tanintharyi. 78 townships are Low-Low, in Yangon (26), the Ayeyarwady delta (18), Shan (East) (10), southern Shan and around Nay Pyi Taw. No township is a High-Low outlier, a lone hot point among quiet neighbours. The 8 Low-High outliers are quieter townships on the edge of hot areas, such as Nyaung-U and Seikphyu beside the Dry Zone block. They may be safer pockets, or places where events go unreported, but Step 6 shows they are the least stable result. High counts alone do not make a cluster. Kawkareik in Kayin, the second busiest township, is not significant, because six of its eight nearest neighbours are quiet Mon townships.</p>
+<p><strong>The Dry Zone is one solid cluster, and there are no lone hot points.</strong> For 115 townships the null hypothesis of random placement is rejected at p &lt; 0.05. 35 are High-High, busy townships with busy neighbours, and 28 of them form one block across Sagaing, Magway and Mandalay, around Monywa, Shwebo, Myaing and Pakokku. A smaller High-High group of 4 sits around Dawei in Tanintharyi. Hakha in Chin, Shwegyin in Bago (East) and Kyaukme in northern Shan are single High-High townships. 72 townships are Low-Low, in Yangon (23), the Ayeyarwady delta (17), Shan (East) (10), southern Shan and around Nay Pyi Taw. No township is a High-Low outlier, a lone hot point among quiet neighbours. The 8 Low-High outliers are quieter townships on the edge of hot areas, such as Nyaung-U and Seikphyu beside the Dry Zone block. They may be safer pockets, or places where events go unreported, but Step 6 shows they are the least stable result. High counts alone do not make a cluster. Kawkareik in Kayin, the second busiest township, is not significant, because six of its eight nearest neighbours are quiet Mon townships.</p>
 </div>
 <section id="the-moran-scatterplot-behind-the-map" class="level3">
 <h3 class="anchored" data-anchor-id="the-moran-scatterplot-behind-the-map">The Moran scatterplot behind the map</h3>
@@ -2100,15 +2092,15 @@ Total events, 8 nearest neighbours plus the township itself, row-standardised we
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Cold spot, p &lt; 0.05</td>
-<td style="text-align: right;">27</td>
+<td style="text-align: right;">26</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Cold spot, p &lt; 0.01</td>
-<td style="text-align: right;">51</td>
+<td style="text-align: right;">49</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Not significant</td>
-<td style="text-align: right;">212</td>
+<td style="text-align: right;">215</td>
 </tr>
 </tbody>
 </table>
@@ -2152,7 +2144,7 @@ Figure&nbsp;8. Getis-Ord Gi* of total armed conflict events, significant townshi
 </div>
 </div>
 <div class="read">
-<p><strong>A few hot neighbourhoods hold nearly a third of all events.</strong> 40 townships are hot spots, 26 of them at p &lt; 0.01, and together they hold 31 percent of all events. 31 of them are in the Dry Zone, and the Sagaing part alone holds 16 percent of all events. The rest are small groups around Dawei in Tanintharyi (5), Hakha in Chin (2), and single townships in Kayin and northern Shan. The two statistics agree closely, since the hot spots are nearly the same townships as the High-High cluster. 78 townships are cold spots, mostly Yangon (26), the Ayeyarwady delta (18) and Shan (East) and (South) (17). Busy townships elsewhere, such as Kawkareik, Hpakant and Kyaukkyi, are not hot spots, because their neighbours are quieter. They are local flashpoints rather than parts of a wider hot zone. Labelling by the hands-on <code>cluster</code> column instead would have called 6 of these significant townships the wrong kind of spot, all of them hot neighbourhoods around a quieter township.</p>
+<p><strong>A few hot neighbourhoods hold nearly a third of all events.</strong> 40 townships are hot spots, 26 of them at p &lt; 0.01, and together they hold 31 percent of all events. 31 of them are in the Dry Zone, and the Sagaing part alone holds 16 percent of all events. The rest are small groups around Dawei in Tanintharyi (5), Hakha in Chin (2), and single townships in Kayin and northern Shan. The two statistics agree closely, since the hot spots are nearly the same townships as the High-High cluster. 75 townships are cold spots, mostly Yangon (23), the Ayeyarwady delta (18) and Shan (East) and (South) (17). Busy townships elsewhere, such as Kawkareik, Hpakant and Kyaukkyi, are not hot spots, because their neighbours are quieter. They are local flashpoints rather than parts of a wider hot zone. Labelling by the hands-on <code>cluster</code> column instead would have called 6 of these significant townships the wrong kind of spot, all of them hot neighbourhoods around a quieter township.</p>
 </div>
 </section>
 <section id="step-5.-clusters-by-type-of-conflict" class="level2">
@@ -2220,7 +2212,7 @@ Figure&nbsp;8. Getis-Ord Gi* of total armed conflict events, significant townshi
 <td style="text-align: right;">11</td>
 <td style="text-align: right;">186</td>
 <td style="text-align: right;">50</td>
-<td style="text-align: right;">90</td>
+<td style="text-align: right;">89</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Explosions and remote violence</td>
@@ -2229,18 +2221,18 @@ Figure&nbsp;8. Getis-Ord Gi* of total armed conflict events, significant townshi
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">7</td>
 <td style="text-align: right;">218</td>
-<td style="text-align: right;">40</td>
-<td style="text-align: right;">75</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">72</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Violence against civilians</td>
-<td style="text-align: right;">44</td>
-<td style="text-align: right;">63</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">62</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">6</td>
-<td style="text-align: right;">216</td>
-<td style="text-align: right;">51</td>
-<td style="text-align: right;">65</td>
+<td style="text-align: right;">218</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">66</td>
 </tr>
 </tbody>
 </table>
@@ -2293,7 +2285,7 @@ Figure&nbsp;9. Local Moran’s I (top) and Gi* (bottom) by type of conflict, sig
 </div>
 </div>
 <div class="read">
-<p><strong>The core is the same for every type, but each has its own second cluster.</strong> All three types form a High-High cluster and a block of Gi* hot spots in the Dry Zone. Battles have the widest spread, with 50 hot spots including groups around Myitkyina and Mohnyin in Kachin, in Kayah, and down Tanintharyi, where ethnic armed groups fight the military for territory. Explosions and remote violence have the fewest hot spots, 40, with a second group where Bago (East) meets Kayin, around Shwegyin, Nyaunglebin and Hpa-An. Violence against civilians has 51 hot spots, almost all in the Dry Zone and Tanintharyi, and the only High-Low outlier under the mean split, Pathein in the Ayeyarwady delta, with more attacks on civilians than its quiet neighbours. The cold areas are the same for all three. Totals find the core well, but the second clusters differ by type, which is why Bonus 1 looks at the mix of types directly.</p>
+<p><strong>The core is the same for every type, but each has its own second cluster.</strong> All three types form a High-High cluster and a block of Gi* hot spots in the Dry Zone. Battles have the widest spread, with 50 hot spots including groups around Myitkyina and Mohnyin in Kachin, in Kayah, and down Tanintharyi, where ethnic armed groups fight the military for territory. Explosions and remote violence have the fewest hot spots, 39, with a second group where Bago (East) meets Kayin, around Shwegyin, Nyaunglebin and Hpa-An. Violence against civilians has 50 hot spots, almost all in the Dry Zone and Tanintharyi, and the only High-Low outlier under the mean split, Pathein in the Ayeyarwady delta, with more attacks on civilians than its quiet neighbours. The cold areas are the same for all three. Totals find the core well, but the second clusters differ by type, which is why Bonus 1 looks at the mix of types directly.</p>
 </div>
 </section>
 <section id="step-6.-how-much-to-trust-these-maps" class="level2">
@@ -2332,13 +2324,13 @@ Figure&nbsp;9. Local Moran’s I (top) and Gi* (bottom) by type of conflict, sig
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Local Moran’s I, total</td>
-<td style="text-align: right;">120</td>
-<td style="text-align: right;">87</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">85</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Gi*, total</td>
-<td style="text-align: right;">118</td>
-<td style="text-align: right;">82</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">85</td>
 </tr>
 </tbody>
 </table>
@@ -2383,24 +2375,24 @@ Figure&nbsp;9. Local Moran’s I (top) and Gi* (bottom) by type of conflict, sig
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">High-High</td>
-<td style="text-align: right;">34</td>
-<td style="text-align: right;">34</td>
-<td style="text-align: right;">28</td>
-<td style="text-align: right;">38</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">39</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Low-Low</td>
-<td style="text-align: right;">78</td>
-<td style="text-align: right;">51</td>
-<td style="text-align: right;">48</td>
-<td style="text-align: right;">76</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">46</td>
+<td style="text-align: right;">71</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">High-Low</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Low-High</td>
@@ -2429,17 +2421,12 @@ Figure&nbsp;9. Local Moran’s I (top) and Gi* (bottom) by type of conflict, sig
 <td style="text-align: left;">Yangon</td>
 <td style="text-align: right;">96</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;">Pathein</td>
-<td style="text-align: left;">Ayeyarwady</td>
-<td style="text-align: right;">118</td>
-</tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="read">
-<p><strong>The main pattern is robust, and the outliers depend on the cut-off.</strong> After the FDR correction, 87 of 120 local Moran’s I results and 82 of 118 Gi* results remain, so most of the pattern is not a by-product of running many tests. Under queen contiguity, 28 of the 34 High-High townships keep their class, and no township swaps from high to low or the reverse. The Dry Zone cluster is the same under both rules. The rest is less stable. Low-Low townships fall from 78 to 51, and only 1 of the 8 Low-High outliers keep their class. An outlier is defined by who its neighbours are, so it is the result most sensitive to that choice. The median split matters mostly for outliers. The mean is pulled up by a few very busy townships, so the mean split calls Pathein and Thaketa “low”, while against the median they are a little busier than typical and become High-Low outliers. Because their label flips with the cut-off, they are borderline outliers, busier spots inside quiet areas rather than clear flashpoints.</p>
+<p><strong>The main pattern is robust, and the outliers depend on the cut-off.</strong> After the FDR correction, 85 of 115 local Moran’s I results and 85 of 115 Gi* results remain, so most of the pattern is not a by-product of running many tests. Under queen contiguity, 29 of the 35 High-High townships keep their class, and no township swaps from high to low or the reverse. The Dry Zone cluster is the same under both rules. The rest is less stable. Low-Low townships fall from 72 to 50, and only 1 of the 8 Low-High outliers keep their class. An outlier is defined by who its neighbours are, so it is the result most sensitive to that choice. The median split matters mostly for outliers. The mean is pulled up by a few very busy townships, so the mean split calls Thaketa “low”, while against the median it is a little busier than typical and becomes a High-Low outlier. Because its label flips with the cut-off, it is a borderline outlier, a busier spot inside a quiet area rather than a clear flashpoint.</p>
 </div>
 </section>
 </section>
@@ -2456,7 +2443,7 @@ Figure&nbsp;9. Local Moran’s I (top) and Gi* (bottom) by type of conflict, sig
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The hot core did not move. It spread. The Sagaing core was a hot spot in most quarters with no steady trend, so it drops out of the trend map. The new and growing hot spots ring it instead. Five townships became hot late and stayed hot, in the hills of Bago (East) and on the road from Mandalay to northern Shan. Thirty more turned from cold to hot, across Tanintharyi, Mon, central Rakhine, Bago (East) and the southern Dry Zone. Yangon cooled steadily, and northern Shan cooled sharply after the early 2024 ceasefire. Each type of violence spread in its own direction, and the military’s air strikes grew most in the Dry Zone and on the new fronts.</p>
+<p>The hot core did not move. It spread. The Sagaing core was a hot spot in most quarters with no steady trend, so it drops out of the trend map. The new and growing hot spots ring it instead. Five townships became hot late and stayed hot, in the hills of Bago (East) and on the road from Mandalay to northern Shan. Twenty-nine more turned from cold to hot, across Tanintharyi, Mon, central Rakhine, Bago (East) and the southern Dry Zone. Yangon cooled steadily, and northern Shan cooled sharply after the early 2024 ceasefire. Each type of violence spread in its own direction, and the military’s air strikes grew most in the Dry Zone and on the new fronts.</p>
 </div>
 </div>
 <section id="step-1.-neighbours-and-weights-in-the-cube" class="level2">
@@ -2522,8 +2509,8 @@ Figure&nbsp;9. Local Moran’s I (top) and Gi* (bottom) by type of conflict, sig
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Falling</td>
-<td style="text-align: right;">90</td>
-<td style="text-align: left;">Yangon (40), Mandalay (10), Sagaing (10), Shan (North) (7)</td>
+<td style="text-align: right;">91</td>
+<td style="text-align: left;">Yangon (41), Mandalay (10), Sagaing (10), Shan (North) (7)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rising</td>
@@ -2577,7 +2564,7 @@ Figure&nbsp;10. Gi* of total events by quarter for the township with the stronge
 </div>
 </div>
 <div class="read">
-<p><strong>A trend is about direction, not level.</strong> Okpho in Bago (West) has the strongest rise of all 330 townships. Its Gi* started below −1.5, a cold neighbourhood, and climbed in most quarters until it crossed the hot spot line in early 2025. Thanlyin, across the river from Yangon city, shows the opposite, a slow slide from slightly warm to near −2. Neither was a strong hot or cold spot for most of the period, yet both trends are clear, with p well below 0.001. Across the country, 49 townships have a significant rise and 90 a significant fall. The largest group of rising townships is in Bago (West) and Bago (East), where Okpho sits, while Yangon leads the falls. Gi* is worked out against the national pattern each quarter, so a falling Gi* means a neighbourhood holds a smaller share of the conflict, not that it is at peace.</p>
+<p><strong>A trend is about direction, not level.</strong> Okpho in Bago (West) has the strongest rise of all 330 townships. Its Gi* started below −1.5, a cold neighbourhood, and climbed in most quarters until it crossed the hot spot line in early 2025. Thanlyin, across the river from Yangon city, shows the opposite, a slow slide from slightly warm to near −2. Neither was a strong hot or cold spot for most of the period, yet both trends are clear, with p well below 0.001. Across the country, 49 townships have a significant rise and 91 a significant fall. The largest group of rising townships is in Bago (West) and Bago (East), where Okpho sits, while Yangon leads the falls. Gi* is worked out against the national pattern each quarter, so a falling Gi* means a neighbourhood holds a smaller share of the conflict, not that it is at peace.</p>
 </div>
 </section>
 <section id="step-3.-emerging-hot-spot-classes" class="level2">
@@ -2750,77 +2737,71 @@ Figure&nbsp;10. Gi* of total events by quarter for the township with the stronge
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">All armed conflict</td>
-<td style="text-align: left;">Intensifying hotspot</td>
-<td style="text-align: left;">Oscillating hotspot</td>
-<td style="text-align: right;">1</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">All armed conflict</td>
 <td style="text-align: left;">Sporadic coldspot</td>
 <td style="text-align: left;">No pattern detected</td>
-<td style="text-align: right;">20</td>
+<td style="text-align: right;">18</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">All armed conflict</td>
 <td style="text-align: left;">Sporadic hotspot</td>
 <td style="text-align: left;">No pattern detected</td>
 <td style="text-align: right;">17</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Battles</td>
 <td style="text-align: left;">Intensifying hotspot</td>
 <td style="text-align: left;">Oscillating hotspot</td>
 <td style="text-align: right;">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Battles</td>
 <td style="text-align: left;">Sporadic coldspot</td>
 <td style="text-align: left;">No pattern detected</td>
-<td style="text-align: right;">26</td>
+<td style="text-align: right;">25</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Battles</td>
 <td style="text-align: left;">Sporadic hotspot</td>
 <td style="text-align: left;">No pattern detected</td>
 <td style="text-align: right;">17</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Explosions and remote violence</td>
 <td style="text-align: left;">Intensifying hotspot</td>
 <td style="text-align: left;">Diminishing coldspot</td>
-<td style="text-align: right;">3</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Explosions and remote violence</td>
-<td style="text-align: left;">Sporadic coldspot</td>
-<td style="text-align: left;">No pattern detected</td>
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Explosions and remote violence</td>
+<td style="text-align: left;">Sporadic coldspot</td>
+<td style="text-align: left;">No pattern detected</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Explosions and remote violence</td>
+<td style="text-align: left;">Sporadic hotspot</td>
+<td style="text-align: left;">No pattern detected</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Military air strikes</td>
+<td style="text-align: left;">Sporadic coldspot</td>
+<td style="text-align: left;">No pattern detected</td>
+<td style="text-align: right;">57</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Military air strikes</td>
 <td style="text-align: left;">Sporadic hotspot</td>
 <td style="text-align: left;">No pattern detected</td>
 <td style="text-align: right;">1</td>
 </tr>
-<tr class="even">
-<td style="text-align: left;">Military air strikes</td>
-<td style="text-align: left;">Sporadic coldspot</td>
-<td style="text-align: left;">No pattern detected</td>
-<td style="text-align: right;">61</td>
-</tr>
 <tr class="odd">
-<td style="text-align: left;">Military air strikes</td>
-<td style="text-align: left;">Sporadic hotspot</td>
-<td style="text-align: left;">No pattern detected</td>
-<td style="text-align: right;">1</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;">Violence against civilians</td>
 <td style="text-align: left;">Sporadic coldspot</td>
 <td style="text-align: left;">No pattern detected</td>
 <td style="text-align: right;">47</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Violence against civilians</td>
 <td style="text-align: left;">Sporadic hotspot</td>
 <td style="text-align: left;">No pattern detected</td>
@@ -2830,7 +2811,7 @@ Figure&nbsp;10. Gi* of total events by quarter for the township with the stronge
 </table>
 </div>
 </div>
-<p>Most corrections move “sporadic” townships that were not significant in the final quarter into “No pattern detected”. The table also catches three townships in Shan that sfdep called intensifying hot spots for explosions and remote violence. They were cold spots in almost every quarter and slowly warming, which the lecture calls diminishing cold spots.</p>
+<p>Most corrections move “sporadic” townships that were not significant in the final quarter into “No pattern detected”. The table also catches two townships in Shan that sfdep called intensifying hot spots for explosions and remote violence. They were cold spots in almost every quarter and slowly warming, which the lecture calls diminishing cold spots.</p>
 </section>
 </section>
 <section id="step-4.-where-hot-spots-are-emerging" class="level2">
@@ -2880,7 +2861,7 @@ Figure&nbsp;11. Number of townships in each emerging hot spot pattern, townships
 </div>
 </div>
 <div class="read">
-<p><strong>Most change is on and off rather than steady.</strong> Of the 151 townships with a significant trend in all conflict, 56 fit none of the named patterns. Most were not significant in the final quarter, which nearly every named pattern requires. 37 of them were moved here from sfdep’s sporadic class by the lecture-rule check in Step 3. Among the rest, oscillating hot spots (30) and oscillating cold spots (25) lead, townships that flipped from cold to hot or from hot to cold. Only 5 townships turned hot and stayed hot, and none is a new, intensifying or persistent hot spot. A war of shifting fronts produces exactly this, because Gi* compares each township with the rest of the country in the same quarter, and the rest of the country keeps changing. The other variables look similar, with one difference. For explosions (51) and air strikes (61), sporadic cold spots are a large group, townships that were cold now and then and never hot. Across all five variables there is a single new hot spot, Hpakant for explosions. The maps below show where each class sits.</p>
+<p><strong>Most change is on and off rather than steady.</strong> Of the 155 townships with a significant trend in all conflict, 56 fit none of the named patterns. Most were not significant in the final quarter, which nearly every named pattern requires. 35 of them were moved here from sfdep’s sporadic class by the lecture-rule check in Step 3. Among the rest, oscillating hot spots (29) and oscillating cold spots (25) lead, townships that flipped from cold to hot or from hot to cold. Only 5 townships turned hot and stayed hot, and none is a new, intensifying or persistent hot spot. A war of shifting fronts produces exactly this, because Gi* compares each township with the rest of the country in the same quarter, and the rest of the country keeps changing. The other variables look similar, with one difference. For explosions (47) and air strikes (64), sporadic cold spots are a large group, townships that were cold now and then and never hot. Across all five variables there is a single new hot spot, Hpakant for explosions. The maps below show where each class sits.</p>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-12-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-1" role="tab" aria-controls="tabset-12-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-12-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-12-2" role="tab" aria-controls="tabset-12-2" aria-selected="false" href="">The Code</a></li></ul>
@@ -2928,7 +2909,7 @@ Figure&nbsp;12. Left, emerging hot spot patterns of all armed conflict, township
 </div>
 </div>
 <div class="read">
-<p><strong>The core stayed hot, and the conflict spread around it.</strong> 151 of 330 townships have a significant trend, a few more than the 139 in Step 2, because EHSA’s Gi* also counts each neighbour’s previous quarter. The right map shows why the Sagaing core is mostly blank on the left. Its High-High townships were significant hot spots in 10 to 18 of the 19 quarters. Their heat rose to a peak in 2023 and then eased, so the series has no single direction and no significant trend. The growing hot spots form a ring around that core. 5 consecutive hot spots, which turned hot late and stayed hot, sit in the hills of Bago (East) and on the road from Mandalay to northern Shan. 30 oscillating hot spots, cold earlier and hot by the end, run through Tanintharyi, Mon, central Rakhine, Bago (East) and the south of the Dry Zone. On the cold side, Yangon has 39 of its 45 townships in a cold pattern. Six townships on the northern Shan border were the hottest anywhere in late 2023 and turned cold after it. The readings below take each pattern in turn.</p>
+<p><strong>The core stayed hot, and the conflict spread around it.</strong> 155 of 330 townships have a significant trend, a few more than the 140 in Step 2, because EHSA’s Gi* also counts each neighbour’s previous quarter. The right map shows why the Sagaing core is mostly blank on the left. Its High-High townships were significant hot spots in 10 to 18 of the 19 quarters. Their heat rose to a peak in 2023 and then eased, so the series has no single direction and no significant trend. The growing hot spots form a ring around that core. 5 consecutive hot spots, which turned hot late and stayed hot, sit in the hills of Bago (East) and on the road from Mandalay to northern Shan. 29 oscillating hot spots, cold earlier and hot by the end, run through Tanintharyi, Mon, central Rakhine, Bago (East) and the south of the Dry Zone. On the cold side, Yangon has 42 of its 45 townships in a cold pattern. Six townships on the northern Shan border were the hottest anywhere in late 2023 and turned cold after it. The readings below take each pattern in turn.</p>
 </div>
 <section id="what-each-pattern-looks-like-over-time" class="level3">
 <h3 class="anchored" data-anchor-id="what-each-pattern-looks-like-over-time">What each pattern looks like over time</h3>
@@ -2984,11 +2965,11 @@ Figure&nbsp;13. Quarterly EHSA Gi* of all armed conflict for townships in each s
 <section id="reading-each-pattern" class="level3">
 <h3 class="anchored" data-anchor-id="reading-each-pattern">Reading each pattern</h3>
 <p><strong>Consecutive hot spots, 5 townships.</strong> These are the clearest new hot spots. Shwegyin, Kyaukkyi, Mogoke, Kyaukme, Nawnghkio were not hot in 2021 but became hot and stayed hot to the end, with their Gi* rising from about zero to between 3 and 7. They mark two new fronts. One is the hills of Bago (East) next to Kayin, around Kyaukkyi and Shwegyin. The other is the road from Mandalay to northern Shan, through Mogoke, Nawnghkio and Kyaukme, where fighting moved in the second phase of Operation 1027 in 2024. Both lead from the edge of the country towards its centre, so they are where the conflict is still advancing.</p>
-<p><strong>Oscillating hot spots, 30 townships.</strong> This is the largest hot pattern. Each township was a significant cold spot at least once, usually in 2021, and is hot in the final quarter. They fall in four groups. 9 cover most of Tanintharyi, from Dawei to Kawthoung. 4 are in central Rakhine, around Kyaukpyu and Ramree, which were cold in 2021 and turned hot in 2024 as fighting moved south through the state. 4 are in Mon and 4 in Bago (East). The rest are in the Dry Zone, mostly in its south around Myingyan, Taungtha, Chauk and Salin, plus Singu on the road to northern Shan. These are the places where conflict arrived during the study period.</p>
-<p><strong>Sporadic hot spots, 6 townships.</strong> These are hot in the final quarter and were hot on and off before, but never cold. 4 of them are in Kayin, including Kawkareik, Myawaddy and Hpa-An on the Thai border. They were strongest in 2025, so the south-east border is warming again.</p>
+<p><strong>Oscillating hot spots, 29 townships.</strong> This is the largest hot pattern. Each township was a significant cold spot at least once, usually in 2021, and is hot in the final quarter. They fall in four groups. 9 cover most of Tanintharyi, from Dawei to Kawthoung. 4 are in central Rakhine, around Kyaukpyu and Ramree, which were cold in 2021 and turned hot in 2024 as fighting moved south through the state. 3 are in Mon and 4 in Bago (East). The rest are in the Dry Zone, mostly in its south around Myingyan, Taungtha, Chauk and Salin, plus Singu on the road to northern Shan. These are the places where conflict arrived during the study period.</p>
+<p><strong>Sporadic hot spots, 7 townships.</strong> These are hot in the final quarter and were hot on and off before, but never cold. 4 of them are in Kayin, including Kawkareik, Myawaddy and Hpa-An on the Thai border. They were strongest in 2025, so the south-east border is warming again.</p>
 <p><strong>Oscillating cold spots, 25 townships.</strong> These were hot at least once and are cold now. 6 are on the Chinese border in northern Shan, including Laukkaing, Hseni and Kunlong. They were the hottest places in Myanmar in late 2023, the spike in <a href="#fig-ehsa-series" class="quarto-xref">Figure&nbsp;13</a>, when Operation 1027 began, and turned cold after the ceasefire brokered by China in early 2024. The other 19 are in Yangon and around Mandalay city, slightly warm during the urban resistance of 2021 and cold since.</p>
-<p><strong>Intensifying, consecutive and sporadic cold spots, 29 townships.</strong> The 9 intensifying cold spots are all in Yangon, including downtown Pazundaung, Botahtaung and Lanmadaw, and they grow colder each year. Thanlyin is a consecutive cold spot. The sporadic cold spots are mostly in Yangon and the delta. Together they show the conflict draining out of Myanmar’s largest city.</p>
-<p><strong>No pattern detected, 56 townships.</strong> These have a significant trend but fit none of the patterns, usually because they were not significant in the final quarter. They split into two groups. 29 are falling, led by Chin, Kachin, Mandalay and the north-west of Sagaing, where conflict peaked in 2021 or 2022 and faded. 27 are rising, 13 of them in Bago (West), including Okpho from <a href="#fig-mk" class="quarto-xref">Figure&nbsp;10</a>. They are warming from cold but are not yet hot spots, so they are the townships to watch next.</p>
+<p><strong>Intensifying, consecutive and sporadic cold spots, 33 townships.</strong> The 11 intensifying cold spots are all in Yangon, including downtown Pazundaung, Botahtaung and Kyauktada, and they grow colder each year. Thingangyun and Hlaing are consecutive cold spots. The sporadic cold spots are mostly in Yangon and the delta. Together they show the conflict draining out of Myanmar’s largest city.</p>
+<p><strong>No pattern detected, 56 townships.</strong> These have a significant trend but fit none of the patterns, usually because they were not significant in the final quarter. They split into two groups. 27 are falling, led by Chin, Kachin, Mandalay and the north-west of Sagaing, where conflict peaked in 2021 or 2022 and faded. 29 are rising, 13 of them in Bago (West), including Okpho from <a href="#fig-mk" class="quarto-xref">Figure&nbsp;10</a>. They are warming from cold but are not yet hot spots, so they are the townships to watch next.</p>
 </section>
 </section>
 <section id="step-5.-how-each-type-of-violence-is-moving" class="level2">
@@ -3030,9 +3011,9 @@ Figure&nbsp;14. Emerging hot spot patterns by type of conflict, townships with a
 </div>
 </div>
 </div>
-<p><strong>Battles, 101 townships with a significant trend.</strong> Ground fighting moved to the coast and the far south. 22 townships turned from cold to hot, led by Tanintharyi (6) and central Rakhine (6). 8 northern Shan townships were hot during Operation 1027 and cold after the 2024 ceasefire. Only about half of the battle trends survive the false discovery rate check in Step 7, so this map is a guide.</p>
-<p><strong>Explosions and remote violence, 131 townships.</strong> Explosions spread into the hills between the Dry Zone and Kayin, and down the south. 19 townships turned from cold to hot, led by Tanintharyi (7) and Bago (East) (6). Hpakant is a new hot spot. Yangon and the delta grew colder as the bombings of 2021 and 2022 faded.</p>
-<p><strong>Violence against civilians, 142 townships.</strong> This type moved most clearly. 7 of its 14 oscillating hot spots are in Bago (West), including Letpadan and Okpho, an area of little fighting. The far north-west, around Kale and Tedim, turned from hot to cold. Attacks on civilians are moving south towards the lowlands.</p>
+<p><strong>Battles, 101 townships with a significant trend.</strong> Ground fighting moved to the coast and the far south. 22 townships turned from cold to hot, led by Tanintharyi (6) and central Rakhine (6). 9 northern Shan townships were hot during Operation 1027 and cold after the 2024 ceasefire. Only about half of the battle trends survive the false discovery rate check in Step 7, so this map is a guide.</p>
+<p><strong>Explosions and remote violence, 133 townships.</strong> Explosions spread into the hills between the Dry Zone and Kayin, and down the south. 17 townships turned from cold to hot, led by Tanintharyi (7) and Bago (East) (5). Hpakant is a new hot spot. Yangon and the delta grew colder as the bombings of 2021 and 2022 faded.</p>
+<p><strong>Violence against civilians, 147 townships.</strong> This type moved most clearly. 7 of its 13 oscillating hot spots are in Bago (West), including Letpadan and Okpho, an area of little fighting. The far north-west, around Kale and Tedim, turned from hot to cold. Attacks on civilians are moving south towards the lowlands.</p>
 </section>
 <section id="step-6.-the-militarys-air-strikes" class="level2">
 <h2 class="anchored" data-anchor-id="step-6.-the-militarys-air-strikes">Step 6. The military’s air strikes</h2>
@@ -3071,7 +3052,7 @@ Figure&nbsp;15. Emerging hot spot patterns of the military’s air strikes, town
 </div>
 </div>
 <div class="read">
-<p><strong>The air campaign grew most in the ground war’s core and on most of its new fronts.</strong> 178 townships have a significant trend in military air strikes. 29 are oscillating hot spots, cold in 2021 when strikes were rare and hot by the end. They cover the Sagaing core (6), Magway (7), the road to northern Shan, the hills of Bago (East) and Dawei in Tanintharyi, many of the same places as the new ground fronts in <a href="#fig-ehsa" class="quarto-xref">Figure&nbsp;12</a>. Central Rakhine is the exception, with only Myebon among them. This changes how the Sagaing core reads. Ground events there eased after 2023, but air strikes on it kept growing. Hpakant in Kachin is a consecutive hot spot, and nearby Myitkyina, Mohnyin and Mogaung are sporadic ones. Most cold patterns, in Yangon, the delta and Shan (East), simply mean these places were rarely bombed while strikes grew elsewhere. For civilians this means the threat from the air grew most where ground fighting was also growing.</p>
+<p><strong>The air campaign grew most in the ground war’s core and on most of its new fronts.</strong> 176 townships have a significant trend in military air strikes. 29 are oscillating hot spots, cold in 2021 when strikes were rare and hot by the end. They cover the Sagaing core (6), Magway (7), the road to northern Shan, the hills of Bago (East) and Dawei in Tanintharyi, many of the same places as the new ground fronts in <a href="#fig-ehsa" class="quarto-xref">Figure&nbsp;12</a>. Central Rakhine is the exception, with only Myebon among them. This changes how the Sagaing core reads. Ground events there eased after 2023, but air strikes on it kept growing. Hpakant in Kachin is a consecutive hot spot, and nearby Myitkyina, Mohnyin and Mogaung are sporadic ones. Most cold patterns, in Yangon, the delta and Shan (East), simply mean these places were rarely bombed while strikes grew elsewhere. For civilians this means the threat from the air grew most where ground fighting was also growing.</p>
 </div>
 </section>
 <section id="step-7.-how-much-to-trust-the-trends" class="level2">
@@ -3119,44 +3100,44 @@ Figure&nbsp;15. Emerging hot spot patterns of the military’s air strikes, town
 <tr class="odd">
 <td style="text-align: left;">All armed conflict</td>
 <td style="text-align: right;">0.65</td>
-<td style="text-align: right;">151</td>
-<td style="text-align: right;">121</td>
-<td style="text-align: right;">114</td>
+<td style="text-align: right;">155</td>
+<td style="text-align: right;">124</td>
+<td style="text-align: right;">120</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Battles</td>
-<td style="text-align: right;">0.65</td>
+<td style="text-align: right;">0.64</td>
 <td style="text-align: right;">101</td>
-<td style="text-align: right;">46</td>
-<td style="text-align: right;">62</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">64</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Explosions and remote violence</td>
 <td style="text-align: right;">0.58</td>
-<td style="text-align: right;">131</td>
-<td style="text-align: right;">106</td>
-<td style="text-align: right;">119</td>
+<td style="text-align: right;">133</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">121</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Violence against civilians</td>
 <td style="text-align: right;">0.61</td>
-<td style="text-align: right;">142</td>
-<td style="text-align: right;">101</td>
-<td style="text-align: right;">118</td>
+<td style="text-align: right;">147</td>
+<td style="text-align: right;">102</td>
+<td style="text-align: right;">121</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Military air strikes</td>
 <td style="text-align: right;">0.60</td>
-<td style="text-align: right;">178</td>
-<td style="text-align: right;">170</td>
-<td style="text-align: right;">175</td>
+<td style="text-align: right;">176</td>
+<td style="text-align: right;">169</td>
+<td style="text-align: right;">174</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="read">
-<p><strong>Most trends survive, but battle trends are fragile.</strong> The median lag-1 autocorrelation is around 0.6 for every variable, so the plain Mann-Kendall p-values are too optimistic, as the lecture warns. Still, most significant trends survive both checks. For all armed conflict, 121 of 151 remain after FDR and 114 under the modified test. Explosions and military air strikes hold up even better. Battles are the exception, with only 46 of 101 surviving FDR, so the battle map in <a href="#fig-ehsa-types" class="quarto-xref">Figure&nbsp;14</a> should be read as a guide, not a firm result. The maps keep the brief’s p &lt; 0.05 rule, and these numbers say how much weight each one can bear.</p>
+<p><strong>Most trends survive, but battle trends are fragile.</strong> The median lag-1 autocorrelation is around 0.6 for every variable, so the plain Mann-Kendall p-values are too optimistic, as the lecture warns. Still, most significant trends survive both checks. For all armed conflict, 124 of 155 remain after FDR and 120 under the modified test. Explosions and military air strikes hold up even better. Battles are the exception, with only 54 of 101 surviving FDR, so the battle map in <a href="#fig-ehsa-types" class="quarto-xref">Figure&nbsp;14</a> should be read as a guide, not a firm result. The maps keep the brief’s p &lt; 0.05 rule, and these numbers say how much weight each one can bear.</p>
 </div>
 </section>
 </section>
@@ -3172,7 +3153,7 @@ Figure&nbsp;15. Emerging hot spot patterns of the military’s air strikes, town
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Neighbouring townships mostly face the same kind of violence, but not everywhere. Multivariate local Geary’s c finds a group of 29 townships, 16 in Yangon and 7 around Mandalay city, where battles are rare but bombs and attacks on civilians are common, and where neighbours share that mix. Local Moran’s I treats every one of them as quiet or not significant. The pattern is growing. Around Mandalay, townships that saw all three types in 2021 and 2022 had shifted to this mix by 2023 to 2025, and in Yangon it moved from downtown to the outskirts. Only 2 townships have a mix clearly unlike their neighbours’.</p>
+<p>Neighbouring townships mostly face the same kind of violence, but not everywhere. Multivariate local Geary’s c finds a group of 34 townships, 20 in Yangon and 8 in Mandalay region, most of them around Mandalay city, where battles are rare but bombs and attacks on civilians are common, and where neighbours share that mix. Local Moran’s I calls every one of them quiet or not significant. The pattern is growing. Around Mandalay, townships that saw all three types in 2021 and 2022 had shifted to this mix by 2023 to 2025, and in Yangon it moved from downtown to the outskirts. Only 2 townships have a mix clearly unlike their neighbours’.</p>
 </div>
 </div>
 <section id="why-this-question-and-why-this-method" class="level2">
@@ -3273,21 +3254,21 @@ The three types are put on one scale first. Counts are log-transformed, log(1 + 
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">All three high</td>
-<td style="text-align: right;">72</td>
-<td style="text-align: center;">1.0 / 0.9 / 0.9</td>
-<td style="text-align: center;">41 / 41 / 18</td>
+<td style="text-align: right;">71</td>
+<td style="text-align: center;">1.0 / 1.0 / 0.9</td>
+<td style="text-align: center;">40 / 42 / 18</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Mostly battles</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: center;">0.5 / 0.2 / 0.0</td>
-<td style="text-align: center;">46 / 39 / 15</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: center;">0.6 / 0.2 / 0.0</td>
+<td style="text-align: center;">50 / 35 / 15</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Few battles, more bombs or attacks on civilians</td>
-<td style="text-align: right;">29</td>
+<td style="text-align: right;">34</td>
 <td style="text-align: center;">-0.6 / 0.2 / 0.4</td>
-<td style="text-align: center;">10 / 54 / 36</td>
+<td style="text-align: center;">10 / 55 / 36</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">All three low</td>
@@ -3298,14 +3279,14 @@ The three types are put on one scale first. Counts are log-transformed, log(1 + 
 <tr class="odd">
 <td style="text-align: left;">Mix unlike its neighbours</td>
 <td style="text-align: right;">2</td>
-<td style="text-align: center;">0.4 / 0.0 / -1.2</td>
-<td style="text-align: center;">62 / 31 / 7</td>
+<td style="text-align: center;">0.4 / 0.0 / -1.1</td>
+<td style="text-align: center;">63 / 29 / 8</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Not significant</td>
-<td style="text-align: right;">142</td>
+<td style="text-align: right;">135</td>
 <td style="text-align: center;">0.2 / 0.0 / 0.0</td>
-<td style="text-align: center;">41 / 42 / 16</td>
+<td style="text-align: center;">42 / 41 / 16</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Myanmar as a whole</td>
@@ -3361,7 +3342,7 @@ Figure&nbsp;16. Multivariate local Geary’s c on battles, explosions and attack
 </div>
 </div>
 <div class="read">
-<p><strong>Two big groups are expected, and one is new.</strong> 186 townships share their mix with their neighbours more than chance allows. 72 have all three types high, led by Sagaing (22), Magway and Mandalay, with Rakhine and Tanintharyi. 77 have all three low, in the delta and eastern and southern Shan. The third group is the new finding. 29 townships, 16 in Yangon and 7 in Mandalay, mostly in and around the two cities, have few battles but above-average bombs or attacks on civilians. Insein in Yangon, for example, had 5 battles but 93 explosions and 56 attacks on civilians. This fits urban bombings and targeted killings rather than front-line war. Only 2 townships have a mix unlike their neighbours’. Kalewa in Sagaing recorded no attacks on civilians at all, unlike the townships around it, and Laukkaing on the Chinese border had a battle-heavy mix its neighbours did not share.</p>
+<p><strong>Two big groups are expected, and one is new.</strong> 193 townships share their mix with their neighbours more than chance allows. 71 have all three types high, led by Sagaing (22), Magway and Mandalay, with Rakhine and Tanintharyi. 77 have all three low, in the delta, downtown Yangon and eastern and southern Shan. The third group is the new finding. 34 townships, 20 in Yangon and 8 in Mandalay, mostly in and around the two cities, have few battles but above-average bombs or attacks on civilians. Insein in Yangon, for example, had 5 battles but 93 explosions and 56 attacks on civilians. This fits urban bombings and targeted killings rather than front-line war. Only 2 townships have a mix unlike their neighbours’. Kalewa in Sagaing recorded no attacks on civilians at all, unlike the townships around it, and Laukkaing on the Chinese border had a battle-heavy mix its neighbours did not share.</p>
 </div>
 </section>
 <section id="step-3.-what-this-adds-to-task-2" class="level2">
@@ -3400,31 +3381,31 @@ Figure&nbsp;16. Multivariate local Geary’s c on battles, explosions and attack
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">All three high</td>
-<td style="text-align: right;">33</td>
+<td style="text-align: right;">34</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">39</td>
+<td style="text-align: right;">37</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Mostly battles</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">11</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Few battles, more bombs or attacks on civilians</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">4</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">23</td>
+<td style="text-align: right;">30</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">All three low</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">62</td>
+<td style="text-align: right;">61</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">15</td>
+<td style="text-align: right;">16</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Mix unlike its neighbours</td>
@@ -3438,7 +3419,7 @@ Figure&nbsp;16. Multivariate local Geary’s c on battles, explosions and attack
 </div>
 </div>
 <div class="read">
-<p><strong>The urban group is invisible to a count-based map.</strong> Of the 29 bombs-and-civilians townships, 23 are not significant in local Moran’s I and 6 are Low-Low. Looking at totals, they are quiet places. Looking at the mix, they share a distinct kind of violence that calls for protection of civilians in cities rather than front-line aid. Geary’s c also widens the hot core. It finds 72 all-high townships where local Moran’s I found 34 High-High, because it asks whether neighbours share the mix, not whether totals are extreme.</p>
+<p><strong>The urban group is invisible to a count-based map.</strong> Of the 34 bombs-and-civilians townships, 30 are not significant in local Moran’s I and 4 are Low-Low. Looking at totals, they are quiet places. Looking at the mix, they share a distinct kind of violence that calls for protection of civilians in cities rather than front-line aid. Geary’s c also widens the hot core. It finds 71 all-high townships where local Moran’s I found 35 High-High, because it asks whether neighbours share the mix, not whether totals are extreme.</p>
 </div>
 </section>
 <section id="step-4.-is-the-mix-changing" class="level2">
@@ -3479,7 +3460,7 @@ Figure&nbsp;16. Multivariate local Geary’s c on battles, explosions and attack
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Ayeyarwady</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
@@ -3499,13 +3480,13 @@ Figure&nbsp;16. Multivariate local Geary’s c on battles, explosions and attack
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Shan (South)</td>
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Yangon</td>
-<td style="text-align: right;">14</td>
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">15</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Bago (West)</td>
@@ -3553,7 +3534,7 @@ Figure&nbsp;17. Multivariate local Geary’s c for two periods, significant town
 </div>
 </div>
 <div class="read">
-<p><strong>Around Mandalay the mix is spreading, and in Yangon it moved outward.</strong> In Mandalay the group grew from 3 to 8 townships, and in Magway from 2 to 5. 8 townships had all three types high in 2021 and 2022 and moved into this group by 2023 to 2025. 6 are in Mandalay region, Chanayethazan, Mahaaungmyay, Chanmyathazi, Pyigyitagon, Kyaukse, Wundwin, and 2 on the edge of Yangon, Mingaladon and Hlaingtharya. Battles fell away there, but bombings and attacks on civilians did not. Yangon kept 14 townships in this group in both periods, but only 7 were the same. The group moved from the downtown townships, such as Botahtaung and Lanmadaw, to the industrial outskirts, such as Hlaingtharya and Mingaladon. This fits the outward spread found in Task 3.</p>
+<p><strong>Around Mandalay the mix is spreading, and in Yangon it moved outward.</strong> In Mandalay the group grew from 3 to 8 townships, and in Magway from 2 to 5. 9 townships had all three types high in 2021 and 2022 and moved into this group by 2023 to 2025. 6 are in Mandalay region, Chanayethazan, Mahaaungmyay, Chanmyathazi, Pyigyitagon, Kyaukse, Wundwin, and 3 on the edge of Yangon, Mingaladon and Dagon Myothit (South) and Dagon Myothit (North). Battles fell away there, but bombings and attacks on civilians did not. Yangon’s group went from 21 to 15 townships, and only 9 were in it both times. The group moved from the downtown townships, such as Botahtaung and Lanmadaw, to the industrial outskirts, such as Hlaingtharya and Mingaladon. This fits the outward spread found in Task 3.</p>
 </div>
 </section>
 <section id="step-5.-how-much-to-trust-the-groups" class="level2">
@@ -3591,18 +3572,18 @@ Figure&nbsp;17. Multivariate local Geary’s c for two periods, significant town
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">6</td>
-<td style="text-align: right;">173</td>
-<td style="text-align: right;">27</td>
+<td style="text-align: right;">178</td>
+<td style="text-align: right;">30</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">8</td>
-<td style="text-align: right;">188</td>
-<td style="text-align: right;">29</td>
+<td style="text-align: right;">195</td>
+<td style="text-align: right;">34</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">10</td>
-<td style="text-align: right;">202</td>
-<td style="text-align: right;">27</td>
+<td style="text-align: right;">208</td>
+<td style="text-align: right;">32</td>
 </tr>
 </tbody>
 </table>
@@ -3629,13 +3610,13 @@ Figure&nbsp;17. Multivariate local Geary’s c for two periods, significant town
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">All significant townships</td>
-<td style="text-align: right;">188</td>
-<td style="text-align: right;">165</td>
+<td style="text-align: right;">195</td>
+<td style="text-align: right;">166</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Bombs-and-civilians group</td>
-<td style="text-align: right;">29</td>
-<td style="text-align: right;">25</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">27</td>
 </tr>
 </tbody>
 </table>
@@ -3695,7 +3676,7 @@ Figure&nbsp;17. Multivariate local Geary’s c for two periods, significant town
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>EHSA labels say which way each township’s trend runs, but not when its conflict rose or fell. Spatially constrained clustering, taught in Lesson 6, groups neighbouring townships whose conflict rose and fell at the same times. It splits Myanmar into 8 regions with clearly different timelines. The Sagaing core heated up within months of the coup and peaked in early 2023. The northern Shan border had one sharp spike with Operation 1027 and then went quiet. The south-east frontier and the Rakhine to Bago belt warmed later, and the south-east was still rising in 2025. Yangon and the delta cooled the whole time. These timelines cannot be read from the EHSA labels alone.</p>
+<p>EHSA labels say which way each township’s trend runs, but not when its conflict rose or fell. Spatially constrained clustering, taught in Lesson 6, groups neighbouring townships whose conflict rose and fell at the same times. It splits Myanmar into 8 regions with clearly different timelines. The Sagaing core heated up within months of the coup and peaked in early 2023. Kayah was hot from late 2021 to mid-2023 and then cooled. Rakhine and the western Dry Zone jumped when the Arakan Army’s offensive began at the end of 2023. The south-east frontier rose slowly and was at its highest in the last quarter. Yangon and the delta cooled the whole time. These timelines cannot be read from the EHSA labels alone.</p>
 </div>
 </div>
 <section id="why-this-question-and-why-this-method-1" class="level2">
@@ -3793,79 +3774,79 @@ Queen contiguity, as in the course text, with each island linked to its nearest 
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">3</td>
-<td style="text-align: left;">44.8%</td>
-<td style="text-align: left;">67.6%</td>
-<td style="text-align: right;">22</td>
+<td style="text-align: left;">45.9%</td>
+<td style="text-align: left;">64.6%</td>
+<td style="text-align: right;">27</td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">4</td>
-<td style="text-align: left;">51.0%</td>
-<td style="text-align: left;">71.4%</td>
-<td style="text-align: right;">22</td>
-<td style="text-align: left;">6.2%</td>
+<td style="text-align: left;">52.3%</td>
+<td style="text-align: left;">70.4%</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: left;">6.4%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">5</td>
-<td style="text-align: left;">55.2%</td>
-<td style="text-align: left;">74.3%</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: left;">4.2%</td>
+<td style="text-align: left;">55.9%</td>
+<td style="text-align: left;">74.2%</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: left;">3.6%</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">6</td>
-<td style="text-align: left;">59.3%</td>
-<td style="text-align: left;">76.9%</td>
-<td style="text-align: right;">15</td>
-<td style="text-align: left;">4.1%</td>
+<td style="text-align: left;">61.5%</td>
+<td style="text-align: left;">77.1%</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: left;">5.5%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">7</td>
-<td style="text-align: left;">63.7%</td>
-<td style="text-align: left;">79.2%</td>
-<td style="text-align: right;">10</td>
-<td style="text-align: left;">4.4%</td>
+<td style="text-align: left;">65.4%</td>
+<td style="text-align: left;">79.6%</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">3.9%</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">8</td>
-<td style="text-align: left;">66.8%</td>
-<td style="text-align: left;">81.5%</td>
+<td style="text-align: left;">69.6%</td>
+<td style="text-align: left;">81.9%</td>
 <td style="text-align: right;">10</td>
-<td style="text-align: left;">3.1%</td>
+<td style="text-align: left;">4.2%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">9</td>
-<td style="text-align: left;">69.2%</td>
-<td style="text-align: left;">83.5%</td>
+<td style="text-align: left;">70.7%</td>
+<td style="text-align: left;">83.6%</td>
 <td style="text-align: right;">10</td>
-<td style="text-align: left;">2.3%</td>
+<td style="text-align: left;">1.1%</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">10</td>
-<td style="text-align: left;">71.6%</td>
-<td style="text-align: left;">84.9%</td>
+<td style="text-align: left;">73.2%</td>
+<td style="text-align: left;">85.1%</td>
 <td style="text-align: right;">10</td>
-<td style="text-align: left;">2.4%</td>
+<td style="text-align: left;">2.5%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">11</td>
-<td style="text-align: left;">73.9%</td>
-<td style="text-align: left;">86.3%</td>
-<td style="text-align: right;">7</td>
-<td style="text-align: left;">2.2%</td>
+<td style="text-align: left;">76.1%</td>
+<td style="text-align: left;">86.6%</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">2.9%</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">12</td>
-<td style="text-align: left;">74.8%</td>
-<td style="text-align: left;">87.6%</td>
+<td style="text-align: left;">78.3%</td>
+<td style="text-align: left;">87.7%</td>
 <td style="text-align: right;">7</td>
-<td style="text-align: left;">1.0%</td>
+<td style="text-align: left;">2.2%</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>Up to 7 regions, each extra region explains about 4 percent more of the variation, and the eighth adds 3.1%. After that the gain falls to about 2 percent per region, so further cuts add little. So 8 regions are used. They explain 67% of the variation, against 82% for Ward clustering without geography. Contiguity costs some fit, as expected, but it gives regions that can be planned for as areas.</p>
+<p>Up to 8 regions, each extra region explains another 4 to 6 percent of the variation. The ninth adds only 1.1%, a clear drop. So 8 regions are used. They explain 70% of the variation, against 82% for Ward clustering without geography. Contiguity costs some fit, as expected, but it gives regions that can be planned for as areas.</p>
 <div class="cell">
 <div class="code-with-filename">
 <div class="code-with-filename-file">
@@ -3874,10 +3855,10 @@ Queen contiguity, as in the course text, with each island linked to its nearest 
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>sk <span class="ot">&lt;-</span> <span class="fu">skater</span>(mst[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], timeline, <span class="at">ncuts =</span> n_regions <span class="sc">-</span> <span class="dv">1</span>)</span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="co"># each region is named after the township that anchors it, so the names do not depend on the group numbers</span></span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>region_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Monywa"</span> <span class="ot">=</span> <span class="st">"Sagaing core"</span>, <span class="st">"Pakokku"</span> <span class="ot">=</span> <span class="st">"Southern Dry Zone"</span>,</span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Muse"</span> <span class="ot">=</span> <span class="st">"Northern Shan and Kachin border"</span>, <span class="st">"Kawkareik"</span> <span class="ot">=</span> <span class="st">"South-east frontier"</span>,</span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Maungdaw"</span> <span class="ot">=</span> <span class="st">"Rakhine to Bago belt"</span>, <span class="st">"Kale"</span> <span class="ot">=</span> <span class="st">"Northern uplands, mixed"</span>,</span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Hlaingtharya"</span> <span class="ot">=</span> <span class="st">"Yangon and the delta"</span>, <span class="st">"Tachileik"</span> <span class="ot">=</span> <span class="st">"Eastern Shan"</span>)</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>region_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Monywa"</span> <span class="ot">=</span> <span class="st">"Sagaing core"</span>, <span class="st">"Maungdaw"</span> <span class="ot">=</span> <span class="st">"Rakhine and western Dry Zone"</span>,</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Loikaw"</span> <span class="ot">=</span> <span class="st">"Kayah"</span>, <span class="st">"Kawkareik"</span> <span class="ot">=</span> <span class="st">"South-east frontier"</span>,</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Nawnghkio"</span> <span class="ot">=</span> <span class="st">"Mandalay to northern Shan road"</span>, <span class="st">"Hpakant"</span> <span class="ot">=</span> <span class="st">"Northern borderlands"</span>,</span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Kyaukpyu"</span> <span class="ot">=</span> <span class="st">"Central belt"</span>, <span class="st">"Pathein"</span> <span class="ot">=</span> <span class="st">"Yangon and the delta"</span>)</span>
 <span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>anchor <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">TS =</span> <span class="fu">names</span>(region_names), <span class="at">name =</span> region_names) <span class="sc">%&gt;%</span></span>
 <span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">tibble</span>(<span class="at">TS =</span> mmr_conflict<span class="sc">$</span>TS, <span class="at">group =</span> sk<span class="sc">$</span>groups), <span class="at">by =</span> <span class="st">"TS"</span>)</span>
 <span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">n_distinct</span>(anchor<span class="sc">$</span>group) <span class="sc">==</span> n_regions)</span>
@@ -3926,7 +3907,7 @@ Figure&nbsp;18. Eight conflict regions from SKATER spatially constrained cluster
 </div>
 </div>
 <div class="read">
-<p><strong>Eight regions, from a hot centre to a cold south.</strong> The hot regions run through the centre and down the eastern border, the Sagaing core with the Southern Dry Zone beside it, the Northern Shan and Kachin border, and the South-east frontier from Kayin to Tanintharyi. The large Rakhine to Bago belt lies between them and Yangon and the delta in the south. Eastern Shan forms a quiet block of its own, and the Northern uplands fill the rest. Every region is one connected block, so each can be planned for as an area.</p>
+<p><strong>Eight regions, from a hot centre to a cold south.</strong> The Sagaing core sits in the middle, with Rakhine and the western Dry Zone to its south-west and the road from Mandalay to northern Shan to its east. Kayah sits on the eastern border, and the South-east frontier runs from the Bago (East) hills through Kayin and Mon to Tanintharyi. The Northern borderlands cover Kachin, northern Sagaing and the northern Shan border. A large Central belt from Rakhine to southern Shan, and Yangon and the delta, form the cold south. Every region is one connected block, so each can be planned for as an area.</p>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-19-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-19-1" role="tab" aria-controls="tabset-19-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-19-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-19-2" role="tab" aria-controls="tabset-19-2" aria-selected="false" href="">The Code</a></li></ul>
@@ -3960,12 +3941,12 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 <span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">group =</span> TS_PCODE), <span class="at">colour =</span> <span class="st">"grey80"</span>, <span class="at">linewidth =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
 <span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> reg_med, <span class="fu">aes</span>(<span class="at">colour =</span> region), <span class="at">linewidth =</span> <span class="fl">1.4</span>) <span class="sc">+</span></span>
 <span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># darker line colours where the map fill would be too pale on a white panel</span></span>
-<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">replace</span>(region_cols, <span class="fu">c</span>(<span class="st">"Rakhine to Bago belt"</span>, <span class="st">"Northern uplands, mixed"</span>),</span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">replace</span>(region_cols, <span class="fu">c</span>(<span class="st">"Mandalay to northern Shan road"</span>, <span class="st">"Northern borderlands"</span>),</span>
 <span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>                                       <span class="fu">c</span>(<span class="st">"#B39B00"</span>, <span class="st">"#5E5E5E"</span>)), <span class="at">guide =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
 <span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">9</span>, <span class="dv">17</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"2021"</span>, <span class="st">"2023"</span>, <span class="st">"2025"</span>)) <span class="sc">+</span></span>
 <span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="dv">10</span>)) <span class="sc">+</span></span>
 <span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> region, <span class="at">ncol =</span> <span class="dv">4</span>, <span class="at">labeller =</span> <span class="fu">label_wrap_gen</span>(<span class="at">width =</span> <span class="dv">22</span>)) <span class="sc">+</span></span>
-<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Each region had its own war: an early core, a single spike, late risers and steady coolers"</span>,</span>
+<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Each region had its own war: an early core, late risers and steady coolers"</span>,</span>
 <span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Gi*"</span>) <span class="sc">+</span></span>
 <span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
 <span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>), <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="fl">11.5</span>),</span>
@@ -3975,19 +3956,19 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 </div>
 </div>
 <div class="read">
-<p><strong>Each region had its own war.</strong> The <strong>Sagaing core</strong> was a hot spot by the third quarter of 2021, peaked in 2023Q1 at a median Gi* of 8.5, and has eased since but is still hot. Because it rose and then fell, most of it has no significant trend in EHSA. The <strong>Southern Dry Zone</strong> rose at the same time and stayed steadily hot. The <strong>Northern Shan and Kachin border</strong> was hot in 2021, went quiet, then spiked to 4.3 and 4.7 in the two quarters of Operation 1027 before falling back. The <strong>South-east frontier</strong> was not hot in 2021 but rose from 2022 and in the last quarter, at 3.6, was close to its 2023 peak. The <strong>Rakhine to Bago belt</strong> stayed cold until the end of 2023 and then warmed to about zero, a large region where the war arrived late. <strong>Yangon and the delta</strong> cooled steadily, and <strong>Eastern Shan</strong> stayed cold. The <strong>Northern uplands</strong> are mixed, with a flat median that hides busy townships such as Hpakant.</p>
+<p><strong>Each region had its own war.</strong> The <strong>Sagaing core</strong> was a hot spot by the third quarter of 2021, peaked in 2023Q1 at a median Gi* of 8.5, and has eased since but is still hot. Because it rose and then fell, most of it has no significant trend in EHSA. <strong>Kayah</strong> was hot from late 2021 to mid-2023 and cooled to about zero from the end of 2023. The <strong>Mandalay to northern Shan road</strong> was warm in 2021 and 2022 and mostly neutral since. <strong>Rakhine and the western Dry Zone</strong> stayed near zero until the end of 2023, then jumped to 4 in the first quarter of 2024, when the Arakan Army’s offensive spread. The <strong>South-east frontier</strong> rose slowly from 2022 and was at 3 in the last quarter, its highest. The <strong>Central belt</strong> was cold until 2024 and has warmed only a little. <strong>Yangon and the delta</strong> cooled steadily. The <strong>Northern borderlands</strong> stayed near zero, a flat median that hides busy townships such as Hpakant.</p>
 </div>
 <section id="what-the-regions-add-to-task-3" class="level3">
 <h3 class="anchored" data-anchor-id="what-the-regions-add-to-task-3">What the regions add to Task 3</h3>
-<p>The regions add to Task 3 in two ways. First, they show <em>when</em>. The Sagaing core, the Northern Shan and Kachin border and the South-east frontier all hold oscillating or no-pattern townships in EHSA, but their timelines are completely different. Second, they agree with EHSA where they should. 44 of the 54 cold-trending townships are in Yangon and the delta, and 30 of the 41 hot-trending townships are in the South-east frontier and the Rakhine to Bago belt.</p>
+<p>The regions add to Task 3 in two ways. First, they show <em>when</em>. The Sagaing core, Kayah and Rakhine and the western Dry Zone all hold oscillating or no-pattern townships in EHSA, but their worst years differ, 2023, 2022 and 2024. Second, they agree with EHSA where they should. 47 of the 58 cold-trending townships are in Yangon and the delta, and 30 of the 41 hot-trending townships are in the South-east frontier and in Rakhine and the western Dry Zone.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 37%">
+<col style="width: 36%">
 <col style="width: 11%">
 <col style="width: 8%">
-<col style="width: 20%">
+<col style="width: 21%">
 <col style="width: 22%">
 </colgroup>
 <thead>
@@ -4008,53 +3989,53 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Southern Dry Zone</td>
-<td style="text-align: right;">10</td>
-<td style="text-align: right;">3,245</td>
-<td style="text-align: right;">4</td>
+<td style="text-align: left;">Rakhine and western Dry Zone</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">6,014</td>
+<td style="text-align: right;">7</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Northern Shan and Kachin border</td>
-<td style="text-align: right;">15</td>
-<td style="text-align: right;">3,667</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">6</td>
+<td style="text-align: left;">Kayah</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2,138</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">South-east frontier</td>
-<td style="text-align: right;">22</td>
-<td style="text-align: right;">6,210</td>
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">10,095</td>
+<td style="text-align: right;">23</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Rakhine to Bago belt</td>
-<td style="text-align: right;">70</td>
-<td style="text-align: right;">9,266</td>
-<td style="text-align: right;">14</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Northern uplands, mixed</td>
-<td style="text-align: right;">84</td>
-<td style="text-align: right;">13,283</td>
+<td style="text-align: left;">Mandalay to northern Shan road</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">4,216</td>
 <td style="text-align: right;">4</td>
 <td style="text-align: right;">3</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;">Northern borderlands</td>
+<td style="text-align: right;">52</td>
+<td style="text-align: right;">9,363</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">6</td>
+</tr>
 <tr class="odd">
-<td style="text-align: left;">Yangon and the delta</td>
-<td style="text-align: right;">84</td>
-<td style="text-align: right;">5,384</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">44</td>
+<td style="text-align: left;">Central belt</td>
+<td style="text-align: right;">87</td>
+<td style="text-align: right;">5,272</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Eastern Shan</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: right;">75</td>
+<td style="text-align: left;">Yangon and the delta</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">4,032</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
+<td style="text-align: right;">47</td>
 </tr>
 </tbody>
 </table>
@@ -4085,7 +4066,7 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 </tr>
 <tr class="even">
 <td>The number of regions is a choice</td>
-<td>More regions would split the larger ones, such as the Northern uplands</td>
+<td>More regions would split the larger ones, such as the Central belt</td>
 <td>Chosen where the gain from one more region levels off</td>
 </tr>
 <tr class="odd">
@@ -4099,9 +4080,9 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 <td>Shown in the timelines, so the reader can see the shape</td>
 </tr>
 <tr class="odd">
-<td>The Northern uplands region is mixed</td>
-<td>Its median is flat and hides busy townships</td>
-<td>Named as mixed, and those townships are read from Task 2 and Task 3</td>
+<td>The Northern borderlands median is flat</td>
+<td>It hides busy townships such as Hpakant</td>
+<td>Those townships are read from Task 2 and Task 3</td>
 </tr>
 </tbody>
 </table>
@@ -4133,25 +4114,25 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 <tr class="odd">
 <td>The Dry Zone is the core of the war</td>
 <td>43 percent of events, 6 of the 10 busiest townships</td>
-<td>28 of 34 High-High, 31 of 40 hot spots</td>
+<td>28 of 35 High-High, 31 of 40 hot spots</td>
 <td>Hot in 10 to 18 of 19 quarters, with no steady trend</td>
-<td>44 of 72 all-high townships. The Sagaing core region was hot from late 2021 and peaked in early 2023</td>
+<td>42 of 71 all-high townships. The Sagaing core region was hot from late 2021 and peaked in early 2023</td>
 <td>Very sure, every method agrees</td>
 </tr>
 <tr class="even">
 <td>Conflict spread outward from the core</td>
 <td>Rakhine and Bago grew year after year</td>
 <td>Second clusters differ by type</td>
-<td>5 consecutive and 30 oscillating hot spots ring the core</td>
-<td>Rakhine and Tanintharyi join the all-high group. The South-east frontier and Rakhine to Bago belt regions warmed later</td>
+<td>5 consecutive and 29 oscillating hot spots ring the core</td>
+<td>Rakhine and Bago (East) join the all-high group in 2023 to 2025. The South-east frontier region and Rakhine and the western Dry Zone rose later</td>
 <td>Sure for all conflict, weaker for battles alone</td>
 </tr>
 <tr class="odd">
 <td>Yangon emptied of fighting but not of violence</td>
 <td>Events fell sharply after 2022</td>
-<td>26 Low-Low, 26 cold spots</td>
-<td>39 of 45 townships in a cold pattern</td>
-<td>16 townships share a bombs-and-civilians mix. The Yangon and delta region cooled in every quarter</td>
+<td>23 Low-Low, 23 cold spots</td>
+<td>42 of 45 townships in a cold pattern</td>
+<td>20 townships share a bombs-and-civilians mix. The Yangon and delta region cooled in every quarter</td>
 <td>Sure</td>
 </tr>
 <tr class="even">
@@ -4159,7 +4140,7 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 <td>Peak in late 2023</td>
 <td>Not a cluster over the whole period</td>
 <td>6 border townships turned from hot to cold</td>
-<td>Its border region spiked in the two quarters of Operation 1027, then fell back</td>
+<td>Part of the Northern borderlands region, whose median stayed near zero</td>
 <td>Sure, the spike is very large</td>
 </tr>
 <tr class="odd">
@@ -4175,7 +4156,7 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 <p>Three lessons come from reading the methods together.</p>
 <ol type="1">
 <li><strong>Where conflict is, where it clusters and where it is growing are three different maps.</strong> Kawkareik is the second busiest township but sits in no cluster. The Sagaing core is the hottest neighbourhood but is blank on the trend map, because it stayed hot in almost every quarter, rising to a peak in 2023 and then easing, with no single direction. A planner using only one of these maps would miss something important.</li>
-<li><strong>The war widened rather than moved.</strong> The core stayed hot while new hot spots opened around it, from the hills of Bago (East) and the road to northern Shan to central Rakhine and the far south. Townships in Bago (West) are warming but are not yet hot spots, which makes them the likeliest next ones. The conflict regions show the order. The Sagaing core and the southern Dry Zone heated first, in 2021, the south-east frontier rose from 2022, the northern Shan border flared with Operation 1027 at the end of 2023, and the Rakhine to Bago belt warmed from 2024.</li>
+<li><strong>The war widened rather than moved.</strong> The core stayed hot while new hot spots opened around it, from the hills of Bago (East) and the road to northern Shan to central Rakhine and the far south. Townships in Bago (West) are warming but are not yet hot spots, which makes them the likeliest next ones. The conflict regions show the order. The Sagaing core heated first, in 2021, Kayah was hottest in 2022 and 2023, Rakhine and the western Dry Zone jumped at the start of 2024, and the south-east frontier was still rising in 2025.</li>
 <li><strong>When fighting leaves, the violence changes kind.</strong> Around Mandalay, battles moved away after 2022 but bombs and attacks on civilians stayed. Yangon has had this mix all along, though it moved from downtown to the outskirts. Count-based maps call these places quiet. The mix says they are not.</li>
 </ol>
 </section>
@@ -4261,7 +4242,7 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 </tr>
 <tr class="even">
 <td>The eight conflict regions went through the war at different times</td>
-<td>Use them as planning areas, each with its own stance: long-term support in the Sagaing core, early warning in the late-rising south-east and Rakhine to Bago belt, and relapse watch on the northern Shan border</td>
+<td>Use them as planning areas, each with its own stance. Long-term support in the Sagaing core, early warning in the still-rising South-east frontier, and relapse watch in Kayah and in Rakhine and the western Dry Zone, where conflict peaked and eased</td>
 <td>Whether the regions match how agencies already divide their work</td>
 </tr>
 <tr class="odd">
@@ -4343,7 +4324,7 @@ Figure&nbsp;19. Quarterly Gi* of total armed conflict events in each conflict re
 </section>
 <section id="conclusion" class="level1">
 <h1>Conclusion</h1>
-<p><strong>Q1.</strong> Armed conflict was heaviest in the central Dry Zone, which holds 43 percent of all events, and along the borders. It peaked in late 2023, and the military’s air strikes grew about 23-fold. <strong>Q2.</strong> Local Moran’s I and Gi* find one large hot cluster in the Dry Zone, a smaller one around Dawei, and cold clusters in Yangon, the delta and eastern Shan. The few outliers are quieter townships beside hot areas, plus Pathein and Thaketa as busy places in quiet areas. <strong>Q3.</strong> The core stayed hot, while new hot spots opened around it and Yangon and northern Shan cooled. Each type of violence spread in its own direction, and attacks on civilians moved towards the lowlands. <strong>Q4.</strong> Neighbours mostly share the same mix of violence, but Yangon and Mandalay city share a different one, of bombs and attacks on civilians, which spread as the fighting moved on. <strong>Q5.</strong> Myanmar splits into eight regions with their own timelines. The Sagaing core and southern Dry Zone heated first, the south-east frontier rose from 2022, the northern Shan border spiked once in late 2023, the Rakhine to Bago belt warmed from 2024, and Yangon and the delta cooled throughout.</p>
+<p><strong>Q1.</strong> Armed conflict was heaviest in the central Dry Zone, which holds 43 percent of all events, and along the borders. It peaked in late 2023, and the military’s air strikes grew about 23-fold. <strong>Q2.</strong> Local Moran’s I and Gi* find one large hot cluster in the Dry Zone, a smaller one around Dawei, and cold clusters in Yangon, the delta and eastern Shan. The few outliers are quieter townships beside hot areas, plus Thaketa in Yangon as a busy place in a quiet area. <strong>Q3.</strong> The core stayed hot, while new hot spots opened around it and Yangon and northern Shan cooled. Each type of violence spread in its own direction, and attacks on civilians moved towards the lowlands. <strong>Q4.</strong> Neighbours mostly share the same mix of violence, but Yangon and Mandalay city share a different one, of bombs and attacks on civilians, which spread as the fighting moved on. <strong>Q5.</strong> Myanmar splits into eight regions with their own timelines. The Sagaing core heated first, Kayah peaked in 2022 and 2023, Rakhine and the western Dry Zone jumped in 2024, the south-east frontier was still rising in 2025, and Yangon and the delta cooled throughout.</p>
 <p>The main lesson is that the war has not shifted from one place to another. It has widened from a core that never cooled, and where the fighting leaves, a different kind of violence often stays.</p>
 <section id="future-work" class="level2">
 <h2 class="anchored" data-anchor-id="future-work">Future work</h2>

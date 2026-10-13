@@ -422,7 +422,7 @@ tm_shape(gt_sf) +
 :::::
 
 ::: notes
-Local Moran's I looks at one type at a time. Multivariate local Geary's c asks whether neighbours share the same mix of battles, explosions and attacks on civilians. It finds 29 townships, mostly in Yangon and around Mandalay city, with few battles but many bombs and attacks on civilians. Count maps call them quiet. Run on two periods, it shows the pattern spreading around Mandalay as battles moved away. The violence did not stop. It changed kind.
+Local Moran's I looks at one type at a time. Multivariate local Geary's c asks whether neighbours share the same mix of battles, explosions and attacks on civilians. It finds 34 townships, mostly in Yangon and around Mandalay city, with few battles but many bombs and attacks on civilians. Count maps call them quiet. Run on two periods, it shows the pattern spreading around Mandalay as battles moved away. The violence did not stop. It changed kind.
 :::
 
 ## Key findings and their limits {.findings}
@@ -464,17 +464,23 @@ tm_shape(reg_sf) +
   states + map_layout
 ```
 
-<div class="small lgd lgd-reg">`r html_legend(setNames(regs$region_cols, sub("Northern Shan and Kachin border", "N. Shan and Kachin border", names(regs$region_cols))), sub("Northern Shan and Kachin border", "N. Shan and Kachin border", names(regs$region_cols)))`</div>
+```{r}
+short_reg <- function(x) x %>% sub("Rakhine and western Dry Zone", "Rakhine, W. Dry Zone", .) %>%
+  sub("Mandalay to northern Shan road", "Mandalay to N. Shan road", .)
+reg_leg <- setNames(regs$region_cols, short_reg(names(regs$region_cols)))
+```
+
+<div class="small lgd lgd-reg">`r html_legend(reg_leg, names(reg_leg))`</div>
 :::
 
 ::: {.column width="66%"}
 <div class="small">SKATER clustering (Lesson 6) groups neighbouring townships whose conflict rose and fell together into eight regions, each needing a different stance.</div>
 
-<div class="act"><b>Sagaing core and Southern Dry Zone. Plan long-term support</b><div class="row"><span class="tag">Because</span><span>hot since late 2021, the core peaking in 2023</span></div><div class="row"><span class="tag">Check first</span><span>displacement and access data from UN agencies and local partners</span></div></div>
+<div class="act"><b>Sagaing core. Plan long-term support</b><div class="row"><span class="tag">Because</span><span>hot since late 2021, peaking in 2023 and still hot</span></div><div class="row"><span class="tag">Check first</span><span>displacement and access data from UN agencies and local partners</span></div></div>
 
-<div class="act"><b>South-east frontier and Rakhine to Bago belt. Early warning</b><div class="row"><span class="tag">Because</span><span>they warmed later, and the south-east was still rising in 2025</span></div><div class="row"><span class="tag">Check first</span><span>whether local partners see the same spread, and which roads are open</span></div></div>
+<div class="act"><b>South-east frontier. Early warning</b><div class="row"><span class="tag">Because</span><span>it rose slowly from 2022 and was at its highest in the last quarter</span></div><div class="row"><span class="tag">Check first</span><span>whether local partners see the same spread, and which roads are open</span></div></div>
 
-<div class="act"><b>Northern Shan and Kachin border. Watch for relapse</b><div class="row"><span class="tag">Because</span><span>one sharp spike with Operation 1027, then quiet after the 2024 ceasefire</span></div><div class="row"><span class="tag">Check first</span><span>whether the ceasefire still holds</span></div></div>
+<div class="act"><b>Kayah, and Rakhine with the western Dry Zone. Watch for relapse</b><div class="row"><span class="tag">Because</span><span>Kayah peaked in 2022 and 2023, Rakhine in early 2024, and both have eased</span></div><div class="row"><span class="tag">Check first</span><span>whether local ceasefires and front lines still hold</span></div></div>
 
 <div class="act"><b>Across regions. Protect civilians where fighting has moved on</b><div class="row"><span class="tag">Because</span><span>air strikes keep returning to the core and new fronts, and bombs and attacks on civilians stay in Yangon and Mandalay city</span></div><div class="row"><span class="tag">Check first</span><span>casualty records, and under-reporting in tightly controlled cities</span></div></div>
 
@@ -483,7 +489,7 @@ tm_shape(reg_sf) +
 :::::
 
 ::: notes
-SKATER, from Lesson 6, joins neighbouring townships whose quarterly Gi star timelines match into eight conflict regions. Each region calls for a different stance. The Sagaing core and southern Dry Zone need long-term support. The south-east frontier and the Rakhine to Bago belt are the early-warning list. The northern Shan border needs watching for relapse. And across regions, civilians need protection from air strikes and from the bombs and attacks that stay after battles move on.
+SKATER, from Lesson 6, joins neighbouring townships whose quarterly Gi star timelines match into eight conflict regions. Each region calls for a different stance. The Sagaing core needs long-term support. The south-east frontier, still rising, is the early-warning area. Kayah and Rakhine with the western Dry Zone peaked and eased, so they need watching for relapse. And across regions, civilians need protection from air strikes and from the bombs and attacks that stay after battles move on.
 :::
 
 ## References {.smaller}
