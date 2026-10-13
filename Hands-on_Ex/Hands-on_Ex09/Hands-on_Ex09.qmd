@@ -76,7 +76,7 @@ condo_resale <- read_csv("data/aspatial/Condo_resale_2015.csv")
 glimpse(condo_resale)
 ```
 
-There are `r nrow(condo_resale)` sales and `r ncol(condo_resale)` columns. `LONGITUDE` and `LATITUDE` are in decimal degrees, so the coordinates are in WGS 84.
+There are `r format(nrow(condo_resale), big.mark = ",")` sales and `r ncol(condo_resale)` columns. `LONGITUDE` and `LATITUDE` are in decimal degrees, so the coordinates are in WGS 84.
 
 ```{r}
 summary(condo_resale$SELLING_PRICE)
@@ -120,6 +120,7 @@ condo_resale.sf <- condo_resale.sf %>%
 price_hist <- function(var, title, xlab) {
   ggplot(condo_resale.sf, aes(x = .data[[var]])) +
     geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+    scale_x_continuous(labels = scales::label_comma()) +
     labs(x = xlab, y = "Sales", title = title) +
     theme_minimal(base_size = 13) +
     theme(plot.title = element_text(size = 14, face = "bold"))
@@ -139,6 +140,7 @@ ggarrange(price_hist("SELLING_PRICE", "Selling price is strongly right skewed",
 price_hist <- function(var, title, xlab) {
   ggplot(condo_resale.sf, aes(x = .data[[var]])) +
     geom_histogram(bins = 30, fill = "#56B4E9", colour = "white") +
+    scale_x_continuous(labels = scales::label_comma()) +
     labs(x = xlab, y = "Sales", title = title) +
     theme_minimal(base_size = 13) +
     theme(plot.title = element_text(size = 14, face = "bold"))
@@ -224,7 +226,8 @@ tm_shape(condo_resale.sf) +
   tm_dots(fill = "SELLING_PRICE",
           size = 0.25,
           fill.scale = tm_scale_intervals(style = "quantile",
-                                          values = "brewer.blues"),
+                                          values = "brewer.blues",
+                                          values.range = c(0.25, 1)),
           fill.legend = tm_legend(title = "Selling price (S$)",
                                   position = tm_pos_out("right", "center"))) +
   tm_title("The most expensive condos cluster in the central region",
@@ -242,7 +245,8 @@ tm_shape(condo_resale.sf) +
   tm_dots(fill = "SELLING_PRICE",
           size = 0.25,
           fill.scale = tm_scale_intervals(style = "quantile",
-                                          values = "brewer.blues"),
+                                          values = "brewer.blues",
+                                          values.range = c(0.25, 1)),
           fill.legend = tm_legend(title = "Selling price (S$)",
                                   position = tm_pos_out("right", "center"))) +
   tm_title("The most expensive condos cluster in the central region",
@@ -424,18 +428,20 @@ mlr.vif
 #| echo: false
 #| fig-width: 9
 #| fig-height: 5.5
-plot(mlr.vif) +
+plot(mlr.vif, colors = c("#0072B2", "#E69F00", "#D55E00")) +
   labs(title = "Every VIF is well below 5") +
-  theme(plot.title = element_text(size = 15, face = "bold"))
+  theme(plot.title = element_text(size = 15, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-plot(mlr.vif) +
+plot(mlr.vif, colors = c("#0072B2", "#E69F00", "#D55E00")) +
   labs(title = "Every VIF is well below 5") +
-  theme(plot.title = element_text(size = 15, face = "bold"))
+  theme(plot.title = element_text(size = 15, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 :::
 
@@ -452,18 +458,20 @@ The highest VIF is `r round(max(mlr.vif$VIF), 2)`, for `r mlr.vif$Term[which.max
 #| echo: false
 #| fig-width: 8
 #| fig-height: 5.5
-check_model(condo.mlr1, check = "linearity")
+check_model(condo.mlr1, check = "linearity",
+            colors = c("#D55E00", "#0072B2", "#CC79A7"))
 ```
 
 ## The Code
 
 ```{r}
 #| eval: false
-check_model(condo.mlr1, check = "linearity")
+check_model(condo.mlr1, check = "linearity",
+            colors = c("#D55E00", "#0072B2", "#CC79A7"))
 ```
 :::
 
-Most residuals scatter around zero and the reference line is roughly flat, so the linear form is acceptable. The spread widens for the higher fitted prices, which is a sign of unequal variance.
+Up to fitted prices of about S$5 million, where most sales are, the residuals scatter around zero. Above that the reference line curves up steeply, because the most expensive condos sold for far more than the model predicts. So the straight-line form works for most of the market but not for the top end. The spread also widens for the higher fitted prices, which is a sign of unequal variance.
 
 ### Normality
 
@@ -480,7 +488,12 @@ check_normality(condo.mlr1)
 #| echo: false
 #| fig-width: 8
 #| fig-height: 5.5
-plot(check_normality(condo.mlr1), type = "qq") +
+qq_plot <- plot(check_normality(condo.mlr1), type = "qq")
+line_layers <- sapply(qq_plot$layers, function(l)
+  inherits(l$geom, c("GeomPath", "GeomAbline", "GeomHline", "GeomSegment")))
+for (i in which(line_layers)) qq_plot$layers[[i]]$aes_params$colour <- "#D55E00"
+
+qq_plot +
   labs(title = "The residuals leave the line at both ends") +
   theme(plot.title = element_text(size = 15, face = "bold"))
 ```
@@ -489,7 +502,12 @@ plot(check_normality(condo.mlr1), type = "qq") +
 
 ```{r}
 #| eval: false
-plot(check_normality(condo.mlr1), type = "qq") +
+qq_plot <- plot(check_normality(condo.mlr1), type = "qq")
+line_layers <- sapply(qq_plot$layers, function(l)
+  inherits(l$geom, c("GeomPath", "GeomAbline", "GeomHline", "GeomSegment")))
+for (i in which(line_layers)) qq_plot$layers[[i]]$aes_params$colour <- "#D55E00"
+
+qq_plot +
   labs(title = "The residuals leave the line at both ends") +
   theme(plot.title = element_text(size = 15, face = "bold"))
 ```
@@ -719,7 +737,7 @@ Both GWR models fit much better than OLS. The adjusted R² rises from `r round(m
 
 ::: {.callout-note}
 ## Learning diary
-The last column was new to me. OLS uses 15 parameters. The adaptive GWR behaves like a model with about `r round(gwr.adaptive$GW.diagnostic$enp)` parameters, because every condo has its own set of 15 coefficients, smoothed by the kernel. That is a lot for `r nrow(condo_resale.sf)` sales. AICc already penalises it, and GWR still wins, but it means some of the local coefficients are fitted from very little data. I look at how reliable they are in [Which Local Effects Can Be Trusted].
+The last column was new to me. OLS uses 15 parameters. The adaptive GWR behaves like a model with about `r round(gwr.adaptive$GW.diagnostic$enp)` parameters, because every condo has its own set of 15 coefficients, smoothed by the kernel. That is a lot for `r format(nrow(condo_resale.sf), big.mark = ",")` sales. AICc already penalises it, and GWR still wins, but it means some of the local coefficients are fitted from very little data. I look at how reliable they are in [Which Local Effects Can Be Trusted].
 :::
 
 ## Converting the SDF into an sf Data Frame
@@ -757,7 +775,8 @@ tm_shape(condo_resale.sf.adaptive) +
   tm_dots(fill = "Local_R2",
           size = 0.25,
           fill.scale = tm_scale_intervals(style = "quantile",
-                                          values = "brewer.purples"),
+                                          values = "brewer.purples",
+                                          values.range = c(0.25, 1)),
           fill.legend = tm_legend(title = "Local R²",
                                   position = tm_pos_out("right", "center"))) +
   tm_title("The local models fit best away from the city centre",
@@ -774,7 +793,8 @@ tm_shape(condo_resale.sf.adaptive) +
   tm_dots(fill = "Local_R2",
           size = 0.25,
           fill.scale = tm_scale_intervals(style = "quantile",
-                                          values = "brewer.purples"),
+                                          values = "brewer.purples",
+                                          values.range = c(0.25, 1)),
           fill.legend = tm_legend(title = "Local R²",
                                   position = tm_pos_out("right", "center"))) +
   tm_title("The local models fit best away from the city centre",
@@ -802,7 +822,8 @@ coef_map <- function(var, title, legend_title, palette) {
     tm_dots(fill = var,
             size = 0.2,
             fill.scale = tm_scale_intervals(style = "quantile",
-                                            values = palette),
+                                            values = palette,
+                                            values.range = c(0.25, 1)),
             fill.legend = tm_legend(title = legend_title,
                                     position = tm_pos_out("right", "center"))) +
     tm_title(title, size = 1.3, fontface = "bold")
@@ -826,7 +847,8 @@ coef_map <- function(var, title, legend_title, palette) {
     tm_dots(fill = var,
             size = 0.2,
             fill.scale = tm_scale_intervals(style = "quantile",
-                                            values = palette),
+                                            values = palette,
+                                            values.range = c(0.25, 1)),
             fill.legend = tm_legend(title = legend_title,
                                     position = tm_pos_out("right", "center"))) +
     tm_title(title, size = 1.3, fontface = "bold")
@@ -840,7 +862,7 @@ tmap_arrange(coef_map("AREA_SQM_SE", "Standard error of AREA_SQM",
 ```
 :::
 
-The t-value is above 1.96 at `r sum(condo_resale.sf.adaptive$AREA_SQM_TV > 1.96)` of the `r nrow(condo_resale.sf.adaptive)` condos, so floor area matters almost everywhere. The t-values are highest in the central area and much lower in the north, east and west, where the remaining `r sum(condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96)` condos that are not significant all sit, between `r round(min(condo_resale.sf$PROX_CBD[condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96]))` and `r round(max(condo_resale.sf$PROX_CBD[condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96]))` km from the CBD. The standard error map is almost the reverse. It is largest in the outer areas.
+The t-value is above 1.96 at `r sum(condo_resale.sf.adaptive$AREA_SQM_TV > 1.96)` of the `r format(nrow(condo_resale.sf.adaptive), big.mark = ",")` condos, so floor area matters almost everywhere. The t-values are highest in the central area and much lower in the north, east and west, where the remaining `r sum(condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96)` condos that are not significant all sit, between `r round(min(condo_resale.sf$PROX_CBD[condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96]))` and `r round(max(condo_resale.sf$PROX_CBD[condo_resale.sf.adaptive$AREA_SQM_TV <= 1.96]))` km from the CBD. The standard error map is almost the reverse. It is largest in the outer areas.
 
 The reason shows up in the coefficient itself. The local value of an extra square metre ranges from S$`r format(round(min(condo_resale.sf.adaptive$AREA_SQM)), big.mark = ",")` to S$`r format(round(max(condo_resale.sf.adaptive$AREA_SQM)), big.mark = ",")`, against a single S$`r format(round(coef(condo.mlr1)["AREA_SQM"]), big.mark = ",")` in the OLS model. Within 3 km of the CBD the median is S$`r format(round(median(condo_resale.sf.adaptive$AREA_SQM[condo_resale.sf$PROX_CBD <= 3])), big.mark = ",")` per square metre, and beyond 10 km it is S$`r format(round(median(condo_resale.sf.adaptive$AREA_SQM[condo_resale.sf$PROX_CBD > 10])), big.mark = ",")`. A square metre costs much more in the centre, so the effect there is large relative to its error. In the suburbs the effect is smaller, and the same amount of noise makes it less certain. This is the kind of local difference a single OLS coefficient hides.
 
@@ -885,14 +907,18 @@ log_compare <- tibble(
                 bptest(condo.mlr1.log)$statistic,
                 log_moran$statistic,
                 sum(coef(summary(condo.mlr1.log))[-1, 4] < 0.05)))
-kable(log_compare, digits = 3)
+log_compare %>%
+  mutate(across(c(price, log_price),
+                ~ if_else(check == "Variables significant at 0.05",
+                          as.character(round(.x)), sprintf("%.3f", .x)))) %>%
+  kable(align = "lrr")
 ```
 
 ::: {.callout-tip}
 ## Alternative explored
 The log model fixes most of the normality problem. The residual skewness drops from `r round(log_compare$price[3], 2)` to `r round(log_compare$log_price[3], 2)` and W rises from `r round(log_compare$price[2], 3)` to `r round(log_compare$log_price[2], 3)`. The fit also improves, with the adjusted R² going from `r round(log_compare$price[1], 3)` to `r round(log_compare$log_price[1], 3)`. This makes sense for prices. Features tend to add a percentage to the price rather than a fixed amount, so an extra square metre is worth more in an expensive area. The log model reads that way. For example, freehold tenure adds about `r round((exp(coef(condo.mlr1.log)["FREEHOLD"]) - 1) * 100)` percent to the price.
 
-Two problems remain. The Breusch-Pagan test still finds unequal variance, and the residuals are even more clustered, with Moran's I at `r sprintf("%.3f", log_compare$log_price[5])` against `r sprintf("%.3f", log_compare$price[5])` for the price model. The log also changes which variables matter. Only `r log_compare$log_price[6]` of the 14 stay significant. `r paste(names(which(coef(summary(condo.mlr1.log))[-1, 4] >= 0.05)), collapse = ", ")` drop out, so their effect in the price model came mostly from the expensive end. So the log model is better behaved, but it still needs a spatial model. The book's GWR on raw price is a fair choice for teaching, but a log-price GWR would be the next thing I would try.
+Two problems remain. The Breusch-Pagan test still finds unequal variance, and the residuals are even more clustered, with Moran's I at `r sprintf("%.3f", log_compare$log_price[5])` against `r sprintf("%.3f", log_compare$price[5])` for the price model. The log also changes which variables matter. Only `r log_compare$log_price[6]` of the 14 stay significant. `r knitr::combine_words(names(which(coef(summary(condo.mlr1.log))[-1, 4] >= 0.05)))` drop out, so their effect in the price model came mostly from the expensive end. So the log model is better behaved, but it still needs a spatial model. The book's GWR on raw price is a fair choice for teaching, but a log-price GWR would be the next thing I would try.
 :::
 
 ## Does GWR Remove the Spatial Autocorrelation?
@@ -978,7 +1004,7 @@ tmap_arrange(res_map(condo_resale.sf, "MLR_RES", "OLS residuals"),
 
 ::: {.callout-tip}
 ## Alternative explored
-GWR removes the clustering. Moran's I falls from `r round(mlr_moran$statistic, 3)` for OLS to `r round(gwr_adaptive_moran$statistic, 3)` for the adaptive GWR, with a p-value of `r gwr_adaptive_moran$p.value`. The fixed model gives `r round(gwr_fixed_moran$statistic, 3)`. Both are slightly below zero and nowhere near significant. On the maps I used the same fixed classes for both models so they can be compared. The GWR map has far more grey points within S$100,000 of the actual price, and the large errors no longer come in groups.
+GWR removes the clustering. Moran's I falls from `r sprintf("%.3f", mlr_moran$statistic)` for OLS to `r sprintf("%.3f", gwr_adaptive_moran$statistic)` for the adaptive GWR, with a p-value of `r sprintf("%.3f", gwr_adaptive_moran$p.value)`. The fixed model gives `r sprintf("%.3f", gwr_fixed_moran$statistic)`. Both are slightly below zero and nowhere near significant. On the maps I used the same fixed classes for both models so they can be compared. The GWR map has far more grey points within S$100,000 of the actual price, and the large errors no longer come in groups.
 
 The book shows that GWR fits better, but it does not check whether GWR fixed the problem that motivated it. Here it did. The caution is that a model with about `r round(gwr.adaptive$GW.diagnostic$enp)` effective parameters can absorb almost any spatial pattern, so this result shows the residuals are clean, not that every local coefficient is meaningful. The next section looks at that.
 :::
