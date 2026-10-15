@@ -43,8 +43,8 @@ charts <- read_rds("data/rds/charts.rds")
 mmr <- prep$mmr_conflict
 mmr_st <- mmr %>% group_by(ST) %>% summarise()
 nudge <- tribble(~ST, ~dx_km, ~dy_km,
-  "Ayeyarwady", -45, -15, "Yangon", 15, -40, "Mon", -15, -45, "Bago (West)", -35, 25, "Bago (East)", 30, -15,
-  "Kayin", 45, 10, "Shan (South)", -25, 0, "Shan (East)", 40, 0, "Tanintharyi", 80, 0)
+  "Ayeyarwady", -45, -15, "Yangon", 15, -40, "Mon", -15, -45, "Bago West", -35, 25, "Bago East", 30, -15,
+  "Kayin", 45, 10, "Shan South", -25, 0, "Shan East", 40, 0, "Tanintharyi", 80, 0)
 st_lab <- st_point_on_surface(mmr_st) %>%
   mutate(x = st_coordinates(.)[, 1], y = st_coordinates(.)[, 2]) %>%
   st_drop_geometry() %>% left_join(nudge, by = "ST") %>%
@@ -171,12 +171,12 @@ tm_shape(mmr) +
 
 <div class="statrow">
 <div><div class="bignum">`r format(n_events, big.mark = ",")`</div><div class="bigcap">armed conflict events, January 2021 to September 2025</div></div>
-<div><div class="bignum">`r format(peak$n, big.mark = ",")`</div><div class="bigcap">events in `r peak$quarter`, the peak, as Operation 1027 began</div></div>
+<div><div class="bignum">`r format(peak$n, big.mark = ",")`</div><div class="bigcap">events in `r sub("(\\d{4})Q(\\d)", "Q\\2 \\1", peak$quarter)`, the peak, as Operation 1027 began</div></div>
 </div>
 
 <div class="fix"><b>Study area.</b> All 330 townships of Myanmar. Black outline, the Dry Zone of Sagaing, Magway and Mandalay.</div>
 
-<div class="fix"><b>Data.</b> ACLED events (battles, explosions and remote violence, violence against civilians) and MIMU township boundaries, counted by township and quarter.</div>
+<div class="fix"><b>Data.</b> ACLED battles, explosions and remote violence, and violence against civilians, with MIMU township boundaries, counted by township and quarter.</div>
 :::
 :::::
 
@@ -287,9 +287,9 @@ tmap_arrange(e1, e2, ncol = 2)
 ::: {.column width="38%"}
 <div class="fix"><b>The core stayed hot.</b> Sagaing's core was a hot spot in `r core_q[1]` to `r core_q[2]` of 19 quarters. With no trend, the brief's filter leaves it blank, so the right map shows it.</div>
 
-<div class="fix"><b>New fronts.</b> `r np("Consecutive hotspot")` townships turned hot and stayed hot, in the hills of Bago (East) and on the road to northern Shan.</div>
+<div class="fix"><b>New fronts.</b> `r np("Consecutive hotspot")` townships turned hot and stayed hot, in the hills of Bago East and on the road to northern Shan.</div>
 
-<div class="fix"><b>Cold to hot.</b> `r np("Oscillating hotspot")` more, across Tanintharyi, Mon, central Rakhine, Bago (East) and the southern Dry Zone.</div>
+<div class="fix"><b>Cold to hot.</b> `r np("Oscillating hotspot")` more, across Tanintharyi, Mon, central Rakhine, Bago East and the southern Dry Zone.</div>
 
 <div class="fix"><b>Cooling.</b> `r sum(sig_tot$ST == "Yangon" & str_detect(sig_tot$pattern, "coldspot"))` of Yangon's 45 townships, and the northern Shan border after the 2024 ceasefire.</div>
 :::
@@ -327,9 +327,9 @@ tm_shape(types_sf) +
 ::: {.column width="34%"}
 <div class="fix"><b>Battles moved south and west.</b> Tanintharyi and central Rakhine turned hot. Northern Shan went cold after the ceasefire.</div>
 
-<div class="fix"><b>Explosions spread to the hills.</b> Bago (East) and Tanintharyi turned hot. Yangon's bombings faded.</div>
+<div class="fix"><b>Explosions spread to the hills.</b> Bago East and Tanintharyi turned hot. Yangon's bombings faded.</div>
 
-<div class="fix"><b>Attacks on civilians moved to the lowlands.</b> `r np("Oscillating hotspot", "Violence against civilians", "Bago (West)")` townships in Bago (West) turned hot, an area of little fighting.</div>
+<div class="fix"><b>Attacks on civilians moved to the lowlands.</b> `r np("Oscillating hotspot", "Violence against civilians", "Bago West")` townships in Bago West turned hot, an area of little fighting.</div>
 :::
 :::::
 
@@ -446,7 +446,7 @@ Local Moran's I looks at one type at a time. Multivariate local Geary's c asks w
 | **1** | The Dry Zone is the hot core | `r round(100 * dz_share)`% of events, `r sum(lq$quadrant == "High-High" & lq$ST %in% dz)` of `r sum(lq$quadrant == "High-High")` High-High, hot in `r core_q[1]` to `r core_q[2]` of 19 quarters | Counts, not rates, since no reliable population data exists for 2021 to 2025 |
 | **2** | Conflict spread out from the core | `r np("Consecutive hotspot")` consecutive and `r np("Oscillating hotspot")` oscillating hot spots ring the core. Conflict regions show the order, core first, south-east and Rakhine later | ACLED records reported events, so places with less access may look calmer |
 | **3** | Yangon and northern Shan cooled | `r sum(sig_tot$ST == "Yangon" & str_detect(sig_tot$pattern, "coldspot"))` of 45 Yangon townships in a cold pattern. Northern Shan cold after the 2024 ceasefire | A falling Gi\* means a smaller share of the conflict, not peace |
-| **4** | Each type moves in a different direction | Battles to Rakhine and Tanintharyi, explosions to Bago (East), attacks on civilians to Bago (West) | Battle trends are weak. About half fail the FDR check |
+| **4** | Each type moves in a different direction | Battles to Rakhine and Tanintharyi, explosions to Bago East, attacks on civilians to Bago West | Battle trends are weak. About half fail the FDR check |
 | **5** | Air strikes grew most where ground fighting grew | About `r round(air_x)`-fold rise, air hot spots in the core and on new fronts | Strikes are counted, not their harm |
 | **6** | Bombs and attacks on civilians stay when fighting leaves | `r nrow(urban)` townships share a bombs-and-civilians mix, growing around Mandalay | Rests on small counts per township |
 
@@ -486,7 +486,7 @@ reg_leg <- setNames(regs$region_cols, short_reg(names(regs$region_cols)))
 :::
 
 ::: {.column width="66%"}
-<div class="small">SKATER clustering (Lesson 6) groups neighbouring townships whose conflict rose and fell together into eight regions, each needing a different stance.</div>
+<div class="small">SKATER clustering from Lesson 6 groups neighbouring townships whose conflict rose and fell together into eight regions, each needing a different stance.</div>
 
 <div class="act"><b>Sagaing core. Plan long-term support</b><div class="row"><span class="tag">Because</span><span>hot since late 2021, peaking in 2023 and still hot</span></div><div class="row"><span class="tag">Check first</span><span>displacement and access data from UN agencies and local partners</span></div></div>
 
