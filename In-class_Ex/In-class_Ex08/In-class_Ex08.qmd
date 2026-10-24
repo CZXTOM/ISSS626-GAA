@@ -1,0 +1,483 @@
+---
+title: "In-class Exercise 8"
+subtitle: "Market Area Analysis with the Huff Model"
+author: "ZeXin Chen"
+format:
+  html:
+    toc: true
+    number-sections: true
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
+date: "October 24, 2026"
+date-modified: today
+execute:
+  echo: true
+  eval: true
+  warning: false
+  freeze: true
+  message: false
+---
+
+# Overview
+
+This in-class exercise follows Lesson 8. It delineates the trade areas of 28 fast-food stores in Taichung City with the Huff model, using the **MCI** package. In class, the prof worked through a revised version of chapter 18 of the book.
+
+# Getting Started
+
+```{r}
+#| output: false
+pacman::p_load(sf, tidyverse, MCI, tmap, ggstatsplot)
+```
+
+# Importing Data
+
+## Importing geospatial data
+
+```{r}
+#| output: false
+stores <- st_read(
+  dsn = "data/geospatial",
+  layer = "STORES_TC")
+
+town <- st_read(
+  dsn = "data/geospatial",
+  layer = "TOWN_TC")
+
+village <- st_read(
+  dsn = "data/geospatial",
+  layer = "VILLAGE_TC")
+```
+
+## Importing aspatial data
+
+```{r}
+#| output: false
+pop2019 <- read_csv(
+  "data/aspatial/pop2019.csv")
+
+store_sales <- read_csv(
+  "data/aspatial/Store_sales_data.csv")
+```
+
+# Data Preparation
+
+## Aggregating store sales
+
+The code chunk below aggregates the store sales data by store code.
+
+```{r}
+store_sales_aggre <- store_sales %>%
+  group_by(`Store Code`) %>%
+  summarise(
+    "Total_Bill" = sum(Bills, na.rm = TRUE),
+    "Total_Sales" = sum(Amount, na.rm = TRUE))
+```
+
+## Relational join
+
+In the code chunk below, `left_join()` of **dplyr** appends the sales totals to the stores, `mutate()` creates a new field called *Store_size*, and `st_drop_geometry()` drops the geometry.
+
+```{r}
+stores_tidied <- stores %>%
+  left_join(store_sales_aggre,
+            by = join_by(
+              Store_CD == `Store Code`)) %>%
+  mutate(Store_size = 1) %>%
+  st_drop_geometry()
+```
+
+Next, `summary()` is used to check if there are any missing values in the data.frame.
+
+```{r}
+summary(stores_tidied)
+```
+
+::: {.callout-note}
+## Learning diary
+This is where the prof changed the book. The result goes into a new object, `stores_tidied`, so `stores` keeps its geometry for mapping later. Every store now gets a size of 1 instead of 100. Since all stores share the same value, it cancels out of the Huff formula either way, so the probabilities do not change. `stores_tidied` has `r nrow(stores_tidied)` rows and `r ncol(stores_tidied)` columns, with no geometry.
+:::
+
+## Tidying pop2019 data.frame
+
+Before appending pop2019 to the village sf data.frame, it is wise to check that the values in the join fields are the same.
+
+```{r}
+glimpse(pop2019)
+```
+
+```{r}
+glimpse(village)
+```
+
+The village ID, *V_ID*, in pop2019 does not have the same structure as *VILLCODE* in the village sf data.frame. The code chunk below removes the "-" sign from the values.
+
+```{r}
+pop2019 <- pop2019 %>%
+  mutate(V_ID = str_remove_all(
+    V_ID, "-"))
+```
+
+Now, `left_join()` of **dplyr** appends the data in pop2019 onto the village sf data.frame.
+
+```{r}
+village <- village %>%
+  left_join(pop2019,
+            by = join_by(
+              VILLCODE == V_ID))
+```
+
+## Check for missing or zero values
+
+The code chunk below is used to check for any records with missing values.
+
+```{r}
+summary(village)
+```
+
+The output above reveals five missing values in the H_CNT, P_CNT, M_CNT and F_CNT fields. The code chunk below removes those five records from the village sf data.frame.
+
+```{r}
+village <- village %>%
+  filter(!is.na(P_CNT))
+```
+
+```{r}
+any(is.na(village$H_CNT))
+any(is.na(village$P_CNT))
+any(is.na(village$M_CNT))
+any(is.na(village$F_CNT))
+```
+
+::: {.callout-note}
+## Learning diary
+After the join and the filter, `village` has `r nrow(village)` villages and `r ncol(village)` columns, the same as on the prof's screen. When he ran the join a second time in class, his `village` picked up columns like `COUNTY_ID.x` and `TOWN_ID.x`. The join chunk overwrites `village`, so running it again joins pop2019 a second time and dplyr adds `.x` and `.y` to keep the duplicate names apart. A clean render runs each chunk once, so it does not happen here.
+:::
+
+# Computing Distance Matrix
+
+Instead of calculating the distance between the villages and the stores directly, the code chunk below takes a point inside each village with `st_point_on_surface()`, then computes the distance between those points and the stores.
+
+```{r}
+village_center <- st_point_on_surface(village)
+distmat <- st_distance(village_center, stores)
+```
+
+Next, the code chunk below names the rows and columns with the village and store codes, and converts the distance matrix into a long data.frame format.
+
+```{r}
+rownames(distmat) <- village$`VILLCODE`
+colnames(distmat) <- stores$`Store_CD`
+
+distmat_long <- distmat %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "VILLCODE") %>%
+  pivot_longer(
+    cols = -VILLCODE,
+    names_to = "Store_CD",
+    values_to = "distance"
+  ) %>%
+  mutate(distance = as.numeric(distance))
+```
+
+::: {.callout-note}
+## Learning diary
+`distmat` has one row for each of the `r nrow(distmat)` villages and one column for each of the `r ncol(distmat)` stores, so the long table has `r format(nrow(distmat_long), big.mark = ",")` rows, one per village and store pair. `st_distance()` returns the distances with units attached, so `as.numeric()` strips them to plain metres before the Huff model uses them.
+:::
+
+# Preparing Interaction Matrix
+
+The code chunk below builds the interaction matrix required by the **MCI** package.
+
+```{r}
+ijMatrix <- distmat_long %>%
+  left_join(
+    stores_tidied %>%
+      select(Store_CD, Store_size,
+             Total_Sales),
+    by = "Store_CD") %>%
+  relocate(
+    distance, .after = last_col())
+```
+
+::: {.callout-note}
+## Learning diary
+This step also differs from the book. The book calls the table `interaction_matrix` and has to drop the geometry from `stores` inside the join. Here it is `ijMatrix`, and because `stores_tidied` already has no geometry, it can be joined directly. The prof also carries `Total_Sales` into the table, next to `Store_size`, so each village and store pair now holds the store's actual sales as well. `ijMatrix` has `r format(nrow(ijMatrix), big.mark = ",")` rows and the columns `r paste(names(ijMatrix), collapse = ", ")`.
+:::
+
+The code chunk below tidies the village sf data frame. It keeps the village code, the number of households and the population, adds the average household size, *HH_SIZE*, and drops the geometry.
+
+```{r}
+village_tidied <- village %>%
+  select(VILLCODE, H_CNT, P_CNT) %>%
+  mutate(HH_SIZE = P_CNT/H_CNT) %>%
+  st_drop_geometry()
+```
+
+::: {.callout-note}
+## Learning diary
+*HH_SIZE* is the number of people per household. It ranges from `r round(min(village_tidied$HH_SIZE), 2)` to `r round(max(village_tidied$HH_SIZE), 2)` across the `r nrow(village_tidied)` villages, with a median of `r round(median(village_tidied$HH_SIZE), 2)`. This is new compared with the book, which only uses the total population, *P_CNT*.
+:::
+
+The code chunk below appends the fields from the village_tidied data frame to ijMatrix.
+
+```{r}
+ijMatrix <- ijMatrix %>%
+  left_join(
+    village_tidied,
+    by = "VILLCODE") %>%
+  relocate(
+    HH_SIZE, .after = last_col())
+```
+
+::: {.callout-note}
+## Learning diary
+Each row of `ijMatrix` is now one village and store pair with everything the model needs, the store's size and sales, the distance, and the village's households, population and household size. It has `r format(nrow(ijMatrix), big.mark = ",")` rows and `r ncol(ijMatrix)` columns. *HH_SIZE* is already the last column after the join, so `relocate()` does not move anything here. Like the village join earlier, this chunk overwrites `ijMatrix`, so running it twice in a live session would add `.x` and `.y` columns.
+:::
+
+# Computing Huff Model
+
+`huff.shares()` of **MCI** computes the probability that the people in each village choose each store.
+
+```{r}
+huff_share <- huff.shares(
+  ijMatrix, "VILLCODE", "Store_CD",
+  "Store_size", "distance", lambda = -1.28)
+```
+
+::: {.callout-note}
+## Learning diary
+The prof sets `lambda = -1.28` instead of the default of -2 used in the book. In the lesson's formula this is the distance exponent λ, so a smaller value means distance puts people off less, and a store draws customers from further away. In my Hands-on Exercise 8, fitting λ to the stores' actual sales shares also gave a value well below 2, at λ = 1, so both point the same way.
+:::
+
+## Trade area analysis for a single store
+
+First, the code chunk below selects the market share data of one store by its *Store_CD*, store BT.
+
+```{r}
+market_share <- huff_share %>%
+  filter(Store_CD == "BT")
+```
+
+Next, the trade areas of the selected store are derived by joining its market share to the villages.
+
+```{r}
+Trade_area <- village %>%
+  left_join(market_share)
+```
+
+Before plotting the trade area map, the code chunk below extracts the selected store from the stores sf data.frame.
+
+```{r}
+selected_store <- stores %>%
+  filter(Store_CD == "BT")
+```
+
+The prof plots the map with the same code as the book. I reuse my map from Hands-on Exercise 8, which labels the classes with two significant figures, greys out the five villages without residents, and shows the other 27 stores as white dots.
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 8
+fmt_num <- function(v) {
+  sapply(v, function(z) {
+    if (abs(z) < 0.01) formatC(z, format = "e", digits = 1)
+    else formatC(signif(z, 2), format = "fg", digits = 2)
+  }) %>% trimws()
+}
+
+q <- quantile(Trade_area$p_ij, probs = seq(0, 1, length.out = 11))
+
+tm_shape(town) +
+  tm_polygons(fill = "grey80", col = NA) +
+tm_shape(Trade_area) +
+  tm_polygons(fill = "p_ij",
+              fill.scale = tm_scale_intervals(
+                breaks = c(q[1:10], Inf) %>% unname(),
+                labels = paste(fmt_num(q[1:10]), "to", fmt_num(q[2:11])),
+                values = "brewer.blues"),
+              fill.legend = tm_legend(title = "Patronage Probability",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey80", lwd = 0.3) +
+tm_shape(stores) +
+  tm_dots(size = 0.45, fill = "white", col = "black", lwd = 1.2) +
+tm_shape(selected_store) +
+  tm_dots(size = 0.6, fill = "#D55E00", col = "black") +
+  tm_title("Distribution of Patronage Probability of Store BT by village",
+           size = 1.3, fontface = "bold") +
+  tm_compass(type = "8star", size = 2, position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+fmt_num <- function(v) {
+  sapply(v, function(z) {
+    if (abs(z) < 0.01) formatC(z, format = "e", digits = 1)
+    else formatC(signif(z, 2), format = "fg", digits = 2)
+  }) %>% trimws()
+}
+
+q <- quantile(Trade_area$p_ij, probs = seq(0, 1, length.out = 11))
+
+tm_shape(town) +
+  tm_polygons(fill = "grey80", col = NA) +
+tm_shape(Trade_area) +
+  tm_polygons(fill = "p_ij",
+              fill.scale = tm_scale_intervals(
+                breaks = c(q[1:10], Inf) %>% unname(),
+                labels = paste(fmt_num(q[1:10]), "to", fmt_num(q[2:11])),
+                values = "brewer.blues"),
+              fill.legend = tm_legend(title = "Patronage Probability",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey80", lwd = 0.3) +
+tm_shape(stores) +
+  tm_dots(size = 0.45, fill = "white", col = "black", lwd = 1.2) +
+tm_shape(selected_store) +
+  tm_dots(size = 0.6, fill = "#D55E00", col = "black") +
+  tm_title("Distribution of Patronage Probability of Store BT by village",
+           size = 1.3, fontface = "bold") +
+  tm_compass(type = "8star", size = 2, position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+With λ = 1.28, BT's lowest probability in any village is `r signif(min(Trade_area$p_ij), 2)`, against about 0.0001 with the book's λ = 2 in my Hands-on Exercise 8. A gentler distance decay spreads each village's choice more evenly across the stores, so far villages give BT a larger share than before. BT still has a probability above one half in `r sum(Trade_area$p_ij > 0.5)` villages.
+:::
+
+The code chunk below turns the probabilities into a wide table, one row per village and one column per store.
+
+```{r}
+huff_share_wider <- huff_share %>%
+  select(VILLCODE, Store_CD, p_ij) %>%
+  pivot_wider(names_from = Store_CD,
+              values_from = p_ij)
+```
+
+## Trade areas of all stores
+
+Each village is given to the store it has the highest probability of patronising. In the code chunk below, `pick(2:29)` takes the 28 store columns of `huff_share_wider`, `max.col()` finds the column with the highest probability in each row, and `names()` turns it into the store code, saved as a new field, *TA*. `ties.method = "first"` means that if two stores tie for the highest probability, the first one is used.
+
+```{r}
+huff_TA <- huff_share_wider %>%
+  mutate(
+    TA = names(pick(2:29))[
+      max.col(pick(2:29),
+              ties.method = "first")
+    ]
+  )
+```
+
+The code chunk below keeps only the village code and its trade area, then appends the trade area of each village to the village sf data.frame.
+
+```{r}
+huff_TA_tidied <- huff_TA %>%
+  select(VILLCODE, TA)
+
+village_TA <- village %>%
+  left_join(huff_TA_tidied,
+            by = join_by(VILLCODE))
+```
+
+::: {.callout-note}
+## Learning diary
+The prof pointed out that some of these steps are redundant and can be nested. `huff_TA` and `huff_TA_tidied` are only stepping stones, so the two chunks above can be written as one pipe. I check that it gives the same trade areas.
+
+```{r}
+village_TA_nested <- huff_share_wider %>%
+  mutate(TA = names(pick(2:29))[
+    max.col(pick(2:29), ties.method = "first")]) %>%
+  select(VILLCODE, TA) %>%
+  left_join(village, ., by = join_by(VILLCODE))
+
+identical(village_TA$TA, village_TA_nested$TA)
+```
+
+The same applies earlier. `village_tidied` is only used to join household size onto `ijMatrix`, so it could be piped straight into that join. Keeping the steps separate makes each object easy to `View()` in class, while nesting keeps the environment tidy.
+:::
+
+`summarise()` merges the villages of each store into one trade area, so the map can draw the boundaries between them.
+
+```{r}
+TA_areas <- village_TA %>%
+  group_by(TA) %>%
+  summarise()
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 9
+hues <- c(seq(0, 55, length.out = 9), seq(200, 345, length.out = 19))
+ta_cols <- hcl(h = hues, c = 55, l = rep(c(62, 82), length.out = 28))
+
+tm_shape(town) +
+  tm_polygons(fill = "grey80", col = NA) +
+tm_shape(village_TA) +
+  tm_polygons(fill = "TA",
+              fill.scale = tm_scale_categorical(values = ta_cols),
+              fill.legend = tm_legend(title = "Trade area",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60", lwd = 0.2) +
+tm_shape(TA_areas) +
+  tm_borders(col = "grey15", lwd = 1.3) +
+tm_shape(stores) +
+  tm_dots(size = 0.3, fill = "black") +
+  tm_text("Store_CD", size = 0.6, ymod = 0.7) +
+  tm_title("Trade Areas of stores", size = 1.5, fontface = "bold") +
+  tm_compass(type = "8star", size = 2, position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+hues <- c(seq(0, 55, length.out = 9), seq(200, 345, length.out = 19))
+ta_cols <- hcl(h = hues, c = 55, l = rep(c(62, 82), length.out = 28))
+
+tm_shape(town) +
+  tm_polygons(fill = "grey80", col = NA) +
+tm_shape(village_TA) +
+  tm_polygons(fill = "TA",
+              fill.scale = tm_scale_categorical(values = ta_cols),
+              fill.legend = tm_legend(title = "Trade area",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey60", lwd = 0.2) +
+tm_shape(TA_areas) +
+  tm_borders(col = "grey15", lwd = 1.3) +
+tm_shape(stores) +
+  tm_dots(size = 0.3, fill = "black") +
+  tm_text("Store_CD", size = 0.6, ymod = 0.7) +
+  tm_title("Trade Areas of stores", size = 1.5, fontface = "bold") +
+  tm_compass(type = "8star", size = 2, position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+The prof maps the trade areas with `tm_polygons(fill = "TA")`. tmap's default palette only has a handful of colours, so with 28 stores it repeats them, and several stores share the same colour on his map. I build 28 different colours with `hcl()`, using only reds, oranges, browns, blues and purples and leaving out the green hues, and I alternate dark and light so stores next to each other in the legend stand apart. I also draw the boundary of each trade area and label each store with its code, so the map can be read without matching colours to the legend.
+
+Because every store has the same size, the store with the highest probability is always the nearest one, whatever λ is. A smaller λ makes the probabilities more even, but it never changes which store comes first. I check this against the nearest store of each village.
+
+```{r}
+nearest <- distmat_long %>%
+  group_by(VILLCODE) %>%
+  slice_min(distance, n = 1, with_ties = FALSE) %>%
+  ungroup()
+nearest_store <- setNames(nearest$Store_CD, nearest$VILLCODE)
+```
+
+`r round(mean(village_TA$TA == nearest_store[village_TA$VILLCODE]) * 100)` percent of villages go to their nearest store. The trade areas would only differ from nearest-store areas if the stores had different sizes.
+:::
