@@ -71,6 +71,7 @@ eldercare <- st_read(dsn = "data/geospatial",
 ## Importing the OD matrix
 
 ```{r}
+#| output: false
 ODMatrix <- read_csv("data/aspatial/OD_Matrix.csv", skip = 0)
 ```
 
@@ -78,13 +79,12 @@ ODMatrix <- read_csv("data/aspatial/OD_Matrix.csv", skip = 0)
 
 ## Supply
 
-Each eldercare centre gets a capacity of 100, and `fid` is renamed to `id`.
+The code chunk below creates a new field called `capacity` and populates it with the value 100.
 
 ```{r}
 eldercare <- eldercare %>%
   select(fid) %>%
-  mutate(capacity = 100) %>%
-  rename(id = fid)
+  mutate(capacity = 100)
 ```
 
 ## Demand
@@ -109,6 +109,103 @@ ODMatrix_tidied <- ODMatrix %>%
          to_id = destination_id,
          dist = total_cost)
 ```
+
+# Computing the Distance to the Nearest Eldercare Centre
+
+In the code chunk below, `cost_to_closest()` of **accessibility** computes the travel distance from each hexagon to the closest n opportunities, here n = 1.
+
+```{r}
+dist2closest <- cost_to_closest(
+  travel_matrix = ODMatrix_tidied,
+  land_use_data = hexagons,
+  opportunity = "demand",
+  travel_cost = "dist",
+  n = 1,
+  group_by = character(0),
+  active = TRUE,
+  fill_missing_ids = TRUE
+)
+```
+
+## Joining the output
+
+The code chunk below appends the closest distance to the hexagons.
+
+```{r}
+hex_acc <- hexagons %>%
+  left_join(dist2closest) %>%
+  rename(dist2closest = dist)
+```
+
+## Mapping the closest distance
+
+`st_bbox()` sets the map frame, which all the maps below share.
+
+```{r}
+mapex <- st_bbox(hex_acc)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 6.5
+tm_shape(hex_acc, bbox = mapex) +
+  tm_polygons(fill = "dist2closest",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 1000, 2000, 5000, 10000, Inf),
+                labels = c("under 1 km", "1 to 2 km", "2 to 5 km",
+                           "5 to 10 km", "over 10 km"),
+                values = "-brewer.blues"),
+              fill.legend = tm_legend(title = "Distance to the\nclosest eldercare",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey85", lwd = 0.2) +
+tm_shape(eldercare) +
+  tm_dots(size = 0.3, fill = "#D55E00", col = "black") +
+  tm_title("Accessibility to the closest eldercare", size = 1.5, fontface = "bold") +
+  tm_compass(type = "8star", size = 2, position = c("left", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
+
+## The Code
+
+```{r}
+#| eval: false
+tm_shape(hex_acc, bbox = mapex) +
+  tm_polygons(fill = "dist2closest",
+              fill.scale = tm_scale_intervals(
+                breaks = c(0, 1000, 2000, 5000, 10000, Inf),
+                labels = c("under 1 km", "1 to 2 km", "2 to 5 km",
+                           "5 to 10 km", "over 10 km"),
+                values = "-brewer.blues"),
+              fill.legend = tm_legend(title = "Distance to the\nclosest eldercare",
+                                      position = tm_pos_out("right", "center")),
+              col = "grey85", lwd = 0.2) +
+tm_shape(eldercare) +
+  tm_dots(size = 0.3, fill = "#D55E00", col = "black") +
+  tm_title("Accessibility to the closest eldercare", size = 1.5, fontface = "bold") +
+  tm_compass(type = "8star", size = 2, position = c("left", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+The median hexagon is `r round(median(hex_acc$dist2closest) / 1000, 1)` km by road from its closest centre, and only `r sum(hex_acc$dist2closest < 1000)` hexagons have one within 1 km. Here a short distance is good access, so the scale is reversed, dark for near and pale for far, as on the prof's map.
+
+The code passes `hexagons` as `land_use_data`, so the opportunities it looks up are the hexagons' demand, not the centres. It still finds the closest centre, because every `to_id` in the OD matrix is a centre `fid`, the centre ids only go up to `r max(eldercare$fid)`, and every hexagon id up to that number has a demand of 100. I check this against the smallest distance in each row of the OD matrix.
+
+```{r}
+nearest_check <- ODMatrix_tidied %>%
+  group_by(from_id) %>%
+  summarise(min_dist = min(dist))
+
+all.equal(hex_acc$dist2closest[match(nearest_check$from_id, hex_acc$id)],
+          nearest_check$min_dist)
+```
+:::
 
 ## Converting the ODMatrix data frame into a matrix
 
@@ -139,11 +236,10 @@ df_2sfca <- catchment_ratio(
 
 ## Mapping 2SFCA
 
-The slide shows only the map, and the prof said the code comes from the hands-on exercise. `bind_cols()` attaches the 2SFCA values to the hexagons, and `st_bbox()` sets the map frame. I reuse the `acc_map()` function from my Hands-on Exercise 7.
+The slide shows only the map, and the prof said the code comes from the hands-on exercise. `bind_cols()` attaches the 2SFCA values to the hexagons. I reuse the `acc_map()` function from my Hands-on Exercise 7.
 
 ```{r}
 hexagon_2SFCA <- bind_cols(hexagons, df_2sfca)
-mapex <- st_bbox(hexagons)
 ```
 
 ::: panel-tabset
@@ -397,5 +493,57 @@ acc_map(hexagon_3SFCA, "3SFCA",
 
 ::: {.callout-note}
 ## Learning diary
-3SFCA uses the same `step_weights` as E2SFCA, passed here as the fourth argument, which is `weight`. `normalize_weight = TRUE` adds the third step. Each hexagon's weights are scaled so they add up to one across the centres it can reach, so a hexagon near many centres no longer counts its full demand at every one of them. This stops the 2SFCA family from over-counting demand where centres cluster. Because of the 5 km steps, `r format(sum(hexagon_3SFCA$"3SFCA" == 0), big.mark = ",")` hexagons are still at 0.
+3SFCA uses the same `step_weights` as E2SFCA, passed here as the fourth argument, which is `weight`. `normalize_weight = TRUE` adds the third step. The source of `catchment_ratio()` shows that each weight is multiplied by the hexagon's chance of choosing that centre, which is the weight divided by the sum of the hexagon's weights to all the centres it can reach. So a hexagon near many centres no longer counts its full demand at every one of them. This stops the 2SFCA family from over-counting demand where centres cluster. Because of the 5 km steps, `r format(sum(hexagon_3SFCA$"3SFCA" == 0), big.mark = ",")` hexagons are still at 0.
+:::
+
+# Computing M2SFCA with the catchment Package
+
+## Modified 2-Step Floating Catchment Area
+
+```{r}
+df_m2sfca <- catchment_ratio(
+  consumers = hexagons$demand,
+  providers = eldercare$capacity,
+  cost = distmat_km,
+  step_weights,
+  adjust_providers = function(w) w^2) %>%
+  as.data.frame() %>%
+  rename("M2SFCA" = ".")
+```
+
+## Mapping M2SFCA
+
+```{r}
+hexagon_M2SFCA <- bind_cols(hexagons, df_m2sfca)
+```
+
+::: panel-tabset
+## The Plot
+
+```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 6.5
+acc_map(hexagon_M2SFCA, "M2SFCA",
+        "M2SFCA Accessibility measures",
+        "M2SFCA",
+        zero_label = "0, no centre within 5 km")
+```
+
+## The Code
+
+```{r}
+#| eval: false
+acc_map(hexagon_M2SFCA, "M2SFCA",
+        "M2SFCA Accessibility measures",
+        "M2SFCA",
+        zero_label = "0, no centre within 5 km")
+```
+:::
+
+::: {.callout-note}
+## Learning diary
+`adjust_providers = function(w) w^2` is the modified 2SFCA of Delamater, 2013. The first step, where each centre's capacity is shared among the hexagons that can reach it, still uses the plain step weights. Only the second step, where each hexagon adds up the centres it can reach, uses the weights squared. A centre 4 to 5 km away then counts for 0.01² = 0.0001 instead of 0.01, so distance matters more than in E2SFCA. The package notes that once the weights are changed this way, the scores no longer add up to the total supply. The two measures still rank the hexagons with a Spearman correlation of `r sprintf("%.3f", cor(df_e2sfca$"E2SFCA", df_m2sfca$"M2SFCA", method = "spearman"))`.
+
+The prof's plot chunk for this map draws `hex_3SFCA` again, while his code chunk draws `hex_M2SFCA`. I map the M2SFCA values.
 :::

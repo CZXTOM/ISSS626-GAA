@@ -102,7 +102,7 @@
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#supply",
     "title": "In-class Exercise 7",
     "section": "4.1 Supply",
-    "text": "4.1 Supply\nEach eldercare centre gets a capacity of 100, and fid is renamed to id.\n\neldercare &lt;- eldercare %&gt;%\n  select(fid) %&gt;%\n  mutate(capacity = 100) %&gt;%\n  rename(id = fid)"
+    "text": "4.1 Supply\nThe code chunk below creates a new field called capacity and populates it with the value 100.\n\neldercare &lt;- eldercare %&gt;%\n  select(fid) %&gt;%\n  mutate(capacity = 100)"
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#demand",
@@ -119,60 +119,88 @@
     "text": "4.3 Tidying the OD matrix\nThe code chunk below selects origin_id, destination_id and total_cost from the OD matrix, then renames them to from_id, to_id and dist.\n\nODMatrix_tidied &lt;- ODMatrix %&gt;%\n  select(origin_id, destination_id, total_cost) %&gt;%\n  rename(from_id = origin_id,\n         to_id = destination_id,\n         dist = total_cost)"
   },
   {
+    "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#joining-the-output",
+    "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#joining-the-output",
+    "title": "In-class Exercise 7",
+    "section": "5.1 Joining the output",
+    "text": "5.1 Joining the output\nThe code chunk below appends the closest distance to the hexagons.\n\nhex_acc &lt;- hexagons %&gt;%\n  left_join(dist2closest) %&gt;%\n  rename(dist2closest = dist)"
+  },
+  {
+    "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-the-closest-distance",
+    "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-the-closest-distance",
+    "title": "In-class Exercise 7",
+    "section": "5.2 Mapping the closest distance",
+    "text": "5.2 Mapping the closest distance\nst_bbox() sets the map frame, which all the maps below share.\n\nmapex &lt;- st_bbox(hex_acc)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ntm_shape(hex_acc, bbox = mapex) +\n  tm_polygons(fill = \"dist2closest\",\n              fill.scale = tm_scale_intervals(\n                breaks = c(0, 1000, 2000, 5000, 10000, Inf),\n                labels = c(\"under 1 km\", \"1 to 2 km\", \"2 to 5 km\",\n                           \"5 to 10 km\", \"over 10 km\"),\n                values = \"-brewer.blues\"),\n              fill.legend = tm_legend(title = \"Distance to the\\nclosest eldercare\",\n                                      position = tm_pos_out(\"right\", \"center\")),\n              col = \"grey85\", lwd = 0.2) +\ntm_shape(eldercare) +\n  tm_dots(size = 0.3, fill = \"#D55E00\", col = \"black\") +\n  tm_title(\"Accessibility to the closest eldercare\", size = 1.5, fontface = \"bold\") +\n  tm_compass(type = \"8star\", size = 2, position = c(\"left\", \"top\")) +\n  tm_scalebar(position = c(\"left\", \"bottom\"))\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nThe median hexagon is 4.1 km by road from its closest centre, and only 194 hexagons have one within 1 km. Here a short distance is good access, so the scale is reversed, dark for near and pale for far, as on the prof’s map.\nThe code passes hexagons as land_use_data, so the opportunities it looks up are the hexagons’ demand, not the centres. It still finds the closest centre, because every to_id in the OD matrix is a centre fid, the centre ids only go up to 133, and every hexagon id up to that number has a demand of 100. I check this against the smallest distance in each row of the OD matrix.\n\nnearest_check &lt;- ODMatrix_tidied %&gt;%\n  group_by(from_id) %&gt;%\n  summarise(min_dist = min(dist))\n\nall.equal(hex_acc$dist2closest[match(nearest_check$from_id, hex_acc$id)],\n          nearest_check$min_dist)\n\n[1] TRUE"
+  },
+  {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#converting-the-odmatrix-data-frame-into-a-matrix",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#converting-the-odmatrix-data-frame-into-a-matrix",
     "title": "In-class Exercise 7",
-    "section": "4.4 Converting the ODMatrix data frame into a matrix",
-    "text": "4.4 Converting the ODMatrix data frame into a matrix\nIn the code chunk below, as.matrix() is used to convert the ODMatrix data frame into a matrix object.\n\ndistmat &lt;- ODMatrix %&gt;%\n  select(origin_id, destination_id, total_cost) %&gt;%\n  spread(destination_id, total_cost)%&gt;%\n  select(c(-c('origin_id')))\n\ndistmat_km &lt;- as.matrix(distmat/1000)"
+    "section": "5.3 Converting the ODMatrix data frame into a matrix",
+    "text": "5.3 Converting the ODMatrix data frame into a matrix\nIn the code chunk below, as.matrix() is used to convert the ODMatrix data frame into a matrix object.\n\ndistmat &lt;- ODMatrix %&gt;%\n  select(origin_id, destination_id, total_cost) %&gt;%\n  spread(destination_id, total_cost)%&gt;%\n  select(c(-c('origin_id')))\n\ndistmat_km &lt;- as.matrix(distmat/1000)"
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-2sfca",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-2sfca",
     "title": "In-class Exercise 7",
-    "section": "5.1 Mapping 2SFCA",
-    "text": "5.1 Mapping 2SFCA\nThe slide shows only the map, and the prof said the code comes from the hands-on exercise. bind_cols() attaches the 2SFCA values to the hexagons, and st_bbox() sets the map frame. I reuse the acc_map() function from my Hands-on Exercise 7.\n\nhexagon_2SFCA &lt;- bind_cols(hexagons, df_2sfca)\nmapex &lt;- st_bbox(hexagons)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfmt_num &lt;- function(v) {\n  sapply(v, function(z) {\n    if (z == 0) \"0\"\n    else if (abs(z) &lt; 0.01 || abs(z) &gt;= 1000) formatC(z, format = \"e\", digits = 1)\n    else if (abs(z) &gt;= 100) format(round(z))\n    else formatC(signif(z, 2), format = \"fg\", digits = 2)\n  }) %&gt;% trimws()\n}\n\nacc_map &lt;- function(data, var, title, legend_title, zero_label = NULL) {\n  x &lt;- data[[var]]\n  if (is.null(zero_label)) {\n    q &lt;- quantile(x, probs = seq(0, 1, length.out = 11))\n    breaks &lt;- c(q[1:10], Inf)\n    labels &lt;- paste(fmt_num(q[1:10]), \"to\", fmt_num(q[2:11]))\n    fills &lt;- \"brewer.blues\"\n  } else {\n    q &lt;- quantile(x[x &gt; 0], probs = seq(0, 1, length.out = 10))\n    breaks &lt;- c(0, q[1:9], Inf)\n    labels &lt;- c(zero_label, paste(fmt_num(q[1:9]), \"to\", fmt_num(q[2:10])))\n    fills &lt;- c(\"grey75\", RColorBrewer::brewer.pal(9, \"Blues\"))\n  }\n  tm_shape(data, bbox = mapex) +\n    tm_polygons(fill = var,\n                fill.scale = tm_scale_intervals(breaks = unname(breaks),\n                                                labels = labels,\n                                                values = fills),\n                fill.legend = tm_legend(title = legend_title,\n                                        position = tm_pos_out(\"right\", \"center\")),\n                col = \"grey85\", lwd = 0.2) +\n  tm_shape(eldercare) +\n    tm_dots(size = 0.3, fill = \"#D55E00\", col = \"black\") +\n    tm_title(title, size = 1.5, fontface = \"bold\") +\n    tm_compass(type = \"8star\", size = 2,\n               position = c(\"left\", \"top\")) +\n    tm_scalebar(position = c(\"left\", \"bottom\"))\n}\n\nacc_map(hexagon_2SFCA, \"2SFCA\",\n        \"2SFCA Accessibility measures\",\n        \"2SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n1,281 of the 3,125 hexagons have a 2SFCA of 0, because no eldercare centre is within 5 km of them by road. With plain quantile classes, the lowest classes all run from 0 to 0, which is why the legend on the prof’s map repeats “0.000 - -0.001”. So I give the zeros their own grey class and split the rest into nine classes, pale for low and dark for high, following the colour guides from ISSS608 Lesson 2."
+    "section": "6.1 Mapping 2SFCA",
+    "text": "6.1 Mapping 2SFCA\nThe slide shows only the map, and the prof said the code comes from the hands-on exercise. bind_cols() attaches the 2SFCA values to the hexagons. I reuse the acc_map() function from my Hands-on Exercise 7.\n\nhexagon_2SFCA &lt;- bind_cols(hexagons, df_2sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nfmt_num &lt;- function(v) {\n  sapply(v, function(z) {\n    if (z == 0) \"0\"\n    else if (abs(z) &lt; 0.01 || abs(z) &gt;= 1000) formatC(z, format = \"e\", digits = 1)\n    else if (abs(z) &gt;= 100) format(round(z))\n    else formatC(signif(z, 2), format = \"fg\", digits = 2)\n  }) %&gt;% trimws()\n}\n\nacc_map &lt;- function(data, var, title, legend_title, zero_label = NULL) {\n  x &lt;- data[[var]]\n  if (is.null(zero_label)) {\n    q &lt;- quantile(x, probs = seq(0, 1, length.out = 11))\n    breaks &lt;- c(q[1:10], Inf)\n    labels &lt;- paste(fmt_num(q[1:10]), \"to\", fmt_num(q[2:11]))\n    fills &lt;- \"brewer.blues\"\n  } else {\n    q &lt;- quantile(x[x &gt; 0], probs = seq(0, 1, length.out = 10))\n    breaks &lt;- c(0, q[1:9], Inf)\n    labels &lt;- c(zero_label, paste(fmt_num(q[1:9]), \"to\", fmt_num(q[2:10])))\n    fills &lt;- c(\"grey75\", RColorBrewer::brewer.pal(9, \"Blues\"))\n  }\n  tm_shape(data, bbox = mapex) +\n    tm_polygons(fill = var,\n                fill.scale = tm_scale_intervals(breaks = unname(breaks),\n                                                labels = labels,\n                                                values = fills),\n                fill.legend = tm_legend(title = legend_title,\n                                        position = tm_pos_out(\"right\", \"center\")),\n                col = \"grey85\", lwd = 0.2) +\n  tm_shape(eldercare) +\n    tm_dots(size = 0.3, fill = \"#D55E00\", col = \"black\") +\n    tm_title(title, size = 1.5, fontface = \"bold\") +\n    tm_compass(type = \"8star\", size = 2,\n               position = c(\"left\", \"top\")) +\n    tm_scalebar(position = c(\"left\", \"bottom\"))\n}\n\nacc_map(hexagon_2SFCA, \"2SFCA\",\n        \"2SFCA Accessibility measures\",\n        \"2SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n1,281 of the 3,125 hexagons have a 2SFCA of 0, because no eldercare centre is within 5 km of them by road. With plain quantile classes, the lowest classes all run from 0 to 0, which is why the legend on the prof’s map repeats “0.000 - -0.001”. So I give the zeros their own grey class and split the rest into nine classes, pale for low and dark for high, following the colour guides from ISSS608 Lesson 2."
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#enhanced-2-step-floating-catchment-area-e2sfca",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#enhanced-2-step-floating-catchment-area-e2sfca",
     "title": "In-class Exercise 7",
-    "section": "6.1 Enhanced 2-Step Floating Catchment Area (E2SFCA)",
-    "text": "6.1 Enhanced 2-Step Floating Catchment Area (E2SFCA)\nE2SFCA gives nearer centres more weight. step_weights sets the weight for each distance band, from 0.01 for centres up to 5 km away to 1 for centres within 1 km.\n\nstep_weights &lt;- list(c(5, .01), c(4, .05), c(3, .1), c(2, .4), c(1, 1))\ndf_e2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  weight = step_weights) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"E2SFCA\" = \".\")"
+    "section": "7.1 Enhanced 2-Step Floating Catchment Area (E2SFCA)",
+    "text": "7.1 Enhanced 2-Step Floating Catchment Area (E2SFCA)\nE2SFCA gives nearer centres more weight. step_weights sets the weight for each distance band, from 0.01 for centres up to 5 km away to 1 for centres within 1 km.\n\nstep_weights &lt;- list(c(5, .01), c(4, .05), c(3, .1), c(2, .4), c(1, 1))\ndf_e2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  weight = step_weights) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"E2SFCA\" = \".\")"
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-e2sfca",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-e2sfca",
     "title": "In-class Exercise 7",
-    "section": "6.2 Mapping E2SFCA",
-    "text": "6.2 Mapping E2SFCA\n\nhexagon_E2SFCA &lt;- bind_cols(hexagons, df_e2sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_E2SFCA, \"E2SFCA\",\n        \"E2SFCA Accessibility measures\",\n        \"E2SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n2SFCA counts every centre within 5 km fully, while E2SFCA cuts a centre 4 to 5 km away down to 1 percent of its weight. The two measures rank the hexagons with a Spearman correlation of 0.958, and E2SFCA has 1,281 hexagons at 0. The steps act like a stepped version of the distance decay used in KD2SFCA in Hands-on Exercise 7."
+    "section": "7.2 Mapping E2SFCA",
+    "text": "7.2 Mapping E2SFCA\n\nhexagon_E2SFCA &lt;- bind_cols(hexagons, df_e2sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_E2SFCA, \"E2SFCA\",\n        \"E2SFCA Accessibility measures\",\n        \"E2SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n2SFCA counts every centre within 5 km fully, while E2SFCA cuts a centre 4 to 5 km away down to 1 percent of its weight. The two measures rank the hexagons with a Spearman correlation of 0.958, and E2SFCA has 1,281 hexagons at 0. The steps act like a stepped version of the distance decay used in KD2SFCA in Hands-on Exercise 7."
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#kernel-density-gaussian-2-step-floating-catchment-area",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#kernel-density-gaussian-2-step-floating-catchment-area",
     "title": "In-class Exercise 7",
-    "section": "7.1 Kernel Density (Gaussian) 2-Step Floating Catchment Area",
-    "text": "7.1 Kernel Density (Gaussian) 2-Step Floating Catchment Area\n\ndf_kd2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  weight = \"gaussian\") %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"KD2SFCA\" = \".\")"
+    "section": "8.1 Kernel Density (Gaussian) 2-Step Floating Catchment Area",
+    "text": "8.1 Kernel Density (Gaussian) 2-Step Floating Catchment Area\n\ndf_kd2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  weight = \"gaussian\") %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"KD2SFCA\" = \".\")"
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-kd2sfca",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-kd2sfca",
     "title": "In-class Exercise 7",
-    "section": "7.2 Mapping KD2SFCA",
-    "text": "7.2 Mapping KD2SFCA\n\nhexagon_KD2SFCA &lt;- bind_cols(hexagons, df_kd2sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_KD2SFCA, \"KD2SFCA\",\n        \"KD2SFCA Accessibility measures\",\n        \"KD2SFCA\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nweight = \"gaussian\" uses the weight exp(−d² / 8), because catchment_weight() sets the scale to 2 km unless told otherwise. There is no max_cost here, so no centre is ever cut off, and 0 hexagons are exactly 0. That is why this map needs no grey class. A centre 2 km away still counts for about 61 percent, while one 6 km away counts for about 1 percent, so the far west only gets a tiny value."
+    "section": "8.2 Mapping KD2SFCA",
+    "text": "8.2 Mapping KD2SFCA\n\nhexagon_KD2SFCA &lt;- bind_cols(hexagons, df_kd2sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_KD2SFCA, \"KD2SFCA\",\n        \"KD2SFCA Accessibility measures\",\n        \"KD2SFCA\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nweight = \"gaussian\" uses the weight exp(−d² / 8), because catchment_weight() sets the scale to 2 km unless told otherwise. There is no max_cost here, so no centre is ever cut off, and 0 hexagons are exactly 0. That is why this map needs no grey class. A centre 2 km away still counts for about 61 percent, while one 6 km away counts for about 1 percent, so the far west only gets a tiny value."
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#step-floating-catchment-area",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#step-floating-catchment-area",
     "title": "In-class Exercise 7",
-    "section": "8.1 3-Step Floating Catchment Area",
-    "text": "8.1 3-Step Floating Catchment Area\n\ndf_3sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  step_weights,\n  normalize_weight = TRUE) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"3SFCA\" = \".\")"
+    "section": "9.1 3-Step Floating Catchment Area",
+    "text": "9.1 3-Step Floating Catchment Area\n\ndf_3sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  step_weights,\n  normalize_weight = TRUE) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"3SFCA\" = \".\")"
   },
   {
     "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-3sfca",
     "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-3sfca",
     "title": "In-class Exercise 7",
-    "section": "8.2 Mapping 3SFCA",
-    "text": "8.2 Mapping 3SFCA\n\nhexagon_3SFCA &lt;- bind_cols(hexagons, df_3sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_3SFCA, \"3SFCA\",\n        \"3SFCA Accessibility measures\",\n        \"3SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n3SFCA uses the same step_weights as E2SFCA, passed here as the fourth argument, which is weight. normalize_weight = TRUE adds the third step. Each hexagon’s weights are scaled so they add up to one across the centres it can reach, so a hexagon near many centres no longer counts its full demand at every one of them. This stops the 2SFCA family from over-counting demand where centres cluster. Because of the 5 km steps, 1,281 hexagons are still at 0."
+    "section": "9.2 Mapping 3SFCA",
+    "text": "9.2 Mapping 3SFCA\n\nhexagon_3SFCA &lt;- bind_cols(hexagons, df_3sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_3SFCA, \"3SFCA\",\n        \"3SFCA Accessibility measures\",\n        \"3SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\n3SFCA uses the same step_weights as E2SFCA, passed here as the fourth argument, which is weight. normalize_weight = TRUE adds the third step. The source of catchment_ratio() shows that each weight is multiplied by the hexagon’s chance of choosing that centre, which is the weight divided by the sum of the hexagon’s weights to all the centres it can reach. So a hexagon near many centres no longer counts its full demand at every one of them. This stops the 2SFCA family from over-counting demand where centres cluster. Because of the 5 km steps, 1,281 hexagons are still at 0."
+  },
+  {
+    "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#modified-2-step-floating-catchment-area",
+    "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#modified-2-step-floating-catchment-area",
+    "title": "In-class Exercise 7",
+    "section": "10.1 Modified 2-Step Floating Catchment Area",
+    "text": "10.1 Modified 2-Step Floating Catchment Area\n\ndf_m2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  step_weights,\n  adjust_providers = function(w) w^2) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"M2SFCA\" = \".\")"
+  },
+  {
+    "objectID": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-m2sfca",
+    "href": "In-class_Ex/In-class_Ex07/In-class_Ex07.html#mapping-m2sfca",
+    "title": "In-class Exercise 7",
+    "section": "10.2 Mapping M2SFCA",
+    "text": "10.2 Mapping M2SFCA\n\nhexagon_M2SFCA &lt;- bind_cols(hexagons, df_m2sfca)\n\n\nThe PlotThe Code\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nacc_map(hexagon_M2SFCA, \"M2SFCA\",\n        \"M2SFCA Accessibility measures\",\n        \"M2SFCA\",\n        zero_label = \"0, no centre within 5 km\")\n\n\n\n\n\n\n\n\n\n\nNoteLearning diary\n\n\n\nadjust_providers = function(w) w^2 is the modified 2SFCA of Delamater, 2013. The first step, where each centre’s capacity is shared among the hexagons that can reach it, still uses the plain step weights. Only the second step, where each hexagon adds up the centres it can reach, uses the weights squared. A centre 4 to 5 km away then counts for 0.01² = 0.0001 instead of 0.01, so distance matters more than in E2SFCA. The package notes that once the weights are changed this way, the scores no longer add up to the total supply. The two measures still rank the hexagons with a Spearman correlation of 0.996.\nThe prof’s plot chunk for this map draws hex_3SFCA again, while his code chunk draws hex_M2SFCA. I map the M2SFCA values."
   },
   {
     "objectID": "In-class_Ex/In-class_Ex04/In-class_Ex04.html",

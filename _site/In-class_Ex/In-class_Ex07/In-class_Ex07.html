@@ -282,26 +282,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#supply" id="toc-supply" class="nav-link" data-scroll-target="#supply"><span class="header-section-number">4.1</span> Supply</a></li>
   <li><a href="#demand" id="toc-demand" class="nav-link" data-scroll-target="#demand"><span class="header-section-number">4.2</span> Demand</a></li>
   <li><a href="#tidying-the-od-matrix" id="toc-tidying-the-od-matrix" class="nav-link" data-scroll-target="#tidying-the-od-matrix"><span class="header-section-number">4.3</span> Tidying the OD matrix</a></li>
-  <li><a href="#converting-the-odmatrix-data-frame-into-a-matrix" id="toc-converting-the-odmatrix-data-frame-into-a-matrix" class="nav-link" data-scroll-target="#converting-the-odmatrix-data-frame-into-a-matrix"><span class="header-section-number">4.4</span> Converting the ODMatrix data frame into a matrix</a></li>
   </ul></li>
-  <li><a href="#computing-2sfca-with-the-catchment-package" id="toc-computing-2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-2sfca-with-the-catchment-package"><span class="header-section-number">5</span> Computing 2SFCA with the catchment Package</a>
+  <li><a href="#computing-the-distance-to-the-nearest-eldercare-centre" id="toc-computing-the-distance-to-the-nearest-eldercare-centre" class="nav-link" data-scroll-target="#computing-the-distance-to-the-nearest-eldercare-centre"><span class="header-section-number">5</span> Computing the Distance to the Nearest Eldercare Centre</a>
   <ul class="collapse">
-  <li><a href="#mapping-2sfca" id="toc-mapping-2sfca" class="nav-link" data-scroll-target="#mapping-2sfca"><span class="header-section-number">5.1</span> Mapping 2SFCA</a></li>
+  <li><a href="#joining-the-output" id="toc-joining-the-output" class="nav-link" data-scroll-target="#joining-the-output"><span class="header-section-number">5.1</span> Joining the output</a></li>
+  <li><a href="#mapping-the-closest-distance" id="toc-mapping-the-closest-distance" class="nav-link" data-scroll-target="#mapping-the-closest-distance"><span class="header-section-number">5.2</span> Mapping the closest distance</a></li>
+  <li><a href="#converting-the-odmatrix-data-frame-into-a-matrix" id="toc-converting-the-odmatrix-data-frame-into-a-matrix" class="nav-link" data-scroll-target="#converting-the-odmatrix-data-frame-into-a-matrix"><span class="header-section-number">5.3</span> Converting the ODMatrix data frame into a matrix</a></li>
   </ul></li>
-  <li><a href="#computing-e2sfca-with-the-catchment-package" id="toc-computing-e2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-e2sfca-with-the-catchment-package"><span class="header-section-number">6</span> Computing E2SFCA with the catchment Package</a>
+  <li><a href="#computing-2sfca-with-the-catchment-package" id="toc-computing-2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-2sfca-with-the-catchment-package"><span class="header-section-number">6</span> Computing 2SFCA with the catchment Package</a>
   <ul class="collapse">
-  <li><a href="#enhanced-2-step-floating-catchment-area-e2sfca" id="toc-enhanced-2-step-floating-catchment-area-e2sfca" class="nav-link" data-scroll-target="#enhanced-2-step-floating-catchment-area-e2sfca"><span class="header-section-number">6.1</span> Enhanced 2-Step Floating Catchment Area (E2SFCA)</a></li>
-  <li><a href="#mapping-e2sfca" id="toc-mapping-e2sfca" class="nav-link" data-scroll-target="#mapping-e2sfca"><span class="header-section-number">6.2</span> Mapping E2SFCA</a></li>
+  <li><a href="#mapping-2sfca" id="toc-mapping-2sfca" class="nav-link" data-scroll-target="#mapping-2sfca"><span class="header-section-number">6.1</span> Mapping 2SFCA</a></li>
   </ul></li>
-  <li><a href="#computing-kd2sfca-with-the-catchment-package" id="toc-computing-kd2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-kd2sfca-with-the-catchment-package"><span class="header-section-number">7</span> Computing KD2SFCA with the catchment Package</a>
+  <li><a href="#computing-e2sfca-with-the-catchment-package" id="toc-computing-e2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-e2sfca-with-the-catchment-package"><span class="header-section-number">7</span> Computing E2SFCA with the catchment Package</a>
   <ul class="collapse">
-  <li><a href="#kernel-density-gaussian-2-step-floating-catchment-area" id="toc-kernel-density-gaussian-2-step-floating-catchment-area" class="nav-link" data-scroll-target="#kernel-density-gaussian-2-step-floating-catchment-area"><span class="header-section-number">7.1</span> Kernel Density (Gaussian) 2-Step Floating Catchment Area</a></li>
-  <li><a href="#mapping-kd2sfca" id="toc-mapping-kd2sfca" class="nav-link" data-scroll-target="#mapping-kd2sfca"><span class="header-section-number">7.2</span> Mapping KD2SFCA</a></li>
+  <li><a href="#enhanced-2-step-floating-catchment-area-e2sfca" id="toc-enhanced-2-step-floating-catchment-area-e2sfca" class="nav-link" data-scroll-target="#enhanced-2-step-floating-catchment-area-e2sfca"><span class="header-section-number">7.1</span> Enhanced 2-Step Floating Catchment Area (E2SFCA)</a></li>
+  <li><a href="#mapping-e2sfca" id="toc-mapping-e2sfca" class="nav-link" data-scroll-target="#mapping-e2sfca"><span class="header-section-number">7.2</span> Mapping E2SFCA</a></li>
   </ul></li>
-  <li><a href="#computing-3sfca-with-the-catchment-package" id="toc-computing-3sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-3sfca-with-the-catchment-package"><span class="header-section-number">8</span> Computing 3SFCA with the catchment Package</a>
+  <li><a href="#computing-kd2sfca-with-the-catchment-package" id="toc-computing-kd2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-kd2sfca-with-the-catchment-package"><span class="header-section-number">8</span> Computing KD2SFCA with the catchment Package</a>
   <ul class="collapse">
-  <li><a href="#step-floating-catchment-area" id="toc-step-floating-catchment-area" class="nav-link" data-scroll-target="#step-floating-catchment-area"><span class="header-section-number">8.1</span> 3-Step Floating Catchment Area</a></li>
-  <li><a href="#mapping-3sfca" id="toc-mapping-3sfca" class="nav-link" data-scroll-target="#mapping-3sfca"><span class="header-section-number">8.2</span> Mapping 3SFCA</a></li>
+  <li><a href="#kernel-density-gaussian-2-step-floating-catchment-area" id="toc-kernel-density-gaussian-2-step-floating-catchment-area" class="nav-link" data-scroll-target="#kernel-density-gaussian-2-step-floating-catchment-area"><span class="header-section-number">8.1</span> Kernel Density (Gaussian) 2-Step Floating Catchment Area</a></li>
+  <li><a href="#mapping-kd2sfca" id="toc-mapping-kd2sfca" class="nav-link" data-scroll-target="#mapping-kd2sfca"><span class="header-section-number">8.2</span> Mapping KD2SFCA</a></li>
+  </ul></li>
+  <li><a href="#computing-3sfca-with-the-catchment-package" id="toc-computing-3sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-3sfca-with-the-catchment-package"><span class="header-section-number">9</span> Computing 3SFCA with the catchment Package</a>
+  <ul class="collapse">
+  <li><a href="#step-floating-catchment-area" id="toc-step-floating-catchment-area" class="nav-link" data-scroll-target="#step-floating-catchment-area"><span class="header-section-number">9.1</span> 3-Step Floating Catchment Area</a></li>
+  <li><a href="#mapping-3sfca" id="toc-mapping-3sfca" class="nav-link" data-scroll-target="#mapping-3sfca"><span class="header-section-number">9.2</span> Mapping 3SFCA</a></li>
+  </ul></li>
+  <li><a href="#computing-m2sfca-with-the-catchment-package" id="toc-computing-m2sfca-with-the-catchment-package" class="nav-link" data-scroll-target="#computing-m2sfca-with-the-catchment-package"><span class="header-section-number">10</span> Computing M2SFCA with the catchment Package</a>
+  <ul class="collapse">
+  <li><a href="#modified-2-step-floating-catchment-area" id="toc-modified-2-step-floating-catchment-area" class="nav-link" data-scroll-target="#modified-2-step-floating-catchment-area"><span class="header-section-number">10.1</span> Modified 2-Step Floating Catchment Area</a></li>
+  <li><a href="#mapping-m2sfca" id="toc-mapping-m2sfca" class="nav-link" data-scroll-target="#mapping-m2sfca"><span class="header-section-number">10.2</span> Mapping M2SFCA</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -399,12 +409,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1 data-number="4"><span class="header-section-number">4</span> Data Wrangling</h1>
 <section id="supply" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="supply"><span class="header-section-number">4.1</span> Supply</h2>
-<p>Each eldercare centre gets a capacity of 100, and <code>fid</code> is renamed to <code>id</code>.</p>
+<p>The code chunk below creates a new field called <code>capacity</code> and populates it with the value 100.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>eldercare <span class="ot">&lt;-</span> eldercare <span class="sc">%&gt;%</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(fid) <span class="sc">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">capacity =</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">id =</span> fid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">capacity =</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="demand" class="level2" data-number="4.2">
@@ -428,37 +437,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">dist =</span> total_cost)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="converting-the-odmatrix-data-frame-into-a-matrix" class="level2" data-number="4.4">
-<h2 data-number="4.4" class="anchored" data-anchor-id="converting-the-odmatrix-data-frame-into-a-matrix"><span class="header-section-number">4.4</span> Converting the ODMatrix data frame into a matrix</h2>
-<p>In the code chunk below, <code>as.matrix()</code> is used to convert the ODMatrix data frame into a matrix object.</p>
+</section>
+<section id="computing-the-distance-to-the-nearest-eldercare-centre" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Computing the Distance to the Nearest Eldercare Centre</h1>
+<p>In the code chunk below, <code>cost_to_closest()</code> of <strong>accessibility</strong> computes the travel distance from each hexagon to the closest n opportunities, here n = 1.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>distmat <span class="ot">&lt;-</span> ODMatrix <span class="sc">%&gt;%</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(origin_id, destination_id, total_cost) <span class="sc">%&gt;%</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">spread</span>(destination_id, total_cost)<span class="sc">%&gt;%</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">'origin_id'</span>)))</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>distmat_km <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(distmat<span class="sc">/</span><span class="dv">1000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dist2closest <span class="ot">&lt;-</span> <span class="fu">cost_to_closest</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">travel_matrix =</span> ODMatrix_tidied,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">land_use_data =</span> hexagons,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">opportunity =</span> <span class="st">"demand"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">travel_cost =</span> <span class="st">"dist"</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">1</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">group_by =</span> <span class="fu">character</span>(<span class="dv">0</span>),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">active =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">fill_missing_ids =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="joining-the-output" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="joining-the-output"><span class="header-section-number">5.1</span> Joining the output</h2>
+<p>The code chunk below appends the closest distance to the hexagons.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hex_acc <span class="ot">&lt;-</span> hexagons <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(dist2closest) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">dist2closest =</span> dist)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-</section>
-<section id="computing-2sfca-with-the-catchment-package" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Computing 2SFCA with the catchment Package</h1>
-<p>In the code chunk below, <a href="https://uva-bi-sdad.github.io/catchment/reference/catchment_ratio.html"><code>catchment_ratio()</code></a> is used to compute 2SFCA.</p>
+<section id="mapping-the-closest-distance" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="mapping-the-closest-distance"><span class="header-section-number">5.2</span> Mapping the closest distance</h2>
+<p><code>st_bbox()</code> sets the map frame, which all the maps below share.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df_2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_cost =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<section id="mapping-2sfca" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="mapping-2sfca"><span class="header-section-number">5.1</span> Mapping 2SFCA</h2>
-<p>The slide shows only the map, and the prof said the code comes from the hands-on exercise. <code>bind_cols()</code> attaches the 2SFCA values to the hexagons, and <code>st_bbox()</code> sets the map frame. I reuse the <code>acc_map()</code> function from my Hands-on Exercise 7.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>hexagon_2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_2sfca)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>mapex <span class="ot">&lt;-</span> <span class="fu">st_bbox</span>(hexagons)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>mapex <span class="ot">&lt;-</span> <span class="fu">st_bbox</span>(hex_acc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">The Code</a></li></ul>
@@ -476,48 +484,140 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fmt_num <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sapply</span>(v, <span class="cf">function</span>(z) {</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (z <span class="sc">==</span> <span class="dv">0</span>) <span class="st">"0"</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">abs</span>(z) <span class="sc">&lt;</span> <span class="fl">0.01</span> <span class="sc">||</span> <span class="fu">abs</span>(z) <span class="sc">&gt;=</span> <span class="dv">1000</span>) <span class="fu">formatC</span>(z, <span class="at">format =</span> <span class="st">"e"</span>, <span class="at">digits =</span> <span class="dv">1</span>)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">abs</span>(z) <span class="sc">&gt;=</span> <span class="dv">100</span>) <span class="fu">format</span>(<span class="fu">round</span>(z))</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="fu">formatC</span>(<span class="fu">signif</span>(z, <span class="dv">2</span>), <span class="at">format =</span> <span class="st">"fg"</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  }) <span class="sc">%&gt;%</span> <span class="fu">trimws</span>()</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>acc_map <span class="ot">&lt;-</span> <span class="cf">function</span>(data, var, title, legend_title, <span class="at">zero_label =</span> <span class="cn">NULL</span>) {</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> data[[var]]</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(zero_label)) {</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    q <span class="ot">&lt;-</span> <span class="fu">quantile</span>(x, <span class="at">probs =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">11</span>))</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(q[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>], <span class="cn">Inf</span>)</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    labels <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">fmt_num</span>(q[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]), <span class="st">"to"</span>, <span class="fu">fmt_num</span>(q[<span class="dv">2</span><span class="sc">:</span><span class="dv">11</span>]))</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    fills <span class="ot">&lt;-</span> <span class="st">"brewer.blues"</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    q <span class="ot">&lt;-</span> <span class="fu">quantile</span>(x[x <span class="sc">&gt;</span> <span class="dv">0</span>], <span class="at">probs =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">10</span>))</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, q[<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>], <span class="cn">Inf</span>)</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    labels <span class="ot">&lt;-</span> <span class="fu">c</span>(zero_label, <span class="fu">paste</span>(<span class="fu">fmt_num</span>(q[<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>]), <span class="st">"to"</span>, <span class="fu">fmt_num</span>(q[<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>])))</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    fills <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"grey75"</span>, RColorBrewer<span class="sc">::</span><span class="fu">brewer.pal</span>(<span class="dv">9</span>, <span class="st">"Blues"</span>))</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(data, <span class="at">bbox =</span> mapex) <span class="sc">+</span></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_polygons</span>(<span class="at">fill =</span> var,</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">breaks =</span> <span class="fu">unname</span>(breaks),</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">labels =</span> labels,</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">values =</span> fills),</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> legend_title,</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">position =</span> <span class="fu">tm_pos_out</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)),</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"grey85"</span>, <span class="at">lwd =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(eldercare) <span class="sc">+</span></span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_dots</span>(<span class="at">size =</span> <span class="fl">0.3</span>, <span class="at">fill =</span> <span class="st">"#D55E00"</span>, <span class="at">col =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_title</span>(title, <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>) <span class="sc">+</span></span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>,</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>               <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_scalebar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_2SFCA, <span class="st">"2SFCA"</span>,</span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>        <span class="st">"2SFCA Accessibility measures"</span>,</span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>        <span class="st">"2SFCA"</span>,</span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(hex_acc, <span class="at">bbox =</span> mapex) <span class="sc">+</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"dist2closest"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="dv">5000</span>, <span class="dv">10000</span>, <span class="cn">Inf</span>),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"under 1 km"</span>, <span class="st">"1 to 2 km"</span>, <span class="st">"2 to 5 km"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"5 to 10 km"</span>, <span class="st">"over 10 km"</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">values =</span> <span class="st">"-brewer.blues"</span>),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Distance to the</span><span class="sc">\n</span><span class="st">closest eldercare"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">position =</span> <span class="fu">tm_pos_out</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)),</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">col =</span> <span class="st">"grey85"</span>, <span class="at">lwd =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(eldercare) <span class="sc">+</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">size =</span> <span class="fl">0.3</span>, <span class="at">fill =</span> <span class="st">"#D55E00"</span>, <span class="at">col =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"Accessibility to the closest eldercare"</span>, <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>) <span class="sc">+</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scalebar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning diary
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The median hexagon is 4.1 km by road from its closest centre, and only 194 hexagons have one within 1 km. Here a short distance is good access, so the scale is reversed, dark for near and pale for far, as on the prof’s map.</p>
+<p>The code passes <code>hexagons</code> as <code>land_use_data</code>, so the opportunities it looks up are the hexagons’ demand, not the centres. It still finds the closest centre, because every <code>to_id</code> in the OD matrix is a centre <code>fid</code>, the centre ids only go up to 133, and every hexagon id up to that number has a demand of 100. I check this against the smallest distance in each row of the OD matrix.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>nearest_check <span class="ot">&lt;-</span> ODMatrix_tidied <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(from_id) <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">min_dist =</span> <span class="fu">min</span>(dist))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(hex_acc<span class="sc">$</span>dist2closest[<span class="fu">match</span>(nearest_check<span class="sc">$</span>from_id, hex_acc<span class="sc">$</span>id)],</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>          nearest_check<span class="sc">$</span>min_dist)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="converting-the-odmatrix-data-frame-into-a-matrix" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="converting-the-odmatrix-data-frame-into-a-matrix"><span class="header-section-number">5.3</span> Converting the ODMatrix data frame into a matrix</h2>
+<p>In the code chunk below, <code>as.matrix()</code> is used to convert the ODMatrix data frame into a matrix object.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>distmat <span class="ot">&lt;-</span> ODMatrix <span class="sc">%&gt;%</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(origin_id, destination_id, total_cost) <span class="sc">%&gt;%</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">spread</span>(destination_id, total_cost)<span class="sc">%&gt;%</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">'origin_id'</span>)))</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>distmat_km <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(distmat<span class="sc">/</span><span class="dv">1000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="computing-2sfca-with-the-catchment-package" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Computing 2SFCA with the catchment Package</h1>
+<p>In the code chunk below, <a href="https://uva-bi-sdad.github.io/catchment/reference/catchment_ratio.html"><code>catchment_ratio()</code></a> is used to compute 2SFCA.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df_2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_cost =</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="mapping-2sfca" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="mapping-2sfca"><span class="header-section-number">6.1</span> Mapping 2SFCA</h2>
+<p>The slide shows only the map, and the prof said the code comes from the hands-on exercise. <code>bind_cols()</code> attaches the 2SFCA values to the hexagons. I reuse the <code>acc_map()</code> function from my Hands-on Exercise 7.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>hexagon_2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_2sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">The Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fmt_num <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sapply</span>(v, <span class="cf">function</span>(z) {</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (z <span class="sc">==</span> <span class="dv">0</span>) <span class="st">"0"</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">abs</span>(z) <span class="sc">&lt;</span> <span class="fl">0.01</span> <span class="sc">||</span> <span class="fu">abs</span>(z) <span class="sc">&gt;=</span> <span class="dv">1000</span>) <span class="fu">formatC</span>(z, <span class="at">format =</span> <span class="st">"e"</span>, <span class="at">digits =</span> <span class="dv">1</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">abs</span>(z) <span class="sc">&gt;=</span> <span class="dv">100</span>) <span class="fu">format</span>(<span class="fu">round</span>(z))</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="fu">formatC</span>(<span class="fu">signif</span>(z, <span class="dv">2</span>), <span class="at">format =</span> <span class="st">"fg"</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  }) <span class="sc">%&gt;%</span> <span class="fu">trimws</span>()</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>acc_map <span class="ot">&lt;-</span> <span class="cf">function</span>(data, var, title, legend_title, <span class="at">zero_label =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> data[[var]]</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(zero_label)) {</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    q <span class="ot">&lt;-</span> <span class="fu">quantile</span>(x, <span class="at">probs =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">11</span>))</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(q[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>], <span class="cn">Inf</span>)</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    labels <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">fmt_num</span>(q[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>]), <span class="st">"to"</span>, <span class="fu">fmt_num</span>(q[<span class="dv">2</span><span class="sc">:</span><span class="dv">11</span>]))</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    fills <span class="ot">&lt;-</span> <span class="st">"brewer.blues"</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    q <span class="ot">&lt;-</span> <span class="fu">quantile</span>(x[x <span class="sc">&gt;</span> <span class="dv">0</span>], <span class="at">probs =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">10</span>))</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, q[<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>], <span class="cn">Inf</span>)</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    labels <span class="ot">&lt;-</span> <span class="fu">c</span>(zero_label, <span class="fu">paste</span>(<span class="fu">fmt_num</span>(q[<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>]), <span class="st">"to"</span>, <span class="fu">fmt_num</span>(q[<span class="dv">2</span><span class="sc">:</span><span class="dv">10</span>])))</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    fills <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"grey75"</span>, RColorBrewer<span class="sc">::</span><span class="fu">brewer.pal</span>(<span class="dv">9</span>, <span class="st">"Blues"</span>))</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(data, <span class="at">bbox =</span> mapex) <span class="sc">+</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_polygons</span>(<span class="at">fill =</span> var,</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">breaks =</span> <span class="fu">unname</span>(breaks),</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">labels =</span> labels,</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">values =</span> fills),</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> legend_title,</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">position =</span> <span class="fu">tm_pos_out</span>(<span class="st">"right"</span>, <span class="st">"center"</span>)),</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>                <span class="at">col =</span> <span class="st">"grey85"</span>, <span class="at">lwd =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(eldercare) <span class="sc">+</span></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_dots</span>(<span class="at">size =</span> <span class="fl">0.3</span>, <span class="at">fill =</span> <span class="st">"#D55E00"</span>, <span class="at">col =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_title</span>(title, <span class="at">size =</span> <span class="fl">1.5</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>) <span class="sc">+</span></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>,</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>               <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tm_scalebar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_2SFCA, <span class="st">"2SFCA"</span>,</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>        <span class="st">"2SFCA Accessibility measures"</span>,</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>        <span class="st">"2SFCA"</span>,</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -537,47 +637,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </section>
 </section>
-<section id="computing-e2sfca-with-the-catchment-package" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Computing E2SFCA with the catchment Package</h1>
-<section id="enhanced-2-step-floating-catchment-area-e2sfca" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="enhanced-2-step-floating-catchment-area-e2sfca"><span class="header-section-number">6.1</span> Enhanced 2-Step Floating Catchment Area (E2SFCA)</h2>
+<section id="computing-e2sfca-with-the-catchment-package" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Computing E2SFCA with the catchment Package</h1>
+<section id="enhanced-2-step-floating-catchment-area-e2sfca" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="enhanced-2-step-floating-catchment-area-e2sfca"><span class="header-section-number">7.1</span> Enhanced 2-Step Floating Catchment Area (E2SFCA)</h2>
 <p>E2SFCA gives nearer centres more weight. <code>step_weights</code> sets the weight for each distance band, from 0.01 for centres up to 5 km away to 1 for centres within 1 km.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>step_weights <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">5</span>, .<span class="dv">01</span>), <span class="fu">c</span>(<span class="dv">4</span>, .<span class="dv">05</span>), <span class="fu">c</span>(<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(<span class="dv">2</span>, .<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>df_e2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> step_weights) <span class="sc">%&gt;%</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"E2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>step_weights <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">5</span>, .<span class="dv">01</span>), <span class="fu">c</span>(<span class="dv">4</span>, .<span class="dv">05</span>), <span class="fu">c</span>(<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(<span class="dv">2</span>, .<span class="dv">4</span>), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>df_e2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> step_weights) <span class="sc">%&gt;%</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"E2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="mapping-e2sfca" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="mapping-e2sfca"><span class="header-section-number">6.2</span> Mapping E2SFCA</h2>
+<section id="mapping-e2sfca" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="mapping-e2sfca"><span class="header-section-number">7.2</span> Mapping E2SFCA</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>hexagon_E2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_e2sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>hexagon_E2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_e2sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
-<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_E2SFCA, <span class="st">"E2SFCA"</span>,</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"E2SFCA Accessibility measures"</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"E2SFCA"</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_E2SFCA, <span class="st">"E2SFCA"</span>,</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"E2SFCA Accessibility measures"</span>,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"E2SFCA"</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -597,44 +697,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </section>
 </section>
-<section id="computing-kd2sfca-with-the-catchment-package" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Computing KD2SFCA with the catchment Package</h1>
-<section id="kernel-density-gaussian-2-step-floating-catchment-area" class="level2" data-number="7.1">
-<h2 data-number="7.1" class="anchored" data-anchor-id="kernel-density-gaussian-2-step-floating-catchment-area"><span class="header-section-number">7.1</span> Kernel Density (Gaussian) 2-Step Floating Catchment Area</h2>
+<section id="computing-kd2sfca-with-the-catchment-package" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Computing KD2SFCA with the catchment Package</h1>
+<section id="kernel-density-gaussian-2-step-floating-catchment-area" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="kernel-density-gaussian-2-step-floating-catchment-area"><span class="header-section-number">8.1</span> Kernel Density (Gaussian) 2-Step Floating Catchment Area</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df_kd2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> <span class="st">"gaussian"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"KD2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df_kd2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> <span class="st">"gaussian"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"KD2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="mapping-kd2sfca" class="level2" data-number="7.2">
-<h2 data-number="7.2" class="anchored" data-anchor-id="mapping-kd2sfca"><span class="header-section-number">7.2</span> Mapping KD2SFCA</h2>
+<section id="mapping-kd2sfca" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="mapping-kd2sfca"><span class="header-section-number">8.2</span> Mapping KD2SFCA</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>hexagon_KD2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_kd2sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>hexagon_KD2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_kd2sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
-<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_KD2SFCA, <span class="st">"KD2SFCA"</span>,</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"KD2SFCA Accessibility measures"</span>,</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"KD2SFCA"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_KD2SFCA, <span class="st">"KD2SFCA"</span>,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"KD2SFCA Accessibility measures"</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"KD2SFCA"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -654,46 +754,46 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </section>
 </section>
-<section id="computing-3sfca-with-the-catchment-package" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> Computing 3SFCA with the catchment Package</h1>
-<section id="step-floating-catchment-area" class="level2" data-number="8.1">
-<h2 data-number="8.1" class="anchored" data-anchor-id="step-floating-catchment-area"><span class="header-section-number">8.1</span> 3-Step Floating Catchment Area</h2>
+<section id="computing-3sfca-with-the-catchment-package" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Computing 3SFCA with the catchment Package</h1>
+<section id="step-floating-catchment-area" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="step-floating-catchment-area"><span class="header-section-number">9.1</span> 3-Step Floating Catchment Area</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df_3sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  step_weights,</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">normalize_weight =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"3SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>df_3sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  step_weights,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">normalize_weight =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"3SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="mapping-3sfca" class="level2" data-number="8.2">
-<h2 data-number="8.2" class="anchored" data-anchor-id="mapping-3sfca"><span class="header-section-number">8.2</span> Mapping 3SFCA</h2>
+<section id="mapping-3sfca" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="mapping-3sfca"><span class="header-section-number">9.2</span> Mapping 3SFCA</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>hexagon_3SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_3sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>hexagon_3SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_3sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">The Code</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">The Code</a></li></ul>
 <div class="tab-content">
-<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-31-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
-<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_3SFCA, <span class="st">"3SFCA"</span>,</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"3SFCA Accessibility measures"</span>,</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"3SFCA"</span>,</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_3SFCA, <span class="st">"3SFCA"</span>,</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"3SFCA Accessibility measures"</span>,</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"3SFCA"</span>,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
@@ -708,7 +808,67 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>3SFCA uses the same <code>step_weights</code> as E2SFCA, passed here as the fourth argument, which is <code>weight</code>. <code>normalize_weight = TRUE</code> adds the third step. Each hexagon’s weights are scaled so they add up to one across the centres it can reach, so a hexagon near many centres no longer counts its full demand at every one of them. This stops the 2SFCA family from over-counting demand where centres cluster. Because of the 5 km steps, 1,281 hexagons are still at 0.</p>
+<p>3SFCA uses the same <code>step_weights</code> as E2SFCA, passed here as the fourth argument, which is <code>weight</code>. <code>normalize_weight = TRUE</code> adds the third step. The source of <code>catchment_ratio()</code> shows that each weight is multiplied by the hexagon’s chance of choosing that centre, which is the weight divided by the sum of the hexagon’s weights to all the centres it can reach. So a hexagon near many centres no longer counts its full demand at every one of them. This stops the 2SFCA family from over-counting demand where centres cluster. Because of the 5 km steps, 1,281 hexagons are still at 0.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="computing-m2sfca-with-the-catchment-package" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Computing M2SFCA with the catchment Package</h1>
+<section id="modified-2-step-floating-catchment-area" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="modified-2-step-floating-catchment-area"><span class="header-section-number">10.1</span> Modified 2-Step Floating Catchment Area</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>df_m2sfca <span class="ot">&lt;-</span> <span class="fu">catchment_ratio</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">consumers =</span> hexagons<span class="sc">$</span>demand,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">providers =</span> eldercare<span class="sc">$</span>capacity,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cost =</span> distmat_km,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  step_weights,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">adjust_providers =</span> <span class="cf">function</span>(w) w<span class="sc">^</span><span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">"M2SFCA"</span> <span class="ot">=</span> <span class="st">"."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="mapping-m2sfca" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="mapping-m2sfca"><span class="header-section-number">10.2</span> Mapping M2SFCA</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>hexagon_M2SFCA <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(hexagons, df_m2sfca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">The Code</a></li></ul>
+<div class="tab-content">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="In-class_Ex07_files/figure-html/unnamed-chunk-35-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acc_map</span>(hexagon_M2SFCA, <span class="st">"M2SFCA"</span>,</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"M2SFCA Accessibility measures"</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"M2SFCA"</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">zero_label =</span> <span class="st">"0, no centre within 5 km"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Learning diary
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>adjust_providers = function(w) w^2</code> is the modified 2SFCA of Delamater, 2013. The first step, where each centre’s capacity is shared among the hexagons that can reach it, still uses the plain step weights. Only the second step, where each hexagon adds up the centres it can reach, uses the weights squared. A centre 4 to 5 km away then counts for 0.01² = 0.0001 instead of 0.01, so distance matters more than in E2SFCA. The package notes that once the weights are changed this way, the scores no longer add up to the total supply. The two measures still rank the hexagons with a Spearman correlation of 0.996.</p>
+<p>The prof’s plot chunk for this map draws <code>hex_3SFCA</code> again, while his code chunk draws <code>hex_M2SFCA</code>. I map the M2SFCA values.</p>
 </div>
 </div>
 
