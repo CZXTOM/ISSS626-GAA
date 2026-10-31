@@ -1,0 +1,434 @@
+---
+title: "Where the New Rail Lines Will Draw Their Riders From"
+subtitle: "A Huff model of weekday morning ridership for the Jurong Region Line and Cross Island Line"
+author: "ZeXin Chen"
+date: "2026-11-15"
+date-format: "D MMMM YYYY"
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    slide-number: true
+    embed-resources: true
+    transition: fade
+    show-notes: false
+    width: 1600
+    height: 900
+    footer: "ISSS626 Take-home Exercise 3 | ZeXin Chen | [Technical Report](Take-home_Ex03.html) | [Back to site](https://isss-626-gaa-six.vercel.app)"
+    include-in-header:
+      text: |
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+execute:
+  echo: false
+  eval: true
+  warning: false
+  message: false
+  freeze: true
+---
+
+```{r}
+#| label: setup
+pacman::p_load(sf, tmap, tidyverse, knitr, scales, ggrepel)
+sf_use_s2(FALSE)
+knitr::opts_chunk$set(out.width = "100%", dpi = 150, dev.args = list(bg = "transparent"))
+
+prep <- read_rds("data/rds/prepared.rds")
+res  <- read_rds("data/rds/results.rds")
+sg_pa <- prep$sg_pa
+result <- res$result; fit_now <- res$fit_now; origins <- res$origins
+new_res <- res$new_res %>% arrange(desc(pred_fut)); imp <- res$imp %>% st_drop_geometry()
+
+bg <- "#FDFAF3"
+col_high <- "#D55E00"; col_low <- "#0072B2"
+line_cols <- c(JRL = "#0099AA", CRL = "#97C616")
+fmt <- function(x, d = 0) format(round(x, d), big.mark = ",", nsmall = max(d, 0), scientific = FALSE)
+pct <- function(x, d = 0) paste0(round(100 * x, d), "%")
+tmap_options(scale = 1.3, component.autoscale = FALSE)
+map_layout <- tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, legend.bg.color = bg,
+                        inner.margins = c(0.01, 0.01, 0.01, 0.01), outer.margins = 0)
+base_map <- tm_shape(sg_pa) + tm_polygons(fill = "#F2EDE3", col = "grey80", lwd = 0.4)
+theme_slide <- theme_minimal(base_size = 18) +
+  theme(plot.title = element_blank(), panel.grid.minor = element_blank(),
+        plot.background = element_rect(fill = bg, colour = NA), panel.background = element_rect(fill = bg, colour = NA))
+
+total <- res$total
+n_flat <- res$n_flat; n_imp <- res$n_imp; n_loss15 <- res$n_loss15
+bp <- res$best
+sw <- origins %>% st_drop_geometry() %>% count(switch_to, wt = flats, name = "flats") %>% mutate(s = flats / sum(flats))
+s_of <- function(x) sw$s[sw$switch_to == x]
+ew_jurong <- c("EW24/NS1", "EW25", "EW26", "EW27", "EW28", "EW29", "EW30", "EW31", "EW32", "EW33")
+ew_loss <- -sum(imp$change[imp$PT_CODE %in% ew_jurong])
+within30 <- mean(abs(st_drop_geometry(fit_now)$ratio - 1) < 0.3)
+hume_pred <- res$hume_pred
+below_hume <- new_res %>% filter(pred_fut < hume_pred)
+n_below_all <- res$n_below_all
+```
+
+## Contents {.contents}
+
+::::: columns
+::: {.column width="50%"}
+**Part 1, The Question and the Data**
+
+- Where morning riders board today
+- How the analysis works
+
+**Part 2, Calibrating the Huff Model**
+
+- Insight 1, distance and station features explain most of the pattern
+
+**Part 3, The New Lines**
+
+- Insight 2, eight new stations draw half the riders, and up to two in five are quieter than Hume
+- Insight 3, the impact stays near the new lines
+- Insight 4, about one in eight flats gets a new most likely station
+:::
+
+::: {.column width="50%"}
+**Part 4, Bonus**
+
+- Insight 5, the ranking holds under another decay curve
+
+**Part 5, So What**
+
+- Key findings and limits
+- Rail planning implications
+:::
+:::::
+
+::: notes
+The deck follows the brief's three objectives. Part 2 calibrates the model. Part 3 predicts ridership at the new stations and the impact on existing ones. The bonus tests the model's shape. Part 5 turns the results into planning implications.
+:::
+
+## Morning riders board in the HDB towns, and two new lines are coming
+
+<div class="part">Part 1 · The question and the data</div>
+
+::::: columns
+::: {.column width="55%"}
+```{r}
+#| fig-width: 7.6
+#| fig-height: 5.6
+fut_pts <- filter(result, is.na(pred_now))
+base_map +
+  tm_shape(filter(result, !is.na(pred_now)) %>% arrange(desc(tap_in))) +
+  tm_bubbles(size = "tap_in", fill = col_high, fill_alpha = 0.65, col = "white", lwd = 0.3,
+             size.scale = tm_scale_continuous(values.scale = 1.3),
+             size.legend = tm_legend(title = "Tap-ins today", position = tm_pos_in("right", "bottom"), frame = FALSE)) +
+  tm_shape(fut_pts) + tm_symbols(shape = 21, size = 0.35, fill = "line",
+                                 fill.scale = tm_scale_categorical(values = line_cols),
+                                 fill.legend = tm_legend(title = "New station", position = tm_pos_in("left", "top"), frame = FALSE),
+                                 col = "grey20") +
+  map_layout
+```
+:::
+
+::: {.column width="45%"}
+<div class="kicker">Research question</div>
+
+<div class="rq">How many morning riders will each new JRL and CRL station draw, which may be too quiet to open yet, and which existing stations will lose riders?</div>
+
+<div class="statrow">
+<div><div class="bignum">`r fmt(total, -3)`</div><div class="bigcap">weekday tap-ins, 6am to 9am, at 184 stations</div></div>
+<div><div class="bignum">29</div><div class="bigcap">new station points, plus 7 interchanges that gain a line</div></div>
+</div>
+
+<div class="fix"><b>Data.</b> LTA origin-destination volumes for August and September 2026, station and bus stop layers, 10,817 HDB blocks with their flats, and the future station points.</div>
+
+<div class="fix"><b>Unit.</b> An HDB block is an origin, sized by its flats. A station is a destination.</div>
+:::
+:::::
+
+::: notes
+Morning tap-ins are highest in the big HDB towns such as Yishun, Admiralty and Woodlands, because in the morning people board near home. The JRL in teal and the CRL in lime will add 29 new station points. The question is how many riders they draw and from where.
+:::
+
+## Fix the data land mines, then fit a Huff model {.approach}
+
+<div class="part">Part 1 · The question and the data</div>
+
+::::: columns
+::: {.column width="46%"}
+<div class="kicker">Land mines that would mislead the model</div>
+
+<div class="fix"><b>No key between HDB tables.</b> Flats and block outlines had no shared column. OneMap search turned each address into a postal code that links them.</div>
+
+<div class="fix"><b>Interchange codes did not match.</b> "NS24/NE6/CC1" in the ridership file is three labels in the station layer. Matched code by code.</div>
+
+<div class="fix"><b>Codes that do not line up.</b> Circle Line stations were recoded in July, so only August and September are used. Stevens appears under two codes, DT10 and TE11, which are merged.</div>
+
+<div class="fix"><b>New blocks missing.</b> Tengah blocks finished after the building layer are placed with OneMap's points, so the JRL's newest town is not lost.</div>
+:::
+
+::: {.column width="54%"}
+| Step | Question | Method |
+|---|---|---|
+| **Task 2** | What makes people pick a station? | Huff model, weights fitted to observed tap-in shares |
+| **Task 3** | How many riders will each new station draw? | Same model with the new stations added |
+| **Task 3** | Which stations lose riders, and which blocks switch? | Change in predicted tap-ins and most likely station |
+| **Bonus** | Does the decay curve change the answer? | Exponential instead of power decay |
+
+: {tbl-colwidths="[16,44,40]"}
+
+<div class="small">Each block considers stations within 5 km. Without this limit, a new station in Jurong would take riders from Changi. Total morning demand is held at today's level.</div>
+:::
+:::::
+
+::: notes
+The hardest data problem was linking the HDB flats table to the block outlines, which have no shared key. OneMap search found every block's postal code. Interchange codes were matched one by one, and the months were chosen so that station codes stay the same. The model is the Huff model from Lesson 8, with weights fitted to the data.
+:::
+
+## Insight 1. Distance, lines and LRT status explain most of the pattern
+
+<div class="part">Part 2 · Calibrating the Huff model</div>
+
+::::: columns
+::: {.column width="62%"}
+```{r}
+#| fig-width: 8.6
+#| fig-height: 5.8
+base_map +
+  tm_shape(mutate(fit_now, ratio_c = pmin(pmax(ratio, 0.25), 4)) %>% arrange(abs(log(ratio_c)))) +
+  tm_symbols(shape = 21, fill = "ratio_c", size = 0.55, col = "grey30", lwd = 0.4,
+             fill.scale = tm_scale_intervals(style = "fixed", breaks = c(0, 0.5, 0.8, 1.25, 2, Inf),
+                                             labels = c("Under half", "0.5 to 0.8", "Close, 0.8 to 1.25", "1.25 to 2", "Over double"),
+                                             values = c(col_low, "#8FC4E8", "#FFFFFF", "#F1A26B", col_high)),
+             fill.legend = tm_legend(title = "Predicted ÷ observed", position = tm_pos_in("right", "bottom"), frame = FALSE)) +
+  map_layout
+```
+:::
+
+::: {.column width="38%"}
+<div class="statrow">
+<div><div class="bignum">`r pct(res$r2)`</div><div class="bigcap">of the variation in tap-ins between stations explained</div></div>
+<div><div class="bignum">`r round(bp["lambda"], 2)`</div><div class="bigcap">distance decay λ. Twice as far keeps `r pct(2^-bp["lambda"])` of the pull</div></div>
+</div>
+
+<div class="fix"><b>Beats both references.</b> Nearest station only explains `r pct(res$r2_nearest)`, distance only `r pct(res$r2_dist)`. Lines and LRT status add the rest. An LRT stop has `r pct(exp(bp["a_lrt"]))` of an MRT station's pull.</div>
+
+<div class="fix"><b>Too low, in blue.</b> Near private homes, such as Newton and the Bukit Timah corridor, and where riders are workers, such as Kranji, Tuas and Changi Airport.</div>
+
+<div class="fix"><b>Too high, in orange.</b> Most LRT stops in Punggol, Sengkang and Bukit Panjang, whose residents often bus straight to the MRT, and MRT stations next to a busier neighbour, such as Expo.</div>
+:::
+:::::
+
+::: notes
+The weights were fitted with optim, extending the grid search from Hands-on Exercise 8, and the matrix code was checked against MCI's huff.shares. The fit is good for the big stations but rough for single small ones, because the model only knows about HDB residents. Stations near private housing, such as Newton, and stations used by workers, such as Kranji and Tuas, are under-predicted.
+:::
+
+## Insight 2. Eight new stations draw half the riders, and up to two in five are quieter than Hume
+
+<div class="part">Part 3 · The new lines</div>
+
+::::: columns
+::: {.column width="58%"}
+```{r}
+#| fig-width: 8
+#| fig-height: 6.4
+ggplot(new_res, aes(pred_fut, fct_reorder(name, pred_fut), fill = line)) +
+  geom_col(width = 0.72) +
+  geom_vline(xintercept = hume_pred, linetype = "dashed", colour = "grey30") +
+  annotate("text", x = hume_pred + 150, y = 3, hjust = 0, size = 4.4, label = paste0("Hume, ", comma(round(hume_pred, -1)))) +
+  scale_fill_manual(values = line_cols, name = NULL) +
+  scale_x_continuous(labels = comma, expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Predicted tap-ins per weekday morning", y = NULL) +
+  theme_slide + theme(legend.position = "top", panel.grid.major.y = element_blank(), axis.text.y = element_text(size = 11))
+```
+:::
+
+::: {.column width="42%"}
+<div class="statrow">
+<div><div class="bignum">`r fmt(sum(new_res$pred_fut), -2)`</div><div class="bigcap">weekday morning tap-ins at the 29 new stations, `r pct(sum(new_res$pred_fut) / total)` of today's total</div></div>
+<div><div class="bignum">`r pct(sum(new_res$pred_fut[1:5]) / sum(new_res$pred_fut))`</div><div class="bigcap">of them at the top 5, led by `r paste(new_res$name[1:3], collapse = ", ")`</div></div>
+</div>
+
+<div class="fix"><b>Below Hume.</b> Hume was kept closed for ten years. The model gives it `r fmt(hume_pred, -1)` tap-ins, and `r nrow(below_hume)` new stations fall below that. `r n_below_all` are below even Hume's observed `r fmt(res$hume_obs, -1)`, all at NTU, in the Jurong industrial area or at Changi.</div>
+
+<div class="small">These stations will mainly serve workers and students, whom the model does not count, so their opening case rests on that demand.</div>
+:::
+:::::
+
+::: notes
+The busiest new stations sit in dense housing that is more than a short walk from today's lines, at Serangoon North, Pasir Ris East and Tampines North on the CRL, and in Tengah and Choa Chu Kang West on the JRL. The dashed line is Hume as predicted by the same model, so the comparison is like for like. The industrial and campus stations will mostly serve workers and students, whom the model does not count, so their morning figures are low.
+:::
+
+## Insight 3. New riders come from nearby, and the rest barely changes
+
+<div class="part">Part 3 · The new lines</div>
+
+::::: columns
+::: {.column width="60%"}
+```{r}
+#| fig-width: 8.2
+#| fig-height: 5.8
+chg_lab <- c("Loses over 30%", "Loses 15 to 30%", "Loses 5 to 15%", "Within 5%", "Gains 5 to 15%", "Gains over 15%")
+chg_col <- c("#08306B", col_low, "#8FC4E8", "#FFFFFF", "#F1A26B", col_high)
+imp_map <- result %>% filter(!is.na(pred_now), pred_now > 0) %>%
+  mutate(chg_class = cut(change_pct, c(-Inf, -0.3, -0.15, -0.05, 0.05, 0.15, Inf), labels = chg_lab)) %>%
+  arrange(desc(abs(change_pct)))
+base_map +
+  tm_shape(filter(result, is.na(pred_now))) +
+  tm_symbols(shape = 24, size = 0.35, fill = "white", col = "grey10", lwd = 0.8) +
+  tm_add_legend(type = "symbols", labels = "New station", shape = 24, fill = "white", col = "grey10", size = 0.6,
+                position = tm_pos_in("left", "top"), frame = FALSE) +
+  tm_shape(imp_map) +
+  tm_symbols(shape = 21, fill = "chg_class", size = 0.5, col = "grey30", lwd = 0.4,
+             fill.scale = tm_scale_categorical(values = setNames(chg_col, chg_lab), levels.drop = FALSE),
+             fill.legend = tm_legend(title = "Change in tap-ins", position = tm_pos_in("right", "bottom"), frame = FALSE)) +
+  map_layout
+```
+:::
+
+::: {.column width="40%"}
+<div class="statrow">
+<div><div class="bignum">`r n_flat`</div><div class="bigcap">of `r n_imp` existing stations with predicted riders change by less than 5%</div></div>
+<div><div class="bignum">`r n_loss15`</div><div class="bigcap">lose more than 15%</div></div>
+</div>
+
+<div class="fix"><b>Biggest loser.</b> The East-West Line from Jurong East to Tuas gives up about `r fmt(ew_loss, -2)` tap-ins, as the JRL runs parallel just to its north.</div>
+
+<div class="fix"><b>Interchanges differ.</b> Hougang and Bright Hill gain from their new CRL line, and Ang Mo Kio holds steady. Jurong East, Boon Lay, Choa Chu Kang and Pasir Ris lose, because new stations sit in their outer catchments.</div>
+
+<div class="small">The East-West Line losses are likely too high. The model does not know that riders bound for the city may stay on that line.</div>
+:::
+:::::
+
+::: notes
+Total morning demand is held fixed, so every rider at a new station used to board somewhere nearby. Most of the network is unaffected. The losses sit along the East-West Line through Jurong and around the middle of the CRL. A check in the report shows that without the 5 km limit, even stations far from the new lines would lose about 8 percent, which is not realistic.
+:::
+
+## Insight 4. About one in eight HDB flats gets a new most likely station
+
+<div class="part">Part 3 · The new lines</div>
+
+::::: columns
+::: {.column width="62%"}
+```{r}
+#| fig-width: 8.4
+#| fig-height: 5.8
+sw_cols <- c(line_cols, `Another existing station` = "#CC79A7", `No change` = "#D9D4CB")
+base_map +
+  tm_shape(mutate(origins, switch_to = factor(switch_to, levels = names(sw_cols))) %>% arrange(desc(switch_to))) +
+  tm_dots(fill = "switch_to", size = 0.12, fill.scale = tm_scale_categorical(values = sw_cols),
+          fill.legend = tm_legend(title = "Most likely station after", position = tm_pos_in("right", "bottom"), frame = FALSE)) +
+  tm_shape(filter(result, is.na(pred_now))) + tm_symbols(shape = 21, size = 0.35, fill = "white", col = "grey10") +
+  map_layout
+```
+:::
+
+::: {.column width="38%"}
+<div class="statrow">
+<div><div class="bignum">`r pct(s_of("JRL"))`</div><div class="bigcap">of HDB flats switch to a JRL station</div></div>
+<div><div class="bignum">`r pct(s_of("CRL"))`</div><div class="bigcap">switch to a CRL station</div></div>
+</div>
+
+<div class="fix"><b>Where.</b> Most in Jurong West, Jurong East, Tengah, Pasir Ris and Bukit Batok, then Choa Chu Kang, Ang Mo Kio and Serangoon.</div>
+
+<div class="fix"><b>One-sided cuts.</b> A catchment like Lakeside's or Tampines' shrinks on the side facing the new line, while blocks next to the old station stay with it.</div>
+:::
+:::::
+
+::: notes
+A block's market area is the station it is most likely to use. The blocks that switch form tight patches around the new stations. Most of the island, in grey, keeps its current station. The report maps Lakeside and Tampines before and after to show the one-sided cut.
+:::
+
+## Insight 5. The station ranking holds under another distance decay curve
+
+<div class="part">Part 4 · Bonus</div>
+
+::::: columns
+::: {.column width="55%"}
+```{r}
+#| fig-width: 7.2
+#| fig-height: 5.6
+nb <- st_drop_geometry(result) %>% filter(is.na(pred_now))
+lab_nb <- nb %>% mutate(d = abs(log(pred_exp / pred_fut))) %>% filter(pred_fut > 1000) %>% slice_max(d, n = 4)
+ggplot(nb, aes(pred_fut, pred_exp, colour = line)) +
+  geom_abline(linetype = "dashed", colour = "grey50") + geom_point(size = 3.4) +
+  geom_text_repel(data = lab_nb, aes(label = name), colour = "grey20", size = 5, seed = 1, min.segment.length = 0, box.padding = 0.8) +
+  scale_colour_manual(values = line_cols, name = NULL) +
+  scale_x_continuous(labels = comma) + scale_y_continuous(labels = comma) +
+  labs(x = "Power decay, main model", y = "Exponential decay") + theme_slide + theme(legend.position = "top")
+```
+:::
+
+::: {.column width="45%"}
+<div class="kicker">Question</div>
+
+<div class="rq">Do the predictions depend on the shape of distance decay?</div>
+
+<div class="statrow">
+<div><div class="bignum">`r round(res$rho_new, 2)`</div><div class="bigcap">rank correlation for the new stations</div></div>
+<div><div class="bignum">`r round(res$rho_chg, 2)`</div><div class="bigcap">for the change at existing stations</div></div>
+</div>
+
+<div class="fix"><b>Method.</b> e<sup>−λd</sup> instead of d<sup>−λ</sup>, refitted with the same data, the same 5 km limit and the same target.</div>
+
+<div class="fix"><b>Answer.</b> Same ranking, similar total, `r fmt(res$tot_exp, -2)` against `r fmt(res$tot_pow, -2)`. Single stations can differ by up to `r pct(res$max_diff_exp)`, so read each number as a range.</div>
+:::
+:::::
+
+::: notes
+The power curve is MCI's default and the form in Lesson 8. An exponential curve fades at the same rate per kilometre, which some studies find suits short trips in a city. It fits today's tap-ins a little worse, so the power model stays the main one, but the two agree on the ranking almost exactly.
+:::
+
+## Key findings and their limits {.findings}
+
+<div class="part">Part 5 · So what</div>
+
+| | Finding | Evidence | Main limit |
+|---|---|---|---|
+| **1** | Station choice follows distance, lines and LRT status | R² `r round(res$r2, 2)`, λ `r round(bp["lambda"], 2)`, weights fitted to observed tap-in shares | Only HDB residents are origins, so stations near private homes and workplaces are under-predicted |
+| **2** | The 29 new stations draw about `r fmt(sum(new_res$pred_fut), -2)` morning riders. `r n_below_all` to `r nrow(below_hume)` of them draw fewer than Hume | Led by `r paste(new_res$name[1:3], collapse = ", ")` | Total demand held fixed, so new bus-to-rail riders are not counted |
+| **3** | The impact is local | `r n_flat` of `r n_imp` stations change by under 5% | Rests on the choice limit. Limits of 3 to 8 km give `r min(res$limits$lose15[-1])` to `r max(res$limits$lose15[-1])` stations losing over 15% |
+| **4** | The East-West Line through Jurong loses most | About `r fmt(ew_loss, -2)` tap-ins | Probably too high, because travel direction is not modelled |
+| **5** | The ranking is robust | Rank correlation `r round(res$rho_new, 2)` with an exponential curve | Straight-line distance, not real routes |
+
+: {tbl-colwidths="[4,30,32,34]"}
+
+::: {.callout-note appearance="minimal"}
+**Main finding.** The new lines move morning riders into the housing gaps between today's lines, and the effect on the rest of the network stays local.
+:::
+
+::: notes
+Each finding comes with its evidence and its main limit. The strongest results are the ranking of new stations and the local nature of the impact. The weakest are the exact numbers for small stations and the size of the East-West Line loss.
+:::
+
+## Rail planning implications
+
+<div class="part">Part 5 · So what</div>
+
+<div class="act"><b>Plan the biggest entrances and feeder links at `r paste(new_res$name[1:3], collapse = ", ")`</b><div class="row"><span class="tag">Because</span><span>they draw the most morning riders among the new stations</span></div><div class="row"><span class="tag">Check first</span><span>Tengah's population once all its flats are built, since the model only sees completed blocks</span></div></div>
+
+<div class="act"><b>Build the shell now, choose the opening date later, for the quietest stations</b><div class="row"><span class="tag">Because</span><span>`r n_below_all` to `r nrow(below_hume)` new stations draw fewer home-based riders than Hume, which stayed closed for ten years</span></div><div class="row"><span class="tag">Check first</span><span>worker, student and airport staff numbers from JTC, NTU and Changi Airport Group</span></div></div>
+
+<div class="act"><b>Use the relief on the East-West Line through Jurong</b><div class="row"><span class="tag">Because</span><span>it gives up about `r fmt(ew_loss, -2)` morning boardings to the JRL</span></div><div class="row"><span class="tag">Check first</span><span>whether city-bound riders really change at Jurong East or Boon Lay, using JRL data once it opens</span></div></div>
+
+<div class="act"><b>Re-route feeder buses and check interchange capacity</b><div class="row"><span class="tag">Because</span><span>about one in eight flats gets a new most likely station, and Hougang gains the most riders among the interchanges</span></div><div class="row"><span class="tag">Check first</span><span>current feeder routes and transfer space at Hougang, Bright Hill and Ang Mo Kio</span></div></div>
+
+<div class="small">The model shows where morning riders from HDB homes are likely to board. It does not count new riders who take the bus today.</div>
+
+::: notes
+Each action comes with the result behind it and what to check before acting. The model is a planning guide for where riders come from, not a demand forecast for building to.
+:::
+
+## References {.smaller}
+
+<div class="small">
+
+1. Bahrami, M. et al. (2022). Using gravity model to make store closing decisions, a data driven approach. *Expert Systems with Applications*, 205, 117703.
+2. Bai, L. et al. (2023). Delineating hierarchical obstetric hospital service areas using the Huff model based on medical records. *Applied Geography*, 153, 102903.
+3. Fotheringham, A. S. and O'Kelly, M. E. (1989). *Spatial Interaction Models: Formulations and Applications*. Kluwer Academic.
+4. Huff, D. L. (1963). A probabilistic analysis of shopping center trade areas. *Land Economics*, 39(1), 81 to 88.
+5. Kam, T. S. (2026). *R for Geospatial Data Science and Analytics*. <https://r4gdsa.netlify.app/>
+6. Kam, T. S. (2026). *ISSS626 Lesson 8, Market Area Analysis for Retail and Service Locations, Huff and MCI Models*. Singapore Management University.
+7. Land Transport Authority (2026). *Factsheet: The Next Phase of Rail Development*.
+8. Lin, T. G. et al. (2016). Enhanced Huff model for estimating Park and Ride catchment areas in Perth, WA. *Journal of Transport Geography*, 54, 336 to 348.
+9. Nakanishi, M. and Cooper, L. G. (1974). Parameter estimation for a multiplicative competitive interaction model, least squares approach. *Journal of Marketing Research*, 11(3), 303 to 311.
+10. Wieland, T. (2017). Market area analysis for retail and service locations with MCI. *The R Journal*, 9(1), 298 to 323.
+11. Zhu, Z. et al. (2021). Improved Huff model for estimating urban rail transit station catchment areas considering station choices. *Journal of Advanced Transportation*, 2021.
+
+Data from LTA DataMall, HDB, data.gov.sg, OneMap and Elliot Wu's station coordinates. Full code, checks and workflow in the [Technical Report](Take-home_Ex03.html).
+
+</div>

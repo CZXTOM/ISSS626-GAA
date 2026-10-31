@@ -52,6 +52,12 @@ website:
             href: "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_slides.html"
           - text: "Technical Report"
             href: "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html"
+      - text: "Take-home Exercise 3"
+        menu:
+          - text: "Executive Summary"
+            href: "Take-home_Ex/Take-home_Ex03/Take-home_Ex03_slides.html"
+          - text: "Technical Report"
+            href: "Take-home_Ex/Take-home_Ex03/Take-home_Ex03.html"
     right:
       - icon: github
         href: https://github.com/CZXTOM/ISSS626-GAA
