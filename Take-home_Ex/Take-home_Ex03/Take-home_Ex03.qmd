@@ -141,6 +141,8 @@ col_now  <- "#7F7F7F"   # grey, existing stations
 line_cols <- c(JRL = "#0099AA", CRL = "#97C616")   # LTA's own line colours, teal and lime
 fmt <- function(x, d = 0) format(round(x, d), big.mark = ",", nsmall = max(d, 0), scientific = FALSE)
 pct <- function(x, d = 0) paste0(round(100 * x, d), "%")
+nocase <- function(x) paste0('<span style="text-transform:none">', x, "</span>")   # keeps Greek letters lower case in table headers
+and_list <- function(x) if (length(x) < 2) x else paste(paste(x[-length(x)], collapse = ", "), "and", x[length(x)])
 ```
 
 ## Data and Study Design
@@ -540,7 +542,7 @@ tg <- origins %>% st_drop_geometry() %>% filter(town == "TG")
 ```
 
 ::: {.read}
-**Flats sit in a ring of towns around the centre, with large empty areas in the west, the middle and the far east.** The `r fmt(nrow(origins))` blocks hold `r fmt(sum(origins$flats))` flats. The towns with the most flats are `r paste(head(town_flats$name, 3), collapse = ", ")`. The darkest dots, blocks of 250 flats or more, are found in most towns, but most often on the city fringe, in Kallang/Whampoa, Queenstown and Bukit Merah. There are no flats in Tuas, the Western Catchment, the central nature reserve or around Changi Airport. Tengah, the newest town, lies between Choa Chu Kang and Jurong West, right on the JRL. It has `r nrow(tg)` blocks with `r fmt(sum(tg$flats))` flats so far, and more are being built, so the JRL predictions there will grow over time.
+**Flats sit in a ring of towns around the centre, with large empty areas in the west, the middle and the far east.** The `r fmt(nrow(origins))` blocks hold `r fmt(sum(origins$flats))` flats. The towns with the most flats are `r and_list(head(town_flats$name, 3))`. The darkest dots, blocks of 250 flats or more, are found in most towns, but most often on the city fringe, in Kallang/Whampoa, Queenstown and Bukit Merah. There are no flats in Tuas, the Western Catchment, the central nature reserve or around Changi Airport. Tengah, the newest town, lies between Choa Chu Kang and Jurong West, right on the JRL. It has `r nrow(tg)` blocks with `r fmt(sum(tg$flats))` flats so far, and more are being built, so the JRL predictions there will grow over time.
 :::
 
 ### Where people board today
@@ -576,7 +578,7 @@ base_map +
 :::
 
 ::: {.read}
-**Morning tap-ins are highest at stations in the big HDB towns.** The busiest station is `r top_now$name[1]`, with `r fmt(top_now$tap_in[1])` tap-ins on an average weekday morning, followed by `r paste(top_now$name[2:4], collapse = ", ")`. All four are in the big northern towns, far from the city, where many residents ride the train to work. Stations in the city centre are small circles, because in the morning people tap out there rather than in. This is why HDB blocks are a fair stand-in for where morning trips start. LRT stations in Bukit Panjang, Sengkang and Punggol are also small, because each serves only the few blocks around it. A rider who changes from the LRT to the MRT taps in only once, at the LRT station.
+**Morning tap-ins are highest at stations in the big HDB towns.** The busiest station is `r top_now$name[1]`, with `r fmt(top_now$tap_in[1])` tap-ins on an average weekday morning, followed by `r and_list(top_now$name[2:4])`. All four are in the big northern towns, far from the city, where many residents ride the train to work. Stations in the city centre are small circles, because in the morning people tap out there rather than in. This is why HDB blocks are a fair stand-in for where morning trips start. LRT stations in Bukit Panjang, Sengkang and Punggol are also small, because each serves only the few blocks around it. A rider who changes from the LRT to the MRT taps in only once, at the LRT station.
 :::
 
 # Task 2. Calibrating the Huff Model
@@ -719,7 +721,7 @@ bind_rows(tibble(model = "Nearest station only", r2 = r2_nearest, converged = NA
                         a_bus = .x$par["a_bus"], a_lrt = .x$par["a_lrt"],
                         r2 = .x$r2, converged = .x$converged))) %>%
   select(model, lambda, a_lines, a_bus, a_lrt, r2, converged) %>%
-  kable(digits = 2, col.names = c("Model", "λ", "α lines", "α bus stops", "α LRT", "R²", "Converged"))
+  kable(digits = 2, escape = FALSE, col.names = c("Model", nocase("λ"), nocase("α lines"), nocase("α bus stops"), nocase("α LRT"), "R²", "Converged"))
 ```
 
 ```{r}
@@ -752,7 +754,7 @@ restarts <- map_dfr(list(c(1, 0.5), c(3, -0.5)), function(s0) {
 
 bind_rows(tibble(start = "λ 2, weights 0, main fit", lambda = bp["lambda"], a_lines = bp["a_lines"],
                  a_bus = bp["a_bus"], a_lrt = bp["a_lrt"], r2 = best$r2), restarts) %>%
-  kable(digits = 3, col.names = c("Starting values", "λ", "α lines", "α bus stops", "α LRT", "R²"))
+  kable(digits = 3, escape = FALSE, col.names = c("Starting values", nocase("λ"), nocase("α lines"), nocase("α bus stops"), nocase("α LRT"), "R²"))
 ```
 
 ```{r}
@@ -813,7 +815,7 @@ within30 <- mean(abs(fit_now$ratio - 1) < 0.3)
 ```
 
 ::: {.read}
-**The model gets the overall pattern right, but not every station.** The R² of `r round(best$r2, 2)` comes mostly from the big stations, which sit close to the dashed line. LRT stations are shown in pink. Station by station the fit is rougher. Only `r pct(within30)` of stations are predicted within 30% of their observed tap-ins. Among stations with more than 3,000 tap-ins, the largest over-predictions are at `r paste(over$name, collapse = ", ")`. These sit between busier stations, and their residents tend to use the neighbouring station instead. The largest under-predictions are at `r paste(under$name, collapse = ", ")`. Kranji serves the industry and workers' dormitories around Kranji and Sungei Kadut, Newton serves private housing, and Aljunied serves Geylang, where many people rent rooms in shophouses and private flats. None of these groups is in the model, whose only origins are HDB blocks. So the model is best read as a guide to where riders come from, not as an exact count for each station.
+**The model gets the overall pattern right, but not every station.** The R² of `r round(best$r2, 2)` comes mostly from the big stations, which sit close to the dashed line. LRT stations are shown in pink. Station by station the fit is rougher. Only `r pct(within30)` of stations are predicted within 30% of their observed tap-ins. Among stations with more than 3,000 tap-ins, the largest over-predictions are at `r and_list(over$name)`. These sit between busier stations, and their residents tend to use the neighbouring station instead. The largest under-predictions are at `r and_list(under$name)`. Kranji serves the industry and workers' dormitories around Kranji and Sungei Kadut, Newton serves private housing, and Aljunied serves Geylang, where many people rent rooms in shophouses and private flats. None of these groups is in the model, whose only origins are HDB blocks. So the model is best read as a guide to where riders come from, not as an exact count for each station.
 :::
 
 ::: panel-tabset
@@ -910,7 +912,7 @@ limits <- map_dfr(c(Inf, 3, 5, 8), limit_check)
 limits %>%
   mutate(r2 = round(r2, 3), lambda = round(lambda, 2), far_median = percent(far_median, 0.1),
          new_riders = fmt(new_riders, -2)) %>%
-  kable(col.names = c("Limit", "R² today", "λ", paste0("Median change at the ", sum(far), " stations over 5 km from any new station"),
+  kable(escape = FALSE, col.names = c("Limit", "R² today", nocase("λ"), paste0("Median change at the ", sum(far), " stations over 5 km from any new station"),
                       "Stations losing over 15%", "Riders at new stations", "New stations below Hume"))
 ```
 
@@ -981,7 +983,7 @@ tibble(yardstick = c("Hume today, predicted by the model", "Hume once the new li
 ```
 
 ::: {.read}
-**`r nrow(below_all)` stations are below Hume on every yardstick.** They are `r paste(below_all$name, collapse = ", ")`, all on the NTU branch, in the Jurong industrial area or at Changi. The count rises to `r nrow(below_hume)` with the first yardstick. The extra stations, such as `r paste(tail(below_hume$name, 2), collapse = " and ")`, sit close to the line, so their case is less clear. For all of them the decision to open should rest on worker and student numbers, which the model leaves out.
+**`r nrow(below_all)` stations are below Hume on every yardstick.** They are `r and_list(below_all$name)`, all on the NTU branch, in the Jurong industrial area or at Changi. The count rises to `r nrow(below_hume)` with the first yardstick. The extra stations, such as `r paste(tail(below_hume$name, 2), collapse = " and ")`, sit close to the line, so their case is less clear. For all of them the decision to open should rest on worker and student numbers, which the model leaves out.
 :::
 
 ::: panel-tabset
@@ -1077,7 +1079,7 @@ small_base <- imp %>% st_drop_geometry() %>% filter(change_pct < -0.5, pred_now 
 ```
 
 ::: {.read}
-**The effect stays near the new lines.** `r n_flat` of the `r n_imp` existing stations with predicted riders change by less than 5%, including almost every station in the north, the centre and along the east coast. `r n_loss15` stations lose more than 15%. In the west they include the East-West Line from Jurong East to Tuas Crescent, Bukit Batok, Bukit Gombak, Choa Chu Kang and Yew Tee, the Bukit Panjang LRT, and the Downtown Line from Bukit Panjang to King Albert Park. In the north they include the stations near the CRL's west end at Bright Hill, such as Upper Thomson, Mayflower, Lentor, Yio Chu Kang and Marymount, and those along its middle, such as Kovan, Serangoon, Buangkok, Lorong Chuan and Bishan. In the east they include Tampines, Tampines East, Expo, Upper Changi and Changi Airport. `r paste(small_base$name, collapse = ", ")` lose more than half, but from a small base of under 3,000 predicted riders. Of the 7 interchanges that gain a line, `r sum(gainers$change_pct > 0.05)` gain more than 5%, led by `r gainers$name[1]`, and Ang Mo Kio holds about steady. Jurong East, Boon Lay, Choa Chu Kang and Pasir Ris still lose riders overall, because new stations nearby take their outer blocks.
+**The effect stays near the new lines.** `r n_flat` of the `r n_imp` existing stations with predicted riders change by less than 5%, including almost every station in the north, the centre and along the east coast. `r n_loss15` stations lose more than 15%. In the west they include the East-West Line from Jurong East to Tuas Crescent, Bukit Batok, Bukit Gombak, Choa Chu Kang and Yew Tee, the Bukit Panjang LRT, and the Downtown Line from Bukit Panjang to King Albert Park. In the north they include the stations near the CRL's west end at Bright Hill, such as Upper Thomson, Mayflower, Lentor, Yio Chu Kang and Marymount, and those along its middle, such as Kovan, Serangoon, Buangkok, Lorong Chuan and Bishan. In the east they include Tampines, Tampines East, Expo, Upper Changi and Changi Airport. `r and_list(small_base$name)` lose more than half, but from a small base of under 3,000 predicted riders. Of the 7 interchanges that gain a line, `r sum(gainers$change_pct > 0.05)` gain more than 5%, led by `r gainers$name[1]`, and Ang Mo Kio holds about steady. Jurong East, Boon Lay, Choa Chu Kang and Pasir Ris still lose riders overall, because new stations nearby take their outer blocks.
 :::
 
 ::: panel-tabset
@@ -1170,7 +1172,7 @@ sw_town <- origins %>% st_drop_geometry() %>% filter(switch_to %in% c("JRL", "CR
 ```
 
 ::: {.read}
-**About `r pct(s_of("JRL") + s_of("CRL"))` of HDB flats get a new most likely station on the JRL or CRL.** These blocks form tight patches around the new stations, `r pct(s_of("JRL"))` on the JRL and `r pct(s_of("CRL"))` on the CRL. The towns with the most switching flats are `r paste(sw_town$name[1:6], collapse = ", ")`. Another `r pct(s_of("Another existing station"), 1)` switch to a different existing station, mostly to an interchange that gains a line, above all Hougang. Most of the island, in pale grey, keeps its current station, which matches the small changes in the impact map. The white circles are the new stations. Some, in the industrial west and near Changi, have almost no blocks around them.
+**About `r pct(s_of("JRL") + s_of("CRL"))` of HDB flats get a new most likely station on the JRL or CRL.** These blocks form tight patches around the new stations, `r pct(s_of("JRL"))` on the JRL and `r pct(s_of("CRL"))` on the CRL. The towns with the most switching flats are `r and_list(sw_town$name[1:6])`. Another `r pct(s_of("Another existing station"), 1)` switch to a different existing station, mostly to an interchange that gains a line, above all Hougang. Most of the island, in pale grey, keeps its current station, which matches the small changes in the impact map. The white circles are the new stations. Some, in the industrial west and near Changi, have almost no blocks around them.
 :::
 
 To show how a single market area shrinks, the chance that each block uses Lakeside, the biggest loser on the JRL side, and Tampines, the biggest on the CRL side, is mapped before and after.
@@ -1244,12 +1246,12 @@ The same `calibrate()` function is used, with `form = "exp"`. Only the decay cur
 #| filename: "calibrate with exponential decay"
 fit_exp <- calibrate(c("lambda", "a_lines", "a_bus", "a_lrt"), form = "exp")
 bind_rows(
-  tibble(decay = "Power, d^-λ", lambda = bp["lambda"], a_lines = bp["a_lines"], a_bus = bp["a_bus"],
+  tibble(decay = "Power, d<sup>−λ</sup>", lambda = bp["lambda"], a_lines = bp["a_lines"], a_bus = bp["a_bus"],
          a_lrt = bp["a_lrt"], r2 = best$r2, sse = best$sse),
-  tibble(decay = "Exponential, e^-λd", lambda = fit_exp$par["lambda"], a_lines = fit_exp$par["a_lines"],
+  tibble(decay = "Exponential, e<sup>−λd</sup>", lambda = fit_exp$par["lambda"], a_lines = fit_exp$par["a_lines"],
          a_bus = fit_exp$par["a_bus"], a_lrt = fit_exp$par["a_lrt"], r2 = fit_exp$r2, sse = fit_exp$sse)
-) %>% kable(digits = c(0, 2, 2, 2, 2, 3, 5),
-            col.names = c("Decay", "λ", "α lines", "α bus stops", "α LRT", "R²", "Sum of squared differences"))
+) %>% kable(digits = c(0, 2, 2, 2, 2, 3, 5), escape = FALSE,
+            col.names = c("Decay", nocase("λ"), nocase("α lines"), nocase("α bus stops"), nocase("α LRT"), "R²", "Sum of squared differences"))
 ```
 
 ```{r}
@@ -1385,7 +1387,7 @@ The main decisions are gathered here, with the reason for each and how much it m
 | Fit the model to station totals with `optim()`, not with `mci.fit()` | Only station-to-station trips are published, so no block's own station shares are known | A λ grid and two restarts reach the same answer |
 | Power distance decay, d^−λ^ | The form in Lesson 8 and MCI's default | The bonus refits with exponential decay. The ranking holds |
 | Each block considers stations within 5 km, and always its nearest | Without a limit, far stations lose riders to lines nowhere near them | Limits of 3 and 8 km and no limit are compared in Task 3 |
-| Distances have a floor of 100 m | d^−λ^ explodes as the distance nears zero | Affects the `r sum(apply(D_now, 1, min) < 0.1)` blocks that sit within 100 m of a station |
+| Distances have a floor of 100 m | d^−λ^ explodes as the distance nears zero | Affects the `r sum(apply(D_now, 1, min) <= 0.1)` blocks that sit within 100 m of a station |
 | Origins are HDB blocks, sized by flats | Flats are the only open, island-wide count of homes. Each flat stands for one household | Private housing and workers are left out. See the residual map |
 | Total morning riders stay at today's level | The model shares out riders. It cannot create new ones | New stations' numbers are probably on the low side, because bus riders who would switch to rail are not added |
 | An interchange that gains a new line gets one more line and keeps its point | The new and old points are within a short walk | The extra line raises the pull of these 7 stations. It is the reason Hougang and Bright Hill gain riders |
@@ -1408,7 +1410,7 @@ Each part of the analysis answers a different question. The findings that severa
 
 | Finding | Evidence | How sure |
 |---|---|---|
-| The new stations fill gaps in housing that is far from today's lines | The busiest new stations, `r paste(nr$name[1:3], collapse = ", ")`, sit in dense HDB areas. `r pct(s_of("JRL") + s_of("CRL"))` of HDB flats get a new most likely station | Sure. Both decay curves rank the stations almost the same |
+| The new stations fill gaps in housing that is far from today's lines | The busiest new stations, `r and_list(nr$name[1:3])`, sit in dense HDB areas. `r pct(s_of("JRL") + s_of("CRL"))` of HDB flats get a new most likely station | Sure. Both decay curves rank the stations almost the same |
 | A handful of new stations carry a large share of the riders | The top 5 draw `r pct(top5_share)` of the new stations' riders, and the top 8 about half. `r sum(nr$pred_fut < 1000)` stations draw under 1,000, all in industrial areas, the NTU campus or near Changi | Sure for the ranking, less sure for the small stations, whose riders are mostly workers and students |
 | Between a quarter and two in five new stations would be quieter than Hume | `r nrow(below_all)` to `r nrow(below_hume)` stations are below Hume, depending on how Hume is measured, mostly in industrial areas, at NTU and near Changi | Sure for the `r nrow(below_all)` that are below on every yardstick, less sure for the rest. These stations serve workers and students, whom the model does not count |
 | The impact on existing stations is local | `r n_flat` of `r n_imp` existing stations with predicted riders change by less than 5%. Stations more than 5 km from any new station barely change | Fairly sure. With limits of 3 to 8 km, `r min(limits$lose15[-1])` to `r max(limits$lose15[-1])` stations lose over 15%, and far stations change little |
@@ -1445,7 +1447,7 @@ The brief frames the question around stations that are built but not yet worth o
 
 | Finding | Possible action | Check first |
 |---|---|---|
-| `r paste(nr$name[1:3], collapse = ", ")` draw the most morning riders among the new stations | Plan entrances, fare gates and feeder bus links there for the largest crowds, and open the JRL stages that include them first if staging allows | Tengah's population once all its flats are built, since the model only sees completed blocks |
+| `r and_list(nr$name[1:3])` draw the most morning riders among the new stations | Plan entrances, fare gates and feeder bus links there for the largest crowds, and open the JRL stages that include them first if staging allows | Tengah's population once all its flats are built, since the model only sees completed blocks |
 | `r nrow(below_all)` to `r nrow(below_hume)` new stations draw fewer home-based riders than Hume, which stayed closed for ten years | Treat them as candidates for building the shell now and choosing the opening date later, as was done with Hume, Buangkok and Woodleigh. Their opening case depends on worker and student demand | Worker, student and airport staff numbers from JTC, NTU and Changi Airport Group, and LTA's own counts of morning tap-outs at nearby stations such as Pioneer and Tuas |
 | Buangkok, once a closed station, now has `r fmt(dest_now$tap_in[dest_now$PT_CODE == "NE15"], -2)` morning tap-ins | Expect quiet stations near new housing, such as Tengah, to grow as flats are completed | HDB's completion schedule for Tengah |
 | The East-West Line through Jurong loses many morning boardings to the JRL | Use the expected relief on this crowded stretch when planning train frequencies and the timing of any further capacity work | Whether riders bound for the city will really change at Jurong East or Boon Lay, using the JRL's own origin-destination data once it opens |
@@ -1472,7 +1474,7 @@ The brief frames the question around stations that are built but not yet worth o
 
 # Conclusion
 
-**Q1.** HDB flats form a ring of towns around the centre, and morning tap-ins are highest at stations in the big towns, led by `r top_now$name[1]`. **Q2.** A Huff model with lines, bus stops and an LRT flag, and a 5 km limit on station choice, explains `r pct(best$r2)` of the variation in tap-ins. The distance decay &lambda; is `r round(bp["lambda"], 2)`. **Q3.** The 29 new stations draw about `r fmt(sum(nr$pred_fut), -2)` weekday morning tap-ins, led by `r paste(nr$name[1:3], collapse = ", ")`, while `r nrow(below_all)` to `r nrow(below_hume)` are predicted to be quieter than Hume, depending on how Hume is measured. **Q4.** The riders come from nearby stations. `r n_flat` of `r n_imp` existing stations with predicted riders barely change, while the East-West Line through Jurong loses the most, and the CRL interchanges at Hougang and Bright Hill gain. **Q5.** An exponential distance decay ranks the stations almost the same, so the ranking is more reliable than any single station's number.
+**Q1.** HDB flats form a ring of towns around the centre, and morning tap-ins are highest at stations in the big towns, led by `r top_now$name[1]`. **Q2.** A Huff model with lines, bus stops and an LRT flag, and a 5 km limit on station choice, explains `r pct(best$r2)` of the variation in tap-ins. The distance decay &lambda; is `r round(bp["lambda"], 2)`. **Q3.** The 29 new stations draw about `r fmt(sum(nr$pred_fut), -2)` weekday morning tap-ins, led by `r and_list(nr$name[1:3])`, while `r nrow(below_all)` to `r nrow(below_hume)` are predicted to be quieter than Hume, depending on how Hume is measured. **Q4.** The riders come from nearby stations. `r n_flat` of `r n_imp` existing stations with predicted riders barely change, while the East-West Line through Jurong loses the most, and the CRL interchanges at Hougang and Bright Hill gain. **Q5.** An exponential distance decay ranks the stations almost the same, so the ranking is more reliable than any single station's number.
 
 Overall, the new lines move morning riders into the housing gaps between today's lines, and the effect on the rest of the network stays local.
 

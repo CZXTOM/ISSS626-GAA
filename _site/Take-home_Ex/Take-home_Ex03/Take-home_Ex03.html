@@ -608,7 +608,9 @@ existing stations, mostly in the west, from Jurong to Bukit Panjang
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>col_now  <span class="ot">&lt;-</span> <span class="st">"#7F7F7F"</span>   <span class="co"># grey, existing stations</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>line_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">JRL =</span> <span class="st">"#0099AA"</span>, <span class="at">CRL =</span> <span class="st">"#97C616"</span>)   <span class="co"># LTA's own line colours, teal and lime</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>fmt <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">d =</span> <span class="dv">0</span>) <span class="fu">format</span>(<span class="fu">round</span>(x, d), <span class="at">big.mark =</span> <span class="st">","</span>, <span class="at">nsmall =</span> <span class="fu">max</span>(d, <span class="dv">0</span>), <span class="at">scientific =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>pct <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">d =</span> <span class="dv">0</span>) <span class="fu">paste0</span>(<span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> x, d), <span class="st">"%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>pct <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">d =</span> <span class="dv">0</span>) <span class="fu">paste0</span>(<span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> x, d), <span class="st">"%"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>nocase <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">paste0</span>(<span class="st">'&lt;span style="text-transform:none"&gt;'</span>, x, <span class="st">"&lt;/span&gt;"</span>)   <span class="co"># keeps Greek letters lower case in table headers</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>and_list <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="cf">if</span> (<span class="fu">length</span>(x) <span class="sc">&lt;</span> <span class="dv">2</span>) x <span class="cf">else</span> <span class="fu">paste</span>(<span class="fu">paste</span>(x[<span class="sc">-</span><span class="fu">length</span>(x)], <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">"and"</span>, x[<span class="fu">length</span>(x)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </section>
@@ -1484,7 +1486,7 @@ Figure&nbsp;1. HDB blocks by number of flats. Each dot is one block. Data from H
 </div>
 </div>
 <div class="read">
-<p><strong>Flats sit in a ring of towns around the centre, with large empty areas in the west, the middle and the far east.</strong> The 10,817 blocks hold 1,179,156 flats. The towns with the most flats are Tampines, Jurong West, Woodlands. The darkest dots, blocks of 250 flats or more, are found in most towns, but most often on the city fringe, in Kallang/Whampoa, Queenstown and Bukit Merah. There are no flats in Tuas, the Western Catchment, the central nature reserve or around Changi Airport. Tengah, the newest town, lies between Choa Chu Kang and Jurong West, right on the JRL. It has 145 blocks with 16,318 flats so far, and more are being built, so the JRL predictions there will grow over time.</p>
+<p><strong>Flats sit in a ring of towns around the centre, with large empty areas in the west, the middle and the far east.</strong> The 10,817 blocks hold 1,179,156 flats. The towns with the most flats are Tampines, Jurong West and Woodlands. The darkest dots, blocks of 250 flats or more, are found in most towns, but most often on the city fringe, in Kallang/Whampoa, Queenstown and Bukit Merah. There are no flats in Tuas, the Western Catchment, the central nature reserve or around Changi Airport. Tengah, the newest town, lies between Choa Chu Kang and Jurong West, right on the JRL. It has 145 blocks with 16,318 flats so far, and more are being built, so the JRL predictions there will grow over time.</p>
 </div>
 </section>
 <section id="where-people-board-today" class="level3">
@@ -1526,7 +1528,7 @@ Figure&nbsp;2. Average weekday tap-ins, 6am to 9am, August and September 2026. C
 </div>
 </div>
 <div class="read">
-<p><strong>Morning tap-ins are highest at stations in the big HDB towns.</strong> The busiest station is Yishun, with 19,148 tap-ins on an average weekday morning, followed by Admiralty, Woodlands, Sembawang. All four are in the big northern towns, far from the city, where many residents ride the train to work. Stations in the city centre are small circles, because in the morning people tap out there rather than in. This is why HDB blocks are a fair stand-in for where morning trips start. LRT stations in Bukit Panjang, Sengkang and Punggol are also small, because each serves only the few blocks around it. A rider who changes from the LRT to the MRT taps in only once, at the LRT station.</p>
+<p><strong>Morning tap-ins are highest at stations in the big HDB towns.</strong> The busiest station is Yishun, with 19,148 tap-ins on an average weekday morning, followed by Admiralty, Woodlands and Sembawang. All four are in the big northern towns, far from the city, where many residents ride the train to work. Stations in the city centre are small circles, because in the morning people tap out there rather than in. This is why HDB blocks are a fair stand-in for where morning trips start. LRT stations in Bukit Panjang, Sengkang and Punggol are also small, because each serves only the few blocks around it. A rider who changes from the LRT to the MRT taps in only once, at the LRT station.</p>
 </div>
 </section>
 </section>
@@ -1695,26 +1697,26 @@ Figure&nbsp;2. Average weekday tap-ins, 6am to 9am, August and September 2026. C
 <span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>                        <span class="at">a_bus =</span> .x<span class="sc">$</span>par[<span class="st">"a_bus"</span>], <span class="at">a_lrt =</span> .x<span class="sc">$</span>par[<span class="st">"a_lrt"</span>],</span>
 <span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>                        <span class="at">r2 =</span> .x<span class="sc">$</span>r2, <span class="at">converged =</span> .x<span class="sc">$</span>converged))) <span class="sc">%&gt;%</span></span>
 <span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(model, lambda, a_lines, a_bus, a_lrt, r2, converged) <span class="sc">%&gt;%</span></span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">2</span>, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Model"</span>, <span class="st">"λ"</span>, <span class="st">"α lines"</span>, <span class="st">"α bus stops"</span>, <span class="st">"α LRT"</span>, <span class="st">"R²"</span>, <span class="st">"Converged"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">2</span>, <span class="at">escape =</span> <span class="cn">FALSE</span>, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Model"</span>, <span class="fu">nocase</span>(<span class="st">"λ"</span>), <span class="fu">nocase</span>(<span class="st">"α lines"</span>), <span class="fu">nocase</span>(<span class="st">"α bus stops"</span>), <span class="fu">nocase</span>(<span class="st">"α LRT"</span>), <span class="st">"R²"</span>, <span class="st">"Converged"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 35%">
-<col style="width: 7%">
-<col style="width: 11%">
-<col style="width: 16%">
-<col style="width: 8%">
-<col style="width: 7%">
-<col style="width: 14%">
+<col style="width: 10%">
+<col style="width: 18%">
+<col style="width: 21%">
+<col style="width: 22%">
+<col style="width: 20%">
+<col style="width: 2%">
+<col style="width: 4%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Model</th>
-<th style="text-align: right;">λ</th>
-<th style="text-align: right;">α lines</th>
-<th style="text-align: right;">α bus stops</th>
-<th style="text-align: right;">α LRT</th>
+<th style="text-align: right;"><span style="text-transform:none">λ</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α lines</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α bus stops</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α LRT</span></th>
 <th style="text-align: right;">R²</th>
 <th style="text-align: left;">Converged</th>
 </tr>
@@ -1794,17 +1796,25 @@ Figure&nbsp;2. Average weekday tap-ins, 6am to 9am, August and September 2026. C
 <span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(<span class="fu">tibble</span>(<span class="at">start =</span> <span class="st">"λ 2, weights 0, main fit"</span>, <span class="at">lambda =</span> bp[<span class="st">"lambda"</span>], <span class="at">a_lines =</span> bp[<span class="st">"a_lines"</span>],</span>
 <span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">a_bus =</span> bp[<span class="st">"a_bus"</span>], <span class="at">a_lrt =</span> bp[<span class="st">"a_lrt"</span>], <span class="at">r2 =</span> best<span class="sc">$</span>r2), restarts) <span class="sc">%&gt;%</span></span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">3</span>, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Starting values"</span>, <span class="st">"λ"</span>, <span class="st">"α lines"</span>, <span class="st">"α bus stops"</span>, <span class="st">"α LRT"</span>, <span class="st">"R²"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">3</span>, <span class="at">escape =</span> <span class="cn">FALSE</span>, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Starting values"</span>, <span class="fu">nocase</span>(<span class="st">"λ"</span>), <span class="fu">nocase</span>(<span class="st">"α lines"</span>), <span class="fu">nocase</span>(<span class="st">"α bus stops"</span>), <span class="fu">nocase</span>(<span class="st">"α LRT"</span>), <span class="st">"R²"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 21%">
+<col style="width: 23%">
+<col style="width: 21%">
+<col style="width: 2%">
+</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Starting values</th>
-<th style="text-align: right;">λ</th>
-<th style="text-align: right;">α lines</th>
-<th style="text-align: right;">α bus stops</th>
-<th style="text-align: right;">α LRT</th>
+<th style="text-align: right;"><span style="text-transform:none">λ</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α lines</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α bus stops</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α LRT</span></th>
 <th style="text-align: right;">R²</th>
 </tr>
 </thead>
@@ -1904,7 +1914,7 @@ Figure&nbsp;4. Observed against predicted tap-ins per weekday morning, by statio
 </div>
 </div>
 <div class="read">
-<p><strong>The model gets the overall pattern right, but not every station.</strong> The R² of 0.84 comes mostly from the big stations, which sit close to the dashed line. LRT stations are shown in pink. Station by station the fit is rougher. Only 37% of stations are predicted within 30% of their observed tap-ins. Among stations with more than 3,000 tap-ins, the largest over-predictions are at Tampines West, Bedok Reservoir, Buona Vista. These sit between busier stations, and their residents tend to use the neighbouring station instead. The largest under-predictions are at Kranji, Newton, Aljunied. Kranji serves the industry and workers’ dormitories around Kranji and Sungei Kadut, Newton serves private housing, and Aljunied serves Geylang, where many people rent rooms in shophouses and private flats. None of these groups is in the model, whose only origins are HDB blocks. So the model is best read as a guide to where riders come from, not as an exact count for each station.</p>
+<p><strong>The model gets the overall pattern right, but not every station.</strong> The R² of 0.84 comes mostly from the big stations, which sit close to the dashed line. LRT stations are shown in pink. Station by station the fit is rougher. Only 37% of stations are predicted within 30% of their observed tap-ins. Among stations with more than 3,000 tap-ins, the largest over-predictions are at Tampines West, Bedok Reservoir and Buona Vista. These sit between busier stations, and their residents tend to use the neighbouring station instead. The largest under-predictions are at Kranji, Newton and Aljunied. Kranji serves the industry and workers’ dormitories around Kranji and Sungei Kadut, Newton serves private housing, and Aljunied serves Geylang, where many people rent rooms in shophouses and private flats. None of these groups is in the model, whose only origins are HDB blocks. So the model is best read as a guide to where riders come from, not as an exact count for each station.</p>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">The Code</a></li></ul>
@@ -2056,25 +2066,25 @@ Figure&nbsp;5. Predicted divided by observed tap-ins, by station. Warm stations 
 <span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>limits <span class="sc">%&gt;%</span></span>
 <span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">r2 =</span> <span class="fu">round</span>(r2, <span class="dv">3</span>), <span class="at">lambda =</span> <span class="fu">round</span>(lambda, <span class="dv">2</span>), <span class="at">far_median =</span> <span class="fu">percent</span>(far_median, <span class="fl">0.1</span>),</span>
 <span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">new_riders =</span> <span class="fu">fmt</span>(new_riders, <span class="sc">-</span><span class="dv">2</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Limit"</span>, <span class="st">"R² today"</span>, <span class="st">"λ"</span>, <span class="fu">paste0</span>(<span class="st">"Median change at the "</span>, <span class="fu">sum</span>(far), <span class="st">" stations over 5 km from any new station"</span>),</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">escape =</span> <span class="cn">FALSE</span>, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Limit"</span>, <span class="st">"R² today"</span>, <span class="fu">nocase</span>(<span class="st">"λ"</span>), <span class="fu">paste0</span>(<span class="st">"Median change at the "</span>, <span class="fu">sum</span>(far), <span class="st">" stations over 5 km from any new station"</span>),</span>
 <span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"Stations losing over 15%"</span>, <span class="st">"Riders at new stations"</span>, <span class="st">"New stations below Hume"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 3%">
-<col style="width: 40%">
-<col style="width: 15%">
-<col style="width: 14%">
-<col style="width: 15%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 21%">
+<col style="width: 32%">
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Limit</th>
 <th style="text-align: right;">R² today</th>
-<th style="text-align: right;">λ</th>
+<th style="text-align: right;"><span style="text-transform:none">λ</span></th>
 <th style="text-align: left;">Median change at the 87 stations over 5 km from any new station</th>
 <th style="text-align: right;">Stations losing over 15%</th>
 <th style="text-align: left;">Riders at new stations</th>
@@ -2220,7 +2230,7 @@ Figure&nbsp;6. Predicted tap-ins per weekday morning at the 29 new JRL and CRL s
 </div>
 </div>
 <div class="read">
-<p><strong>7 stations are below Hume on every yardstick.</strong> They are Tukang, Jurong Hill, Jurong Pier, Nanyang Gateway, Nanyang Crescent, Peng Kang Hill, Aviation Park, all on the NTU branch, in the Jurong industrial area or at Changi. The count rises to 12 with the first yardstick. The extra stations, such as Jurong Town Hall and Tengah, sit close to the line, so their case is less clear. For all of them the decision to open should rest on worker and student numbers, which the model leaves out.</p>
+<p><strong>7 stations are below Hume on every yardstick.</strong> They are Tukang, Jurong Hill, Jurong Pier, Nanyang Gateway, Nanyang Crescent, Peng Kang Hill and Aviation Park, all on the NTU branch, in the Jurong industrial area or at Changi. The count rises to 12 with the first yardstick. The extra stations, such as Jurong Town Hall and Tengah, sit close to the line, so their case is less clear. For all of them the decision to open should rest on worker and student numbers, which the model leaves out.</p>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">The Code</a></li></ul>
@@ -2316,7 +2326,7 @@ Figure&nbsp;8. Change in predicted tap-ins per weekday morning at existing stati
 </div>
 </div>
 <div class="read">
-<p><strong>The effect stays near the new lines.</strong> 101 of the 182 existing stations with predicted riders change by less than 5%, including almost every station in the north, the centre and along the east coast. 38 stations lose more than 15%. In the west they include the East-West Line from Jurong East to Tuas Crescent, Bukit Batok, Bukit Gombak, Choa Chu Kang and Yew Tee, the Bukit Panjang LRT, and the Downtown Line from Bukit Panjang to King Albert Park. In the north they include the stations near the CRL’s west end at Bright Hill, such as Upper Thomson, Mayflower, Lentor, Yio Chu Kang and Marymount, and those along its middle, such as Kovan, Serangoon, Buangkok, Lorong Chuan and Bishan. In the east they include Tampines, Tampines East, Expo, Upper Changi and Changi Airport. Changi Airport, Joo Koon, Gul Circle, Tuas Crescent lose more than half, but from a small base of under 3,000 predicted riders. Of the 7 interchanges that gain a line, 2 gain more than 5%, led by Hougang, and Ang Mo Kio holds about steady. Jurong East, Boon Lay, Choa Chu Kang and Pasir Ris still lose riders overall, because new stations nearby take their outer blocks.</p>
+<p><strong>The effect stays near the new lines.</strong> 101 of the 182 existing stations with predicted riders change by less than 5%, including almost every station in the north, the centre and along the east coast. 38 stations lose more than 15%. In the west they include the East-West Line from Jurong East to Tuas Crescent, Bukit Batok, Bukit Gombak, Choa Chu Kang and Yew Tee, the Bukit Panjang LRT, and the Downtown Line from Bukit Panjang to King Albert Park. In the north they include the stations near the CRL’s west end at Bright Hill, such as Upper Thomson, Mayflower, Lentor, Yio Chu Kang and Marymount, and those along its middle, such as Kovan, Serangoon, Buangkok, Lorong Chuan and Bishan. In the east they include Tampines, Tampines East, Expo, Upper Changi and Changi Airport. Changi Airport, Joo Koon, Gul Circle and Tuas Crescent lose more than half, but from a small base of under 3,000 predicted riders. Of the 7 interchanges that gain a line, 2 gain more than 5%, led by Hougang, and Ang Mo Kio holds about steady. Jurong East, Boon Lay, Choa Chu Kang and Pasir Ris still lose riders overall, because new stations nearby take their outer blocks.</p>
 </div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">The Plot</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">The Code</a></li></ul>
@@ -2447,7 +2457,7 @@ Figure&nbsp;10. HDB blocks whose most likely station changes once the JRL and CR
 </div>
 </div>
 <div class="read">
-<p><strong>About 12% of HDB flats get a new most likely station on the JRL or CRL.</strong> These blocks form tight patches around the new stations, 8% on the JRL and 4% on the CRL. The towns with the most switching flats are Jurong West, Jurong East, Tengah, Pasir Ris, Bukit Batok, Choa Chu Kang. Another 1.7% switch to a different existing station, mostly to an interchange that gains a line, above all Hougang. Most of the island, in pale grey, keeps its current station, which matches the small changes in the impact map. The white circles are the new stations. Some, in the industrial west and near Changi, have almost no blocks around them.</p>
+<p><strong>About 12% of HDB flats get a new most likely station on the JRL or CRL.</strong> These blocks form tight patches around the new stations, 8% on the JRL and 4% on the CRL. The towns with the most switching flats are Jurong West, Jurong East, Tengah, Pasir Ris, Bukit Batok and Choa Chu Kang. Another 1.7% switch to a different existing station, mostly to an interchange that gains a line, above all Hougang. Most of the island, in pale grey, keeps its current station, which matches the small changes in the impact map. The white circles are the new stations. Some, in the industrial west and near Changi, have almost no blocks around them.</p>
 </div>
 <p>To show how a single market area shrinks, the chance that each block uses Lakeside, the biggest loser on the JRL side, and Tampines, the biggest on the CRL side, is mapped before and after.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
@@ -2523,38 +2533,38 @@ Figure&nbsp;11. Chance that residents of each block use Lakeside, top, and Tampi
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fit_exp <span class="ot">&lt;-</span> <span class="fu">calibrate</span>(<span class="fu">c</span>(<span class="st">"lambda"</span>, <span class="st">"a_lines"</span>, <span class="st">"a_bus"</span>, <span class="st">"a_lrt"</span>), <span class="at">form =</span> <span class="st">"exp"</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">decay =</span> <span class="st">"Power, d^-λ"</span>, <span class="at">lambda =</span> bp[<span class="st">"lambda"</span>], <span class="at">a_lines =</span> bp[<span class="st">"a_lines"</span>], <span class="at">a_bus =</span> bp[<span class="st">"a_bus"</span>],</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">decay =</span> <span class="st">"Power, d&lt;sup&gt;−λ&lt;/sup&gt;"</span>, <span class="at">lambda =</span> bp[<span class="st">"lambda"</span>], <span class="at">a_lines =</span> bp[<span class="st">"a_lines"</span>], <span class="at">a_bus =</span> bp[<span class="st">"a_bus"</span>],</span>
 <span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">a_lrt =</span> bp[<span class="st">"a_lrt"</span>], <span class="at">r2 =</span> best<span class="sc">$</span>r2, <span class="at">sse =</span> best<span class="sc">$</span>sse),</span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">decay =</span> <span class="st">"Exponential, e^-λd"</span>, <span class="at">lambda =</span> fit_exp<span class="sc">$</span>par[<span class="st">"lambda"</span>], <span class="at">a_lines =</span> fit_exp<span class="sc">$</span>par[<span class="st">"a_lines"</span>],</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">decay =</span> <span class="st">"Exponential, e&lt;sup&gt;−λd&lt;/sup&gt;"</span>, <span class="at">lambda =</span> fit_exp<span class="sc">$</span>par[<span class="st">"lambda"</span>], <span class="at">a_lines =</span> fit_exp<span class="sc">$</span>par[<span class="st">"a_lines"</span>],</span>
 <span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">a_bus =</span> fit_exp<span class="sc">$</span>par[<span class="st">"a_bus"</span>], <span class="at">a_lrt =</span> fit_exp<span class="sc">$</span>par[<span class="st">"a_lrt"</span>], <span class="at">r2 =</span> fit_exp<span class="sc">$</span>r2, <span class="at">sse =</span> fit_exp<span class="sc">$</span>sse)</span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">digits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>),</span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Decay"</span>, <span class="st">"λ"</span>, <span class="st">"α lines"</span>, <span class="st">"α bus stops"</span>, <span class="st">"α LRT"</span>, <span class="st">"R²"</span>, <span class="st">"Sum of squared differences"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">digits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>), <span class="at">escape =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Decay"</span>, <span class="fu">nocase</span>(<span class="st">"λ"</span>), <span class="fu">nocase</span>(<span class="st">"α lines"</span>), <span class="fu">nocase</span>(<span class="st">"α bus stops"</span>), <span class="fu">nocase</span>(<span class="st">"α LRT"</span>), <span class="st">"R²"</span>, <span class="st">"Sum of squared differences"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 6%">
-<col style="width: 9%">
-<col style="width: 14%">
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 32%">
+<col style="width: 11%">
+<col style="width: 16%">
+<col style="width: 19%">
+<col style="width: 20%">
+<col style="width: 18%">
+<col style="width: 2%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Decay</th>
-<th style="text-align: right;">λ</th>
-<th style="text-align: right;">α lines</th>
-<th style="text-align: right;">α bus stops</th>
-<th style="text-align: right;">α LRT</th>
+<th style="text-align: right;"><span style="text-transform:none">λ</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α lines</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α bus stops</span></th>
+<th style="text-align: right;"><span style="text-transform:none">α LRT</span></th>
 <th style="text-align: right;">R²</th>
 <th style="text-align: right;">Sum of squared differences</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Power, d^-λ</td>
+<td style="text-align: left;">Power, d<sup>−λ</sup></td>
 <td style="text-align: right;">2.05</td>
 <td style="text-align: right;">0.97</td>
 <td style="text-align: right;">0.11</td>
@@ -2563,7 +2573,7 @@ Figure&nbsp;11. Chance that residents of each block use Lakeside, top, and Tampi
 <td style="text-align: right;">0.00127</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Exponential, e^-λd</td>
+<td style="text-align: left;">Exponential, e<sup>−λd</sup></td>
 <td style="text-align: right;">1.43</td>
 <td style="text-align: right;">0.80</td>
 <td style="text-align: right;">0.21</td>
@@ -2712,7 +2722,7 @@ Figure&nbsp;12. Left, predicted tap-ins at the 29 new stations under the two dec
 <tr class="even">
 <td>Distances have a floor of 100 m</td>
 <td>d<sup>−λ</sup> explodes as the distance nears zero</td>
-<td>Affects the 0 blocks that sit within 100 m of a station</td>
+<td>Affects the 189 blocks that sit within 100 m of a station</td>
 </tr>
 <tr class="odd">
 <td>Origins are HDB blocks, sized by flats</td>
@@ -2761,7 +2771,7 @@ Figure&nbsp;12. Left, predicted tap-ins at the 29 new stations under the two dec
 <tbody>
 <tr class="odd">
 <td>The new stations fill gaps in housing that is far from today’s lines</td>
-<td>The busiest new stations, Serangoon North, Pasir Ris East, Tengah Plantation, sit in dense HDB areas. 12% of HDB flats get a new most likely station</td>
+<td>The busiest new stations, Serangoon North, Pasir Ris East and Tengah Plantation, sit in dense HDB areas. 12% of HDB flats get a new most likely station</td>
 <td>Sure. Both decay curves rank the stations almost the same</td>
 </tr>
 <tr class="even">
@@ -2862,7 +2872,7 @@ Figure&nbsp;12. Left, predicted tap-ins at the 29 new stations under the two dec
 </thead>
 <tbody>
 <tr class="odd">
-<td>Serangoon North, Pasir Ris East, Tengah Plantation draw the most morning riders among the new stations</td>
+<td>Serangoon North, Pasir Ris East and Tengah Plantation draw the most morning riders among the new stations</td>
 <td>Plan entrances, fare gates and feeder bus links there for the largest crowds, and open the JRL stages that include them first if staging allows</td>
 <td>Tengah’s population once all its flats are built, since the model only sees completed blocks</td>
 </tr>
@@ -2960,7 +2970,7 @@ Figure&nbsp;12. Left, predicted tap-ins at the 29 new stations under the two dec
 </section>
 <section id="conclusion" class="level1">
 <h1>Conclusion</h1>
-<p><strong>Q1.</strong> HDB flats form a ring of towns around the centre, and morning tap-ins are highest at stations in the big towns, led by Yishun. <strong>Q2.</strong> A Huff model with lines, bus stops and an LRT flag, and a 5 km limit on station choice, explains 84% of the variation in tap-ins. The distance decay λ is 2.05. <strong>Q3.</strong> The 29 new stations draw about 102,100 weekday morning tap-ins, led by Serangoon North, Pasir Ris East, Tengah Plantation, while 7 to 12 are predicted to be quieter than Hume, depending on how Hume is measured. <strong>Q4.</strong> The riders come from nearby stations. 101 of 182 existing stations with predicted riders barely change, while the East-West Line through Jurong loses the most, and the CRL interchanges at Hougang and Bright Hill gain. <strong>Q5.</strong> An exponential distance decay ranks the stations almost the same, so the ranking is more reliable than any single station’s number.</p>
+<p><strong>Q1.</strong> HDB flats form a ring of towns around the centre, and morning tap-ins are highest at stations in the big towns, led by Yishun. <strong>Q2.</strong> A Huff model with lines, bus stops and an LRT flag, and a 5 km limit on station choice, explains 84% of the variation in tap-ins. The distance decay λ is 2.05. <strong>Q3.</strong> The 29 new stations draw about 102,100 weekday morning tap-ins, led by Serangoon North, Pasir Ris East and Tengah Plantation, while 7 to 12 are predicted to be quieter than Hume, depending on how Hume is measured. <strong>Q4.</strong> The riders come from nearby stations. 101 of 182 existing stations with predicted riders barely change, while the East-West Line through Jurong loses the most, and the CRL interchanges at Hougang and Bright Hill gain. <strong>Q5.</strong> An exponential distance decay ranks the stations almost the same, so the ranking is more reliable than any single station’s number.</p>
 <p>Overall, the new lines move morning riders into the housing gaps between today’s lines, and the effect on the rest of the network stays local.</p>
 <section id="future-work" class="level2">
 <h2 class="anchored" data-anchor-id="future-work">Future work</h2>
