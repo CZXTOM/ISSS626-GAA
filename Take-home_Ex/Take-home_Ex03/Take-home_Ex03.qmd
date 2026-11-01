@@ -1279,10 +1279,12 @@ result$change_exp   <- result$pred_exp - pred_now_exp[match(result$PT_CODE, dest
 #| echo: false
 nb <- result %>% st_drop_geometry() %>% filter(is.na(pred_now))
 eb <- result %>% st_drop_geometry() %>% filter(!is.na(pred_now))
-lab_nb <- nb %>% slice_max(abs(pred_exp - pred_fut), n = 5)
+lab_nb <- nb %>% slice_max(abs(pred_exp - pred_fut), n = 5) %>%
+  mutate(nx = if_else(pred_exp > pred_fut, -1500, 1500), ny = if_else(pred_exp > pred_fut, 700, -1300))
 p1 <- ggplot(nb, aes(pred_fut, pred_exp, colour = line)) +
   geom_abline(linetype = "dashed", colour = "grey50") + geom_point(size = 2.6) +
-  geom_text_repel(data = lab_nb, aes(label = name), colour = "grey20", size = 3.4, seed = 1, min.segment.length = 0) +
+  geom_text_repel(data = lab_nb, aes(label = name), colour = "grey20", size = 3.4, seed = 1, min.segment.length = 0,
+                  nudge_x = lab_nb$nx, nudge_y = lab_nb$ny, segment.colour = "grey40", point.padding = 0.4) +
   scale_colour_manual(values = line_cols, name = NULL) +
   scale_x_continuous(labels = comma) + scale_y_continuous(labels = comma) +
   labs(subtitle = "New stations", x = "Power decay", y = "Exponential decay") +
@@ -1460,7 +1462,7 @@ The brief frames the question around stations that are built but not yet worth o
 
 | Limitation | Effect on the results | How it was handled |
 |---|---|---|
-| Only HDB residents are origins | Stations near private housing, workplaces, schools and the Causeway are under-predicted | Shown in the residual map and named in the readings |
+| Only HDB residents are origins | Stations near private housing, workplaces, schools and workers' dormitories are under-predicted | Shown in the residual map and named in the readings |
 | Total morning demand is held fixed | People who take the bus today and would switch to the new lines are not counted, so new-station ridership is probably on the low side | Stated in Task 3. Results read as a share of today's riders |
 | Distance is a straight line | Rivers, expressways and the actual walking or bus route are ignored | The 5 km limit removes the most unrealistic choices |
 | The model picks a station by distance and pull only | It does not know where riders are going, so a rider bound for the city who would stay on the East-West Line is treated like any other | Losses on the East-West Line through Jurong are flagged as probably too high |

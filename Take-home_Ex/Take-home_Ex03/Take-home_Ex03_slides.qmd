@@ -44,6 +44,7 @@ col_high <- "#D55E00"; col_low <- "#0072B2"
 line_cols <- c(JRL = "#0099AA", CRL = "#97C616")
 fmt <- function(x, d = 0) format(round(x, d), big.mark = ",", nsmall = max(d, 0), scientific = FALSE)
 pct <- function(x, d = 0) paste0(round(100 * x, d), "%")
+and_list <- function(x) if (length(x) < 2) x else paste(paste(x[-length(x)], collapse = ", "), "and", x[length(x)])
 tmap_options(scale = 1.3, component.autoscale = FALSE)
 map_layout <- tm_layout(bg.color = bg, outer.bg.color = bg, frame = FALSE, legend.bg.color = bg,
                         inner.margins = c(0.01, 0.01, 0.01, 0.01), outer.margins = 0)
@@ -171,7 +172,7 @@ Morning tap-ins are highest in the big HDB towns such as Yishun, Admiralty and W
 
 : {tbl-colwidths="[16,44,40]"}
 
-<div class="small">Each block considers stations within 5 km. Without this limit, a new station in Jurong would take riders from Changi. Total morning demand is held at today's level.</div>
+<div class="small" style="margin-top:1.2rem">Each block considers stations within 5 km. Without this limit, a new station in Jurong would take riders from Changi. Total morning demand is held at today's level.</div>
 :::
 :::::
 
@@ -225,7 +226,7 @@ The weights were fitted with optim, extending the grid search from Hands-on Exer
 ::: {.column width="58%"}
 ```{r}
 #| fig-width: 8
-#| fig-height: 6.4
+#| fig-height: 7.6
 ggplot(new_res, aes(pred_fut, fct_reorder(name, pred_fut), fill = line)) +
   geom_col(width = 0.72) +
   geom_vline(xintercept = hume_pred, linetype = "dashed", colour = "grey30") +
@@ -233,14 +234,14 @@ ggplot(new_res, aes(pred_fut, fct_reorder(name, pred_fut), fill = line)) +
   scale_fill_manual(values = line_cols, name = NULL) +
   scale_x_continuous(labels = comma, expand = expansion(mult = c(0, 0.05))) +
   labs(x = "Predicted tap-ins per weekday morning", y = NULL) +
-  theme_slide + theme(legend.position = "top", panel.grid.major.y = element_blank(), axis.text.y = element_text(size = 11))
+  theme_slide + theme(legend.position = "top", panel.grid.major.y = element_blank(), axis.text.y = element_text(size = 12.5))
 ```
 :::
 
 ::: {.column width="42%"}
 <div class="statrow">
 <div><div class="bignum">`r fmt(sum(new_res$pred_fut), -2)`</div><div class="bigcap">weekday morning tap-ins at the 29 new stations, `r pct(sum(new_res$pred_fut) / total)` of today's total</div></div>
-<div><div class="bignum">`r pct(sum(new_res$pred_fut[1:5]) / sum(new_res$pred_fut))`</div><div class="bigcap">of them at the top 5, led by `r paste(new_res$name[1:3], collapse = ", ")`</div></div>
+<div><div class="bignum">`r pct(sum(new_res$pred_fut[1:5]) / sum(new_res$pred_fut))`</div><div class="bigcap">of them at the top 5, led by `r and_list(new_res$name[1:3])`</div></div>
 </div>
 
 <div class="fix"><b>Below Hume.</b> Hume was kept closed for ten years. The model gives it `r fmt(hume_pred, -1)` tap-ins, and `r nrow(below_hume)` new stations fall below that. `r n_below_all` are below even Hume's observed `r fmt(res$hume_obs, -1)`, all at NTU, in the Jurong industrial area or at Changi.</div>
@@ -343,10 +344,12 @@ A block's market area is the station it is most likely to use. The blocks that s
 #| fig-width: 7.2
 #| fig-height: 5.6
 nb <- st_drop_geometry(result) %>% filter(is.na(pred_now))
-lab_nb <- nb %>% mutate(d = abs(log(pred_exp / pred_fut))) %>% filter(pred_fut > 1000) %>% slice_max(d, n = 4)
+lab_nb <- nb %>% mutate(d = abs(log(pred_exp / pred_fut))) %>% filter(pred_fut > 1000) %>% slice_max(d, n = 4) %>%
+  mutate(nx = if_else(pred_exp > pred_fut, -1600, 1400), ny = if_else(pred_exp > pred_fut, 900, -900))
 ggplot(nb, aes(pred_fut, pred_exp, colour = line)) +
   geom_abline(linetype = "dashed", colour = "grey50") + geom_point(size = 3.4) +
-  geom_text_repel(data = lab_nb, aes(label = name), colour = "grey20", size = 5, seed = 1, min.segment.length = 0, box.padding = 0.8) +
+  geom_text_repel(data = lab_nb, aes(label = name), colour = "grey20", size = 5, seed = 1, min.segment.length = 0,
+                  nudge_x = lab_nb$nx, nudge_y = lab_nb$ny, segment.colour = "grey40") +
   scale_colour_manual(values = line_cols, name = NULL) +
   scale_x_continuous(labels = comma) + scale_y_continuous(labels = comma) +
   labs(x = "Power decay, main model", y = "Exponential decay") + theme_slide + theme(legend.position = "top")
@@ -380,7 +383,7 @@ The power curve is MCI's default and the form in Lesson 8. An exponential curve 
 | | Finding | Evidence | Main limit |
 |---|---|---|---|
 | **1** | Station choice follows distance, lines and LRT status | R² `r round(res$r2, 2)`, λ `r round(bp["lambda"], 2)`, weights fitted to observed tap-in shares | Only HDB residents are origins, so stations near private homes and workplaces are under-predicted |
-| **2** | The 29 new stations draw about `r fmt(sum(new_res$pred_fut), -2)` morning riders. `r n_below_all` to `r nrow(below_hume)` of them draw fewer than Hume | Led by `r paste(new_res$name[1:3], collapse = ", ")` | Total demand held fixed, so new bus-to-rail riders are not counted |
+| **2** | The 29 new stations draw about `r fmt(sum(new_res$pred_fut), -2)` morning riders. `r n_below_all` to `r nrow(below_hume)` of them draw fewer than Hume | Led by `r and_list(new_res$name[1:3])` | Total demand held fixed, so new bus-to-rail riders are not counted |
 | **3** | The impact is local | `r n_flat` of `r n_imp` stations change by under 5% | Rests on the choice limit. Limits of 3 to 8 km give `r min(res$limits$lose15[-1])` to `r max(res$limits$lose15[-1])` stations losing over 15% |
 | **4** | The East-West Line through Jurong loses most | About `r fmt(ew_loss, -2)` tap-ins | Probably too high, because travel direction is not modelled |
 | **5** | The ranking is robust | Rank correlation `r round(res$rho_new, 2)` with an exponential curve | Straight-line distance, not real routes |
@@ -399,7 +402,7 @@ Each finding comes with its evidence and its main limit. The strongest results a
 
 <div class="part">Part 5 · So what</div>
 
-<div class="act"><b>Plan the biggest entrances and feeder links at `r paste(new_res$name[1:3], collapse = ", ")`</b><div class="row"><span class="tag">Because</span><span>they draw the most morning riders among the new stations</span></div><div class="row"><span class="tag">Check first</span><span>Tengah's population once all its flats are built, since the model only sees completed blocks</span></div></div>
+<div class="act"><b>Plan the biggest entrances and feeder links at `r and_list(new_res$name[1:3])`</b><div class="row"><span class="tag">Because</span><span>they draw the most morning riders among the new stations</span></div><div class="row"><span class="tag">Check first</span><span>Tengah's population once all its flats are built, since the model only sees completed blocks</span></div></div>
 
 <div class="act"><b>Build the shell now, choose the opening date later, for the quietest stations</b><div class="row"><span class="tag">Because</span><span>`r n_below_all` to `r nrow(below_hume)` new stations draw fewer home-based riders than Hume, which stayed closed for ten years</span></div><div class="row"><span class="tag">Check first</span><span>worker, student and airport staff numbers from JTC, NTU and Changi Airport Group</span></div></div>
 
